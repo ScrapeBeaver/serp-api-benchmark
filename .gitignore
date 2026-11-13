@@ -1,0 +1,25 @@
+# Run output: records, saved bodies. Published data lives on its own branch, not here.
+out/
+
+# The built results page (`serp-bench site`).
+/dist/
+
+# Local secrets. The example file is kept.
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+
+# Editors
+.idea/
+.vscode/
+.DS_Store

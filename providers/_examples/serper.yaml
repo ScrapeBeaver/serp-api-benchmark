@@ -1,0 +1,154 @@
+# Worked example: prepaid credit packs bought once, with an expiry (`period: one_time` and
+# `unused_units: {expire_after_days: N}`). The price of 1,000 searches then depends on how
+# fast a pack is used. It also shows a provider whose per-request rules are not public:
+# every request shape other than the base one is `undocumented`.
+#
+# Every fact comes from research/pricing/group-a.md (section 3), read on 2026-11-12.
+# Only the homepage and the terms page are public; the API documentation is behind a login
+# and was not read. Not checked against the live service.
+
+schema_version: 1
+id: serper
+name: Serper
+status: draft
+homepage: https://serper.dev/
+docs_url: null                      # no public documentation page could be opened
+
+product:
+  name: Google Search
+  endpoint: "not shown on the public pages"
+  mode: light                       # the only mode: every query is real-time
+  settings: {}
+  notes: >
+    Every query is real-time: "whenever you call our API we directly query Google for the
+    latest results". A typical response takes "1 to 2 seconds".
+
+terms:
+  url: https://serper.dev/terms     # read for refunds only
+  benchmarking: unknown             # a clause about benchmarking has not been looked for
+
+auth:
+  env: []
+
+capabilities:                       # none of these is stated on the public pages
+  mobile: unknown
+  city_location: unknown            # the FAQ says location is set "by specifying the country and language"
+  pagination: unknown
+  raw_html: unknown
+  ai_overview: unknown
+
+billing:
+  - effective_from: 2026-11-12
+    checked_at: 2026-11-12
+    currency: USD
+    sources:
+      - https://serper.dev/
+      - https://serper.dev/terms
+    prices_exclude_tax: true        # "* Excluding sales tax/VAT/GST"
+
+    meter:
+      unit: credit
+      unit_label: credit
+      shared_across_products: true  # one balance for web, images, news, maps and the other search types
+
+    request_cost:
+      base: 1
+      derived: >
+        The homepage equates credits and queries: "50k credits ($1.00/1k) ... Submit 50,000
+        queries". A formal definition of a credit is not stated.
+      rules: []                     # no multiplier or surcharge is stated on the public pages
+      stacking: unknown
+      per_page: unknown
+      results_per_charge: unknown
+      free_parameters: []
+      undocumented: [device, page, location, query_operators, ai_overview]
+
+    charges:
+      failed_request:
+        charged: unknown
+        how: >-
+          Not stated beyond: "Every time you receive successful responses to queries, we
+          will deduct credits from your account balance."
+        source: https://serper.dev/
+      timeout: {charged: unknown}
+      empty_serp: {charged: unknown}
+      client_timeout: {charged: unknown}
+      client_error: {charged: unknown}
+      cached_response: {charged: n/a}       # there is no cache
+      billed_statuses: unknown
+
+    cache:
+      on_by_default: false          # "We do not cache anything"
+      source: https://serper.dev/
+
+    usage_reporting:
+      response_header: null
+      response_field: null
+      account_endpoint: null
+      notes: >
+        Not stated on the public pages. The sample responses on the homepage show no
+        credits field.
+
+    purchase:
+      model: prepaid_packs          # "top-up model. No monthly subscriptions"
+      pricing: plan_units
+      # "Credits valid for 6 months" on every pack, written here as 180 days. The rate
+      # limit belongs to the pack bought, not to an account tier.
+      plans:
+        - id: starter
+          name: Starter
+          price: 50
+          period: one_time
+          units: 50000
+          limits: {requests_per_second: 50}
+          unused_units: {expire_after_days: 180}
+        - id: standard
+          name: Standard
+          price: 375
+          period: one_time
+          units: 500000
+          limits: {requests_per_second: 100}
+          unused_units: {expire_after_days: 180}
+        - id: scale
+          name: Scale
+          price: 1250
+          period: one_time
+          units: 2500000
+          limits: {requests_per_second: 200}
+          unused_units: {expire_after_days: 180}
+        - id: ultimate
+          name: Ultimate
+          price: 3750
+          period: one_time
+          units: 12500000
+          limits: {requests_per_second: 300}
+          unused_units: {expire_after_days: 180}
+      on_limit: block               # "When your credit balance reaches zero, we will stop accepting new queries."
+      overage: null
+      free:
+        units: 2500
+        period: once
+        notes: >
+          "Get 2,500 free queries", "No credit card required". The page does not say whether
+          this is given once or every month, nor when it expires; `once` is the nearest
+          value the contract has.
+      beyond_published: >
+        No pack larger than Ultimate is published, and the price beyond 12.5 million credits
+        is not stated. "If your specific use case requires a higher concurrency we are able
+        to change this limit."
+      refunds: >
+        A "full refund within 7 days of your initial credit purchase unless you have used
+        more than 20% of your credits."
+
+    benchmark_account:
+      plan: unknown
+    notes: >
+      Not expressed by a field. (1) The vendor's public pages do not say what a request for
+      more than 10 results costs. A third-party article reports 2 credits for 11 to 100
+      results (https://coldiq.com/blog/serper-pricing); it is not a statement by Serper and
+      is not used here. (2) The order in which credits of several packs are used is not
+      stated. (3) Whether a pack may be bought again before the previous one is used up is
+      implied by "top-up model" and not stated.
+
+adapter:
+  version: "1"

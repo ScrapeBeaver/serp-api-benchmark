@@ -1,0 +1,83 @@
+# SYNTHETIC. Not a real provider: a credit subscription with multipliers, to prove the
+# contract can express one.
+schema_version: 1
+id: example_credits
+name: Example Credits
+homepage: https://credits.example.com
+docs_url: https://credits.example.com/docs
+product:
+  name: Search API (Light)
+  endpoint: "GET https://api.credits.example.com/google"
+  mode: light
+  settings: {advanced: false}
+auth:
+  env: [EXAMPLE_CREDITS_API_KEY]
+capabilities: {mobile: true, city_location: unknown, pagination: true, raw_html: false, ai_overview: false}
+billing:
+  - effective_from: 2026-01-01
+    checked_at: 2026-01-05
+    sources: [https://credits.example.com/pricing]
+    meter: {unit: credit, unit_label: API credit, shared_across_products: true}
+    request_cost:
+      base: 5
+      rules:
+        - when: {mode: full}
+          set: 10
+          source: https://credits.example.com/pricing#credits
+        - when: {device: mobile}
+          set: 10
+        - when: {option: deep_scrape}
+          add: 5
+        - when: {query_operators: true}
+          multiply: 5
+      stacking: unknown
+      per_page: separate_request
+      undocumented: [location, ai_overview]
+    charges:
+      failed_request: {charged: false, how: "credited back automatically"}
+      timeout: {charged: unknown}
+      empty_serp: {charged: unknown}
+    purchase:
+      model: subscription
+      pricing: plan_units
+      plans:
+        - {id: lite, name: Lite, price: 40, period: month, units: 200000, limits: {concurrency: 5}, unused_units: expire}
+        - {id: standard, name: Standard, price: 90, period: month, units: 1000000, unused_units: roll_over}
+        - {id: pro, name: Pro, price: 200, period: month, units: 3000000, unused_units: roll_over}
+      on_limit: block
+      minimum: {amount: 40, period: month}
+      free: {units: 100, period: once}
+    benchmark_account: {plan: lite}
+  - effective_from: 2026-06-01
+    checked_at: 2026-06-02
+    sources: [https://credits.example.com/pricing]
+    changes:
+      - what: Lite plan, monthly price
+        was: "see the entry of 2026-01-01"
+        now: "as listed below"
+        source: https://credits.example.com/pricing
+    review: {confirmed_by: a maintainer, confirmed_at: 2026-06-02}
+    meter: {unit: credit, unit_label: API credit, shared_across_products: true}
+    request_cost:
+      base: 5
+      rules:
+        - when: {mode: full}
+          set: 10
+        - when: {device: mobile}
+          set: 10
+        - when: {query_operators: true}
+          multiply: 5
+      stacking: max
+      per_page: separate_request
+      undocumented: [location]
+    charges:
+      failed_request: {charged: false}
+    purchase:
+      model: subscription
+      pricing: plan_units
+      plans:
+        - {id: lite, name: Lite, price: 45, period: month, units: 200000, unused_units: expire}
+        - {id: standard, name: Standard, price: 90, period: month, units: 1000000, unused_units: roll_over}
+      on_limit: overage
+      overage: {unit_price: 0.0003}
+    benchmark_account: {plan: lite}

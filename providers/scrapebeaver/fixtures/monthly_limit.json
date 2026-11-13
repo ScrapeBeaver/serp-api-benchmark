@@ -1,0 +1,11 @@
+{
+  "description": "The account's monthly searches are used up: our problem, so the request is void.",
+  "source": "Built from the documented body of a 429 (https://scrapebeaver.com/docs/errors). Illustrative values; not a recorded response.",
+  "task": {"query": "coffee shops london", "country": "GB", "locale": "en-GB", "device": "desktop", "page": 1},
+  "response": {
+    "status": 429,
+    "headers": {"content-type": "application/json", "retry-after": "86400"},
+    "body": {"detail": "Monthly searches used.", "limit": "monthly", "allowed": 100, "retry_after": 86400}
+  },
+  "expect": {"outcome": "void", "void_reason": "auth_or_credits"}
+}

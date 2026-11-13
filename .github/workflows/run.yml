@@ -1,0 +1,112 @@
+name: Benchmark run
+
+# Runs the benchmark against real providers, with keys from repository secrets, and stores
+# the records on the `benchmark-data` branch.
+#
+# On a schedule it wakes up every hour; `serp-bench run --run auto` then decides whether one
+# of the day's runs is due in this hour (the hours move from day to day, see bench.yaml)
+# and does nothing otherwise. It can also be started by hand.
+#
+# A schedule fires only from the default branch.
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      providers:
+        description: "Provider ids, comma-separated (empty: the list in bench.yaml)"
+        required: false
+        default: ""
+      run:
+        description: "Run index (0, 1, ...) or auto (the run due this UTC hour)"
+        required: true
+        default: "auto"
+      limit:
+        description: "Send only the first N tasks (empty: the whole run)"
+        required: false
+        default: ""
+      allow_draft:
+        description: "Also run providers whose status is draft"
+        type: boolean
+        default: false
+      store:
+        description: "Store the records on the benchmark-data branch"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write   # to push records to the benchmark-data branch; nothing else is written
+  actions: write    # to start the workflow that publishes the page
+
+# One run at a time: two runs at once would compete for the same provider limits.
+concurrency:
+  group: benchmark-run
+  cancel-in-progress: false
+
+
+jobs:
+  run:
+    # The schedule spends real searches on every provider's account, so it stays off until
+    # someone turns it on: set the repository variable BENCHMARK_SCHEDULE to `on`
+    # (Settings, Secrets and variables, Actions, Variables). Starting a run by hand always works.
+    if: github.event_name != 'schedule' || vars.BENCHMARK_SCHEDULE == 'on'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      # Secrets are passed by name, one line per provider key. Add a line when a provider
+      # is added. Values are never printed: the tool redacts them and logs no headers.
+      SCRAPEBEAVER_API_KEY: ${{ secrets.SCRAPEBEAVER_API_KEY }}
+      SCRAPEBEAVER_BASE_URL: ${{ vars.SCRAPEBEAVER_BASE_URL }}
+      DECODO_API_KEY: ${{ secrets.DECODO_API_KEY }}
+      SCRAPINGBEE_API_KEY: ${{ secrets.SCRAPINGBEE_API_KEY }}
+      SCRAPINGDOG_API_KEY: ${{ secrets.SCRAPINGDOG_API_KEY }}
+      # On a schedule there are no inputs: the run due this hour, every task, stored.
+      INPUT_PROVIDERS: ${{ inputs.providers }}
+      INPUT_RUN: ${{ inputs.run || 'auto' }}
+      INPUT_LIMIT: ${{ inputs.limit }}
+      INPUT_ALLOW_DRAFT: ${{ inputs.allow_draft }}
+      INPUT_STORE: ${{ github.event_name == 'schedule' || inputs.store }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync --locked
+      - name: Providers and keys
+        run: uv run serp-bench providers
+      - name: Run
+        run: |
+          args=(run --run "$INPUT_RUN")
+          if [ -n "$INPUT_PROVIDERS" ]; then args+=(--providers "$INPUT_PROVIDERS"); fi
+          if [ -n "$INPUT_LIMIT" ]; then args+=(--limit "$INPUT_LIMIT"); fi
+          if [ "$INPUT_ALLOW_DRAFT" = "true" ]; then args+=(--allow-draft); fi
+          uv run serp-bench "${args[@]}"
+      - name: Check the records
+        # The report must be recomputable from the file alone, before the file is kept.
+        run: |
+          find out/raw -name 'run-*.jsonl.gz' 2>/dev/null | sort | while IFS= read -r file; do
+            uv run serp-bench verify "$file" > /dev/null
+            echo "verified: $file"
+          done
+      - name: Store the records
+        id: store
+        if: env.INPUT_STORE == 'true'
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: scripts/store_run.sh out benchmark-data origin
+      - name: Publish the page
+        # Only when this run stored something new: an hour with no run due publishes nothing.
+        if: steps.store.outputs.stored == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref "$GITHUB_REF_NAME"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: records-${{ github.run_id }}
+          path: out/raw/
+          retention-days: 30
+          if-no-files-found: ignore

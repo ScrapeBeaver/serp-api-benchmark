@@ -1,0 +1,57 @@
+# An offline stand-in: no network, deterministic answers, a small share of every kind of
+# failure. It exists so the whole pipeline can be run and tested without a key.
+# It is not a real provider and never appears in results.
+schema_version: 1
+id: mock
+name: Mock
+status: shadow        # it runs, and it is never published
+homepage: https://example.org/serp-bench-mock
+docs_url: null
+
+product:
+  name: Offline mock
+  endpoint: "POST https://mock.invalid/search (never sent; answered in-process)"
+  mode: light
+  notes: Synthetic. See adapter.py.
+
+auth:
+  env: []
+
+capabilities:
+  mobile: true
+  city_location: false
+  pagination: true
+  raw_html: false
+  ai_overview: false
+
+billing:
+  - effective_from: 2026-01-01
+    checked_at: 2026-01-01
+    sources: [https://example.org/serp-bench-mock]
+    meter: {unit: request, shared_across_products: false}
+    request_cost: {base: 1, stacking: first_match, per_page: separate_request}
+    charges:
+      failed_request: {charged: false}
+      timeout: {charged: false}
+      empty_serp: {charged: true}
+    purchase:
+      model: subscription
+      pricing: plan_units
+      plans:
+        - {id: mock, name: Mock, price: 0, period: month, units: 1000000000}
+      on_limit: block
+    benchmark_account: {plan: mock}
+
+adapter:
+  version: "1"
+  base_url: https://mock.invalid
+  options:
+    seed: 0
+    latency_ms: [200, 1800]     # simulated latency of a successful answer
+    time_scale: 0.1             # the real wait is latency x time_scale
+    failure_shares:             # share of requests that end each way
+      timeout: 0.02
+      http_5xx: 0.03
+      http_429: 0.01
+      invalid_json: 0.01
+      empty_results: 0.03

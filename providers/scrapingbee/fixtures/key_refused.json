@@ -1,0 +1,24 @@
+{
+ "description": "HTTP 401: the key is invalid or the credits are used up. Our own account, so the request is set aside.",
+ "source": "Built from the documented request and response of the Google Search API (https://www.scrapingbee.com/documentation/google-api/). Illustrative values; not a recorded response. To be replaced by a recorded one after the first live call.",
+ "task": {
+  "query": "pizza new york",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 401,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "message": "Invalid api key"
+  }
+ },
+ "expect": {
+  "outcome": "void",
+  "void_reason": "auth_or_credits"
+ }
+}

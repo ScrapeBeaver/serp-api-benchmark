@@ -1,0 +1,154 @@
+# ScrapeBeaver. Facts as declared in its public documentation and pricing page.
+# The contract of this file is described in providers/README.md.
+schema_version: 1
+id: scrapebeaver
+name: ScrapeBeaver
+status: conformance   # called with a live key on 2026-11-12: see conformance.json
+homepage: https://scrapebeaver.com
+docs_url: https://scrapebeaver.com/docs
+
+product:
+  name: Google Search (light)
+  endpoint: "POST https://dev.scrapebeaver.com/v1/search/light"
+  mode: light
+  settings: {}          # defaults; the AI Overview that loads after the page is not requested.
+                        # `request_id` is never sent, so no stored answer can be replayed.
+  alternatives:
+    - name: Google Search Advanced
+      endpoint: "POST https://dev.scrapebeaver.com/v1/search"
+      why_not: "Announced, not released. It adds ads, shopping and further blocks to the same results."
+      source: https://scrapebeaver.com/docs/google-search
+  notes: >
+    Real-time Google results as JSON. `max_attempts` is left at its default, so the
+    provider's own retries are part of what is measured.
+
+terms:
+  benchmarking: allowed
+  permission: ScrapeBeaver runs this benchmark; its own service is measured with an ordinary key.
+
+auth:
+  env: [SCRAPEBEAVER_API_KEY]
+
+capabilities:
+  mobile: true
+  city_location: true   # `uule`
+  pagination: true      # `start`, one page per call
+  raw_html: true        # `format: html | both`
+  ai_overview: true
+  full_mode: false      # Google Search Advanced (POST /v1/search) is announced, not released
+
+billing:
+  - effective_from: 2026-11-11
+    checked_at: 2026-11-11
+    currency: USD
+    sources:
+      - https://scrapebeaver.com/pricing
+      - https://scrapebeaver.com/docs/billing
+      - https://scrapebeaver.com/docs/rest-api
+    reading_notes:
+      - "The pricing page is built from src/lib/plans.ts in the site repository: one data source for every plan."
+      - "The rule at the limit is the last line of each plan card: \"Extra calls at the next tier's rate, never blocked\"."
+      - "Paid plans are started through \"Contact us\"; the Free plan by signing up."
+
+    meter:
+      unit: request
+      unit_label: search
+      shared_across_products: false   # search is the only product on the balance
+
+    request_cost:
+      base: 1
+      rules: []         # device, a place below country level and the AI Overview are the same price
+      stacking: first_match
+      per_page: separate_request   # `start` gets one page per call; with `pages`, "each page counts as a search"
+      results_per_charge: unknown  # `num` goes up to 100; whether it changes the charge is not stated
+      free_parameters: [device, uule, ai_overview, format, time_range, safe]
+      undocumented: []
+
+    charges:
+      failed_request:
+        charged: false
+        how: "Only responses with organic_success: true are billed."
+        source: https://scrapebeaver.com/docs/billing
+      timeout:
+        charged: false
+        how: "A 502 (not completed after internal retries) and a 503 (no capacity) are not successful calls."
+        source: https://scrapebeaver.com/docs/billing
+      client_timeout: {charged: unknown}
+      client_error:
+        charged: false
+        how: "Only a response with organic_success: true is a successful call; a 4xx is not one."
+        source: https://scrapebeaver.com/docs/billing
+      cached_response:
+        charged: unknown
+        how: "A request repeated with the same request_id is answered from what is stored; the documentation says a lost response \"costs nothing to recover\"."
+        source: https://scrapebeaver.com/docs/rest-api
+      billed_statuses: n/a      # billing follows organic_success, not the HTTP status
+      empty_serp:
+        charged: unknown
+        how: "The documentation says the treatment of genuinely empty result pages is still to be decided."
+        source: https://scrapebeaver.com/docs/billing
+
+    cache:
+      on_by_default: false      # a stored answer is returned only for a repeated request_id
+      bypass: "do not send request_id"
+      source: https://scrapebeaver.com/docs/rest-api
+
+    usage_reporting:
+      response_field: organic_success       # true: one search charged; false: nothing
+      account_endpoint: "GET https://dev.scrapebeaver.com/v1/usage"
+      notes: "GET /v1/usage/export lists every search; GET /v1/limits gives the limits and what is in use. None of them is a search."
+
+    purchase:
+      model: subscription
+      pricing: plan_units
+      plans:
+        - id: free
+          name: Free
+          price: 0
+          period: month
+          units: 100
+          limits: {concurrency: 2, requests_per_minute: 10}
+          on_limit: block
+        - id: starter
+          name: Starter
+          price: 25
+          period: month
+          units: 25000
+          limits: {concurrency: 5, requests_per_minute: 120}
+        - id: growth
+          name: Growth
+          price: 80
+          period: month
+          units: 100000
+          limits: {concurrency: 15, requests_per_minute: 300}
+        - id: business
+          name: Business
+          price: 600
+          period: month
+          units: 1000000
+          limits: {concurrency: 30, requests_per_minute: 600}
+        - id: scale_1_5m
+          name: Scale 1.5M
+          price: 900
+          period: month
+          units: 1500000
+          limits: {concurrency: 60, requests_per_minute: 1200}
+        - id: scale_5m
+          name: Scale 5M
+          price: 2250
+          period: month
+          units: 5000000
+          limits: {concurrency: 120, requests_per_minute: 2400}
+      on_limit: overage         # "Extra calls at the next tier's rate, never blocked" (pricing page)
+      overage: {rule: next_plan_rate}
+      beyond_published: "Above 5 million searches a month: volume discounts by agreement."
+      minimum: {amount: 25, period: month}
+      free: {units: 100, period: month}
+
+    benchmark_account:
+      plan: unknown     # set when the benchmark's key is provisioned
+
+adapter:
+  version: "1"
+  base_url: https://dev.scrapebeaver.com
+  base_url_env: SCRAPEBEAVER_BASE_URL

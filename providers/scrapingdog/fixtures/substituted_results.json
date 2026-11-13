@@ -1,0 +1,53 @@
+{
+ "description": "Google found nothing for the query as asked and shows results for something close; `organic_results_state` says so.",
+ "source": "Built from the documented request and response of the Google Search API (https://www.scrapingdog.com/documentation/google-search-api/). Illustrative values; not a recorded response. To be replaced by a recorded one after the first live call.",
+ "task": {
+  "query": "\"zqxjvkpw qhzvnnrt wxkqjzpf\"",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "search_information": {
+    "organic_results_state": "Empty showing fixed spelling results",
+    "url": "https://www.google.com/search?q=%22zqxjvkpw+qhzvnnrt+wxkqjzpf%22&gl=us&hl=en"
+   },
+   "organic_results": [
+    {
+     "rank": 1,
+     "title": "Result 1",
+     "link": "https://www.example.com/1",
+     "displayed_link": "www.example.com",
+     "snippet": "",
+     "source": "Result 1"
+    },
+    {
+     "rank": 2,
+     "title": "Result 2",
+     "link": "https://www.example.com/2",
+     "displayed_link": "www.example.com",
+     "snippet": "",
+     "source": "Result 2"
+    },
+    {
+     "rank": 3,
+     "title": "Result 3",
+     "link": "https://www.example.com/3",
+     "displayed_link": "www.example.com",
+     "snippet": "",
+     "source": "Result 3"
+    }
+   ]
+  }
+ },
+ "expect": {
+  "outcome": "delivered",
+  "organic_count": 3
+ }
+}

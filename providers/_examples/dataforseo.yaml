@@ -1,0 +1,238 @@
+# Worked example: a prepaid balance in dollars with one flat price per request and no plans
+# (`meter.unit: usd`, `pricing: pay_as_you_go`). It also shows billing per page of ten
+# results, a x5 multiplier for search operators, surcharges that are credited back when the
+# feature is not delivered, and cheaper queued modes that are not the benchmarked product.
+#
+# Every fact comes from research/pricing/group-a.md (section 2), read on 2026-11-12.
+# Not checked against the live service.
+
+schema_version: 1
+id: dataforseo
+name: DataForSEO
+status: draft
+homepage: https://dataforseo.com
+docs_url: https://docs.dataforseo.com/v3/serp/google/organic/live/advanced/
+
+product:
+  name: Google Organic SERP API, Live mode
+  endpoint: "POST /v3/serp/google/organic/live/advanced"
+  mode: light                       # the benchmarked mode: the cheapest synchronous one
+  settings: {}                      # defaults: depth 10, one page of up to 10 organic results
+  alternatives:
+    - name: Standard queue (priority 1)
+      endpoint: "POST + GET, see https://docs.dataforseo.com/v3/serp/google/organic/task_post/"
+      why_not: >
+        Asynchronous: about 5 minutes on average, with a 45-minute target. It is the cheapest
+        mode ($0.0006 per page of results) and a different product from a real-time search.
+      source: https://dataforseo.com/pricing/serp/google-organic-serp-api
+    - name: Priority queue (priority 2)
+      endpoint: "POST + GET, see https://docs.dataforseo.com/v3/serp/google/organic/task_post/"
+      why_not: "Asynchronous: up to 1 minute. $0.0012 per page of results."
+      source: https://dataforseo.com/pricing/serp/google-organic-serp-api
+    - name: Google AI Mode SERP API
+      why_not: >
+        A separate endpoint for Google's AI Mode at twice the organic price ($0.004 per
+        page of results in Live mode).
+      source: https://dataforseo.com/pricing/serp/google-ai-mode-serp-api
+  notes: >
+    Live mode is one synchronous POST that answers in up to about 6 seconds. The regular,
+    advanced and HTML result types cost the same.
+
+terms:
+  url: https://dataforseo.com/terms-of-service    # read for refunds and the purchase model only
+  benchmarking: unknown             # a clause about benchmarking has not been looked for
+
+auth:
+  env: []
+
+capabilities:
+  mobile: true                      # `device`, included in the base price
+  city_location: true               # `location`; `location_coordinate` takes GPS coordinates
+  pagination: true                  # `depth` above 10, or `max_crawl_pages`, in the same request
+  raw_html: true                    # the HTML result type
+  ai_overview: true                 # `load_async_ai_overview`
+
+billing:
+  - effective_from: 2026-11-12
+    checked_at: 2026-11-12
+    currency: USD
+    sources:
+      - https://dataforseo.com/pricing
+      - https://dataforseo.com/pricing/serp/google-organic-serp-api
+      - https://dataforseo.com/pricing/serp/google-ai-mode-serp-api
+      - https://dataforseo.com/help-center/serp-api-cost-explained
+      - https://dataforseo.com/help-center/what-does-the-40102-error-mean
+      - https://dataforseo.com/help-center/what-does-the-40101-error-mean
+      - https://dataforseo.com/help-center/common-first-errors-with-dataforseo-api-and-how-to-fix-them
+      - https://dataforseo.com/terms-of-service
+      - https://docs.dataforseo.com/v3/serp/google/organic/live/advanced/
+      - https://docs.dataforseo.com/v3/serp/google/organic/task_post/
+      - https://docs.dataforseo.com/v3/appendix/errors/
+      - https://docs.dataforseo.com/v3/appendix/user_data/
+    prices_exclude_tax: unknown
+
+    meter:
+      unit: usd                     # each request takes its price in dollars off the balance
+      unit_label: USD
+      # "Add funds to your account and pay for API services as you use them. Each API has
+      # its own rates and billing units."
+      shared_across_products: true
+
+    request_cost:
+      # "You are billed per SERP, where one SERP is a page of up to 10 organic results."
+      # The formula DataForSEO documents is: cost = B x K x (D / 10) + C, where B is the
+      # price of the mode, K is 5 with a search operator, D is the depth rounded up to the
+      # next ten, and C is one more B for each additive option.
+      base: 0.002                   # Live mode, one page of up to 10 results
+      rules:
+        - when: {page: "2+"}
+          multiply: 2
+          source: https://dataforseo.com/pricing/serp/google-organic-serp-api
+          notes: >
+            Further results come in the same request through `depth`: "+1 base price for
+            each additional 10 results", and depth is "always rounded up to the next ten".
+            Page 2 is depth 20, two charges; depth 30 is three, and so on. With
+            `max_crawl_pages`, "you will be charged for each page crawled". Results that
+            do not exist are refunded.
+        - when: {query_operators: true}
+          multiply: 5
+          source: https://dataforseo.com/help-center/serp-api-cost-explained
+          notes: >
+            A keyword containing site:, inurl:, intitle:, intext:, filetype:, link:,
+            define:, id:, info:, inanchor:, allinurl:, allintitle:, allintext: or
+            allinanchor:. `cache:` is not allowed.
+        - when: {ai_overview: true}
+          add: 0.002
+          applies: if_returned
+          source: https://docs.dataforseo.com/v3/serp/google/organic/live/advanced/
+          notes: >
+            `load_async_ai_overview`: one more base price. When there is no AI Overview,
+            "all extra charges will be returned to your account balance".
+        - when: {option: standard_queue}
+          set: 0.0006
+          source: https://dataforseo.com/pricing/serp/google-organic-serp-api
+          notes: "Asynchronous. Charged when the task is set; retrieving the results is free."
+        - when: {option: priority_queue}
+          set: 0.0012
+          source: https://dataforseo.com/pricing/serp/google-organic-serp-api
+          notes: "Asynchronous, twice the standard queue."
+        - when: {option: calculate_rectangles}
+          add: 0.002
+          source: https://dataforseo.com/help-center/serp-api-cost-explained
+          notes: >
+            Pixel rankings: one more base price of the mode, added once and not multiplied
+            by the operator factor.
+        - when: {option: people_also_ask_click_depth}
+          add: 0.00015
+          applies: if_returned
+          source: https://docs.dataforseo.com/v3/serp/google/organic/live/advanced/
+          notes: '"$0.00015 extra for each click"; clicks that were not performed are returned to the balance.'
+      stacking: multiply_then_add   # the documented formula above
+      per_page: included            # several pages come in one request
+      results_per_charge: 10
+      free_parameters:              # "are included in the base price"
+        - keyword
+        - location
+        - language
+        - device
+        - search engine domain
+        - result type (regular, advanced or HTML)
+      undocumented: []
+
+    charges:
+      failed_request:
+        charged: false
+        how: >-
+          Error 40101, "Internal SE Server Error": after automatic retries "the cost of the
+          request will be fully refunded to your account". The refund does not show in the
+          task's own `cost` field.
+        source: https://dataforseo.com/help-center/what-does-the-40101-error-mean
+      timeout:
+        charged: unknown
+        how: "Error 50401: the task was not processed within 120 seconds. The charge for it is not stated."
+        source: https://docs.dataforseo.com/v3/appendix/errors/
+      empty_serp:
+        charged: true
+        how: >-
+          Error 40102, "No Search Results": "the request is billable even though no SERP
+          items were returned."
+        source: https://dataforseo.com/help-center/what-does-the-40102-error-mean
+      client_timeout: {charged: unknown}
+      client_error:
+        charged: unknown
+        how: >-
+          Whether a bad request is charged is not stated; the terms say only that
+          "DataForSEO will not issue refunds for tasks affected by user-side errors".
+        source: https://dataforseo.com/terms-of-service
+      cached_response: {charged: unknown}
+      billed_statuses: unknown      # billing follows DataForSEO's own status codes, above
+      notes: >
+        "Your account will be charged for each request." Partial results (error 40106):
+        "You have not been charged for the pages that were not returned." The `user_data`
+        and errors endpoints are free.
+
+    cache:
+      on_by_default: unknown        # not stated
+
+    usage_reporting:
+      response_header: null
+      response_field: cost          # "total tasks cost, USD"; each task also has its own `cost`
+      account_endpoint: "GET https://api.dataforseo.com/v3/appendix/user_data"
+      notes: >
+        Free of charge. `money.total`, `money.balance`, `money.statistics` (spending by day,
+        by minute and by function), `money.limits`, `rates.limits`, `rates.statistics` and
+        `price` (per function, without paid extra parameters).
+
+    purchase:
+      model: pay_as_you_go          # "no subscriptions or recurring fees"
+      pricing: pay_as_you_go
+      tiers: []                     # no volume or deposit tiers are stated
+      minimum_topup: 50             # "The minimum account top-up is $50."
+      unused_units: never_expire    # "Funds added to your DataForSEO account do not expire."
+      free: {units: 1, period: once, notes: "\"$1 trial credit available to new accounts\", and a free Sandbox with sample responses."}
+      limits:
+        requests_per_minute: 10000
+        notes: >
+          "You can send up to 10000 API calls per minute, each Live SERP API call can
+          contain only one task." A queued POST call may hold up to 100 tasks. For the cap
+          on simultaneous requests see `conflicts`.
+      beyond_published: >
+        The same price at every volume. "If your project involves high request volumes ...
+        contact our support team".
+      refunds: >
+        "30-day no-question refund policy applicable only to first-time purchases of API
+        credits."
+
+    conflicts:
+      - topic: Whether there are subscriptions
+        statements:
+          - text: "DataForSEO uses a pay-as-you-go pricing model with no subscriptions or recurring fees."
+            source: https://dataforseo.com/pricing
+          - text: "The Service is made available on a pay-as-you-go and/or on-demand subscription basis"
+            source: https://dataforseo.com/terms-of-service
+        used: "The pricing page: no subscription is offered there."
+      - topic: Which APIs the limit of 30 simultaneous requests applies to
+        statements:
+          - text: 'Error 40209, "Too many simultaneous queries": simultaneous requests per user are limited to 30.'
+            source: https://docs.dataforseo.com/v3/appendix/errors/
+          - text: "The limit of 30 simultaneous requests applies to specific APIs; DataForSEO Labs, Backlinks and AI Optimization are listed."
+            source: https://dataforseo.com/help-center/common-first-errors-with-dataforseo-api-and-how-to-fix-them
+        used: >
+          Neither: no concurrency limit is entered for the SERP API until it has been
+          measured.
+
+    benchmark_account:
+      plan: n/a                     # there are no plans
+    notes: >
+      Not expressed by a field. (1) At a zero balance requests are refused: errors 40200
+      "Payment required" and 40210 "Insufficient funds" (HTTP 402). There is no overage and
+      no credit line; automatic top-ups can be switched on. (2) Daily spending limits can be
+      set for the account, an API or an endpoint (error 40203 when one is reached).
+      (3) Cards, PayPal and Amazon Pay; bank wire and ACH for payments of $5,000 or more.
+      (4) The maximum depth is 200 on the Live documentation page and 700 on the queued
+      one. (5) `calculate_rectangles` costs two base prices on Google News and Search by
+      Image. (6) The surcharge for People Also Ask clicks is per click, so the rule above
+      is the price of one click.
+
+adapter:
+  version: "1"

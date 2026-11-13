@@ -1,0 +1,18 @@
+{
+  "description": "A search that could not be completed after the provider's internal retries: HTTP 502 with the full envelope.",
+  "source": "Built from the documented body of a failed search (https://scrapebeaver.com/docs/errors). Illustrative values; not a recorded response.",
+  "task": {"query": "coffee shops london", "country": "GB", "locale": "en-GB", "device": "desktop", "page": 1},
+  "response": {
+    "status": 502,
+    "headers": {"content-type": "application/json"},
+    "body": {
+      "search_metadata": {"id": "4e06aaaa-0000-4000-8000-000000000002", "status": "Failed", "verdict": "captcha", "total_time_taken": 6.41},
+      "search_parameters": {"engine": "google", "q": "coffee shops london", "gl": "gb", "hl": "en-GB", "start": 0},
+      "organic_results": [],
+      "organic_success": false,
+      "pagination": {"current": 1},
+      "error": "captcha"
+    }
+  },
+  "expect": {"outcome": "http_5xx", "billed_units": 0.0}
+}

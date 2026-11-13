@@ -1,0 +1,203 @@
+# provider.yaml: what the provider DECLARES. Copy this folder, rename it to the provider's
+# id, and replace every value. The full description is in providers/README.md; worked
+# examples of every pricing model are in providers/_examples/.
+#
+# Three rules:
+#   1. Write what the documentation and the pricing page say, with the URL. What a run was
+#      actually charged is measured and lives in records, never here.
+#   2. A fact is a value, `unknown` (not documented; to be measured) or `n/a`. Never guess.
+#   3. Do not edit a billing entry after it has been in force: append a new one.
+#
+# `serp-bench schema` prints the JSON Schema of this file; unknown keys are errors.
+# `serp-bench curve --file <this file>` prints the price it leads to, by monthly volume.
+
+schema_version: 1
+id: example                       # lower case; must equal the folder name
+name: Example
+status: draft                     # draft | conformance | shadow | published (see providers/README.md, "Lifecycle")
+homepage: https://example.com
+docs_url: https://example.com/docs
+
+product:                          # exactly what is benchmarked
+  name: Google Search API (Light)
+  endpoint: "GET https://api.example.com/google"
+  mode: light                     # light | full. The provider's cheapest synchronous Google mode is "light".
+  settings: {advanced: false, cache: false}   # every non-default parameter the adapter sends
+  alternatives:                   # other endpoints of this provider that return Google results
+    - name: Universal Scraper with a Google URL
+      endpoint: "GET https://api.example.com/scrape"
+      why_not: "Dearer (25 credits) and returns HTML, not parsed results."
+      source: https://example.com/pricing#credits
+  notes: Why this endpoint and these settings.
+
+terms:                            # what the terms of service say about benchmarking the service
+  url: https://example.com/terms
+  checked_at: 2026-01-01
+  benchmarking: not_mentioned     # allowed | not_mentioned | prohibited | unknown
+  quote: null                     # the clause in the provider's words, when there is one
+  permission: null                # written permission that lifts a prohibition: who and when.
+                                  # `prohibited` without it keeps the provider in `draft`.
+
+auth:
+  env: [EXAMPLE_API_KEY]          # NAMES of environment variables. Never a value.
+
+capabilities:                     # true | false | unknown
+  mobile: true                    # a phone results page can be requested
+  city_location: unknown          # a place below country level can be requested
+  pagination: true                # page 2 and later can be requested
+  raw_html: false                 # the page itself can be returned next to the JSON
+  ai_overview: false              # the AI Overview is returned
+  full_mode: true                 # a dearer mode that returns every block of the page exists
+
+billing:                          # a price history, oldest first; an entry dated in the future is an announced change
+  - effective_from: 2026-01-01    # the first day this entry applies
+    checked_at: 2026-01-01        # the day the sources were read
+    currency: USD
+    sources:                      # at least one URL; where the numbers below come from
+      - https://example.com/pricing
+      - https://example.com/docs/credits
+    sources_need_browser:         # sources whose prices are drawn by a script: read them in a browser
+      - https://example.com/pricing
+    reading_notes:                # how to read the sources next time, for whoever updates the prices
+      - "The pricing page opens on annual prices: switch the toggle to Monthly."
+      - "The Growth plan has a slider with four sizes; each is a plan below."
+      - "Credits per request are in the docs, not on the pricing page."
+    prices_exclude_tax: unknown   # true | false | unknown
+
+    meter:                        # what the provider counts
+      unit: credit                # request | credit | usd
+      unit_label: API credit      # the provider's own word for it
+      shared_across_products: true    # true | false | unknown: one balance for every product
+
+    request_cost:                 # units charged for ONE request, by its shape
+      base: 5                     # the benchmarked mode, desktop, page 1, country-level. A number or `unknown`.
+      derived: null               # how `base` was worked out when the provider does not state it
+      rules:                      # each needs exactly one of set / add / multiply
+        - when: {mode: full}      # keys: mode, device, page (1 | "2+"), location (country | city),
+          set: 10                 #       query_operators, ai_overview, option
+          source: https://example.com/pricing#credits
+        - when: {device: mobile}
+          multiply: 2
+        - when: {query_operators: true}
+          multiply: 5
+        - when: {ai_overview: true}
+          add: 5
+          applies: if_returned    # always | if_returned | unknown. `if_returned`: charged only when the
+                                  # feature is in the response; the declared price is then an upper bound.
+        - when: {option: deep_scrape}   # a provider option the benchmark never sends: documentation only
+          add: 5
+          notes: Listed so the table of multipliers is complete.
+      stacking: multiply_then_add # how several matching rules combine:
+                                  #   first_match | max | sum | product | multiply_then_add | unknown
+      per_page: separate_request  # separate_request | included (one request, several pages) | unknown
+      results_per_charge: 10      # organic results covered by one charge; `unknown` or null when not stated
+      free_parameters: [country, language, html]    # documented as free of surcharge
+      undocumented: [location]    # shape keys the documentation does not price
+
+    charges:                      # does the provider say it charges for these? true | false | unknown | n/a
+      failed_request: {charged: false, how: "credited back automatically", source: "https://example.com/faq"}
+      timeout: {charged: unknown}             # the provider's own deadline passed
+      empty_serp: {charged: unknown}          # Google has no results for the query
+      client_timeout: {charged: unknown}      # the caller hung up first
+      client_error: {charged: unknown}        # a bad request (HTTP 4xx)
+      cached_response: {charged: n/a}         # served from the provider's cache
+      billed_statuses: [200, 404]             # HTTP statuses the provider says it bills; unknown | n/a
+      notes: null
+
+    cache:                        # may the provider answer from a cache instead of asking Google?
+      on_by_default: false        # true | false | unknown | n/a
+      ttl_seconds: null
+      bypass: null                # the parameter that switches it off; the adapter must send it
+      source: null
+
+    usage_reporting:              # where the provider reports what it charged (read by the benchmark)
+      response_header: X-Credits-Charged
+      response_field: null
+      account_endpoint: "GET https://api.example.com/account"
+      notes: null
+
+    purchase:                     # how units are bought. `pricing` selects the kind:
+      model: subscription         #   subscription | prepaid_packs | pay_as_you_go (how it is sold)
+      pricing: plan_units         #   plan_units | rate_card | pay_as_you_go (how the price is computed)
+      plans:                      # EVERY published plan, including the ones behind a slider or a toggle
+        - id: lite
+          name: Lite
+          price: 40               # one month, paid monthly. Never the annual figure a page may show first.
+          annual_price_per_month: 33    # documentation only
+          period: month           # month | one_time (a pack bought once)
+          units: 200000           # in meter units
+          limits: {concurrency: 5, requests_per_second: null, requests_per_minute: null,
+                   requests_per_hour: null, hourly_share_of_plan: null}
+          unused_units: expire    # expire | roll_over | never_expire | {expire_after_days: 180} | unknown
+          on_limit: null          # overrides the purchase-level value for this plan
+          overage_unit_price: null    # currency per unit beyond this plan, where each plan has its own
+          notes: null
+        - id: standard
+          name: Standard
+          price: 90
+          period: month
+          units: 1000000
+          unused_units: roll_over
+      on_limit: block             # block | overage | auto_renew | auto_upgrade | unknown
+      overage: null               # {unit_price: 0.0002} | {rule: next_plan_rate} | {rule: plan_rate} | null
+      minimum: {amount: 40, period: month}
+      free: {units: 100, period: once, notes: null}     # once | month
+      addons:                     # paid options that change the price of a plan, not of a request
+        - {name: "Priority speed", price_multiply: 2, notes: "Account-level; prices are quoted without it."}
+      beyond_published: "Custom plans through sales."   # what the provider says above its largest plan
+      refunds: "No refunds once the service has been used."
+
+    # The two other kinds of `purchase`, for reference:
+    #
+    #   purchase:                         # a plan is a budget; each request shape has its own
+    #     model: subscription             # price, and that price depends on the plan
+    #     pricing: rate_card              # (needs meter.unit: request)
+    #     shapes:
+    #       standard:   {when: {option: proxy_pool_standard}}
+    #       premium:    {when: {option: proxy_pool_premium}}
+    #       premium_js: {when: {option: proxy_pool_premium, mode: full}}
+    #     benchmarked_shape: premium
+    #     plans:
+    #       - {id: p19, name: "$19", price: 19, period: month,
+    #          rates_per_1k: {standard: 0.50, premium: 1.00, premium_js: 1.50}}
+    #     on_limit: overage               # with {rule: plan_rate}: spending beyond the plan
+    #     overage: {rule: plan_rate}      # continues at the plan's own rates
+    #
+    #   purchase:                         # a balance in currency (needs meter.unit: usd;
+    #     model: pay_as_you_go            # request_cost.base is then the price of one request)
+    #     pricing: pay_as_you_go
+    #     tiers:                          # more money buys a lower rate; `basis` says what the money is
+    #       - {from_amount: 100, basis: deposit, rate_multiplier: 0.5}            # one payment into the balance
+    #       - {from_amount: 49, basis: monthly_commitment, rate_multiplier: 0.9}  # paid every month, used or not
+    #       - {from_amount: 500, basis: monthly_usage, unit_price: 0.0007}        # a month's spend reaches it
+    #     minimum_topup: 10
+    #     unused_units: never_expire
+
+    conflicts:                    # two statements by the provider that cannot both be true
+      - topic: Size of the free allowance
+        statements:
+          - {text: "100 free credits", source: "https://example.com/pricing"}
+          - {text: "200 requests a month on the free plan", source: "https://example.com/docs"}
+        used: "The pricing page: it is the newer of the two."
+
+    changes: []                   # required on every entry AFTER the first: what differs from the one before
+    #  - what: Lite plan, monthly price
+    #    was: "$40"
+    #    now: "$45"
+    #    source: https://example.com/pricing      # the page that shows the new value
+    #    quote: "Lite: $45 / month"                # the page's own words, short
+
+    review:                       # the person who compared this entry with its sources and confirmed it
+      confirmed_by: a maintainer  # a name or a handle; written only after they said yes
+      confirmed_at: 2026-01-01
+
+    benchmark_account:
+      plan: lite                  # the plan the benchmark's own key is on (a plan id, or unknown)
+      notes: null
+    notes: null
+
+adapter:                          # technical settings of adapter.py, not facts about the provider
+  version: "1"                    # bump when the adapter's reading of responses changes
+  base_url: https://api.example.com
+  base_url_env: null              # an environment variable that may override base_url
+  options: {}                     # anything adapter.py wants to read from self.options

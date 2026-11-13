@@ -1,0 +1,34 @@
+# SYNTHETIC. Not a real provider: plans are budgets and each request shape has its own
+# price on each plan.
+schema_version: 1
+id: example_rates
+name: Example Rates
+product:
+  name: Scraping API, Google target
+  endpoint: "POST https://api.rates.example.com/scrape"
+  mode: light
+  settings: {target: google_search, parse: true}
+auth:
+  env: [EXAMPLE_RATES_TOKEN]
+billing:
+  - effective_from: 2026-01-01
+    checked_at: 2026-01-01
+    sources: [https://rates.example.com/billing]
+    meter: {unit: request, shared_across_products: true}
+    request_cost: {base: 1, stacking: first_match, per_page: separate_request}
+    charges:
+      failed_request: {charged: false, how: "only successful requests are charged"}
+    purchase:
+      model: subscription
+      pricing: rate_card
+      shapes:
+        standard: {when: {option: proxy_pool_standard}}
+        premium: {when: {option: proxy_pool_premium}}
+        premium_js: {when: {option: proxy_pool_premium, mode: full}}
+      benchmarked_shape: premium
+      plans:
+        - {id: p19, name: "$19", price: 19, period: month, rates_per_1k: {standard: 0.50, premium: 1.00, premium_js: 1.50}}
+        - {id: p99, name: "$99", price: 99, period: month, rates_per_1k: {standard: 0.30, premium: 0.70, premium_js: 1.10}}
+        - {id: p999, name: "$999", price: 999, period: month, rates_per_1k: {standard: 0.16, premium: 0.55, premium_js: 0.90}}
+      on_limit: unknown
+    benchmark_account: {plan: p19}

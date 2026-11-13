@@ -1,0 +1,32 @@
+{
+ "description": "Google has no results: status `done` with an empty `organic` list, as the documentation describes.",
+ "source": "Built from the documented request and response of /v1/search (https://help.decodo.com/docs/web-data-api-search-parameters). Illustrative values; not a recorded response. To be replaced by a recorded one after the first live call.",
+ "task": {
+  "query": "\"zqxjvkpw qhzvnnrt wxkqjzpf\"",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "status": "done",
+   "organic": [],
+   "top_stories": [],
+   "search_parameters": {
+    "query": "\"zqxjvkpw qhzvnnrt wxkqjzpf\"",
+    "gl": "US",
+    "locale": "en",
+    "page": 1
+   }
+  }
+ },
+ "expect": {
+  "outcome": "empty_results",
+  "organic_count": 0
+ }
+}

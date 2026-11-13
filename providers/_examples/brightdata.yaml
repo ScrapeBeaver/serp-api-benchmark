@@ -1,0 +1,216 @@
+# Bright Data: pay as you go from a prepaid wallet, next to monthly plans that include
+# requests and bill further ones at a rate of their own. A contract has one `purchase`, so
+# the pay-as-you-go rate is written as a block of 1,000 requests beside the three plans, and
+# the engine picks whichever is cheaper at each volume.
+# Source of every figure: research/pricing/group-b.md, read on 2026-11-12.
+
+schema_version: 1
+id: brightdata
+name: Bright Data
+status: draft
+homepage: https://brightdata.com
+docs_url: https://docs.brightdata.com/api-reference/rest-api/serp/serp-api
+
+product:
+  name: SERP API (synchronous request)
+  endpoint: "POST https://api.brightdata.com/request"
+  mode: light
+  settings: {}
+  alternatives:
+    - name: SERP API, asynchronous mode
+      why_not: "Not synchronous. Same unit: sending the request is billed, collecting the result is free."
+      source: https://docs.brightdata.com/products/serp-api/pricing-and-billing
+    - name: Fast SERP
+      why_not: "Access and its request rate are arranged through an account manager, and no price is published."
+      source: https://docs.brightdata.com/products/serp-api/fast-serp/quickstart
+    - name: Google SERP - 100 Results (Scrapers endpoint, `start_page` / `end_page`)
+      why_not: >
+        A different product: one call returns up to 10 pages and is one billable request. The
+        benchmark asks for one page of results, which costs the same single request here.
+      source: https://docs.brightdata.com/products/serp-api/get-top-100-google-results
+  notes: >
+    One synchronous request to a SERP zone is one billable request, with parsed JSON,
+    Markdown or raw HTML output at the same price. The same product is also reachable as a
+    native proxy (`brd.superproxy.io`). The zone must have no custom headers or cookies:
+    with them every request is billed, failed ones included. A lighter output
+    (`parsed_light`) exists; a price difference is not stated.
+
+terms:
+  benchmarking: unknown           # the terms of service were not read
+
+auth:
+  env: []
+
+capabilities:
+  mobile: true                    # desktop and mobile user agents are included in the price
+  city_location: true             # city / ZIP geotargeting is included in the price
+  pagination: true                # `start=`, one page per request
+  raw_html: true                  # raw HTML is one of the output formats, at the same price
+  ai_overview: true               # `brd_ai_overview=2`
+
+billing:
+  - effective_from: 2026-11-12
+    checked_at: 2026-11-12
+    currency: USD
+    sources:
+      - https://brightdata.com/pricing/serp
+      - https://docs.brightdata.com/products/serp-api/pricing-and-billing
+      - https://docs.brightdata.com/general/account/billing-and-pricing/billing
+      - https://docs.brightdata.com/general/account/billing-and-pricing/free-tier
+      - https://docs.brightdata.com/general/usage-monitoring/serp-rate-limit
+      - https://docs.brightdata.com/products/serp-api/debugging
+      - https://docs.brightdata.com/products/serp-api/configuration
+      - https://docs.brightdata.com/products/serp-api/features
+      - https://docs.brightdata.com/api-reference/account-management-api/Get_total_balance_through_API
+    sources_need_browser:
+      - https://brightdata.com/pricing/serp     # the Scale plans sit behind a slider; only the first shows until it is moved
+    prices_exclude_tax: unknown
+
+    meter:
+      unit: request
+      unit_label: request
+      shared_across_products: true    # one prepaid wallet in USD for every Bright Data product
+
+    request_cost:
+      base: 1                     # "Executing each API is counted as a request"
+      rules: []                   # no surcharge is documented for any request shape
+      per_page: separate_request  # each page is a request of its own (`start=`)
+      results_per_charge: null    # not stated for this endpoint
+      free_parameters:            # documented as included in the price of a request
+        - parsed JSON, Markdown or raw HTML output
+        - city / ZIP geotargeting
+        - desktop and mobile user agents
+        - proxy management, unlocking and CAPTCHA solving
+        - automatic retries
+        - bandwidth
+      # No surcharge is stated for the AI Overview parameter; one request is one billable
+      # request, so it is priced as the base. Search operators are not mentioned at all.
+      undocumented: [query_operators]
+
+    charges:
+      failed_request:
+        charged: false
+        how: "Failed/errored requests are not billed; retries made in the background are not charged."
+        source: https://docs.brightdata.com/products/serp-api/pricing-and-billing
+      timeout:
+        charged: unknown
+        how: "Not named separately from failed and errored requests."
+      empty_serp: {charged: unknown}
+      client_timeout: {charged: unknown}
+      client_error:
+        charged: unknown
+        how: >
+          Only the errors of the debugging catalog (rate limit, verification) are covered:
+          "None of the errors in this catalog are billed".
+        source: https://docs.brightdata.com/products/serp-api/debugging
+      cached_response: {charged: unknown}
+      billed_statuses: unknown
+      notes: >
+        Billing is per 1,000 successful requests. Two settings change that. When custom
+        headers or cookies are selected for the zone, "all requests are billed, including
+        failed or errored requests". A response for a different query than the one asked
+        (`unexpected_q`) is not billed by default; with `return_mismatch` enabled it is
+        returned as successful and billed. An unjustified payment dispute carries a $150
+        handling fee.
+
+    cache:
+      on_by_default: unknown      # not stated
+
+    usage_reporting:
+      response_header: x-brd-debug    # contains `billed=true|false`
+      account_endpoint: "GET https://api.brightdata.com/customer/balance"
+      notes: >
+        The balance endpoint returns `balance`, `credit`, `prepayment` and `pending_costs`.
+        `GET /trials/free_tier` returns the free credits included, used and left;
+        `GET /pricing_plans` returns the current plan and its price per 1,000 requests
+        (`req`); a cost breakdown per day and zone can be exported. The request header
+        `x-brd-get-rate-limit` returns the rate limit in force.
+
+    purchase:
+      # Sold two ways, both published on the same page: a wallet charged per request with no
+      # plan (`pay_as_you_go`), and three Scale plans with their own price for requests
+      # beyond the plan. The cheaper of the two is quoted at each volume.
+      model: subscription
+      pricing: plan_units
+      plans:
+        - id: free
+          name: Free Tier
+          price: 0
+          period: month
+          units: 5000             # "5K requests"; 1 free credit = 1 SERP request
+          limits: {requests_per_minute: 1000}     # while the account has no funds
+          unused_units: expire    # "Unused free credits do not roll over"
+          on_limit: block         # "a hard stop is applied and no charges will occur"
+          notes: >
+            No credit card. With funds in the wallet, usage continues at the pay-as-you-go
+            rate instead of stopping. Not available to accounts on a Scale plan.
+        - id: scale_499
+          name: Scale $499
+          price: 499
+          period: month
+          units: 380000
+          overage_unit_price: 0.0013      # "$1.3 / 1K additional requests"
+          unused_units: unknown           # rollover of included requests is not stated
+          limits: {notes: "\"Unlimited concurrency\" on the pricing page; see `conflicts`."}
+        - id: scale_999
+          name: Scale $999
+          price: 999
+          period: month
+          units: 900000
+          overage_unit_price: 0.0011      # "$1.1 / 1K additional requests"
+          unused_units: unknown
+          limits: {notes: "\"Unlimited concurrency\" on the pricing page; see `conflicts`."}
+        - id: scale_1999
+          name: Scale $1,999
+          price: 1999
+          period: month
+          units: 2000000
+          overage_unit_price: 0.001       # "$1 / 1K additional requests"
+          unused_units: unknown
+          limits: {notes: "\"Unlimited concurrency\" on the pricing page; see `conflicts`."}
+      on_limit: overage           # Scale: further requests are billed at the plan's own rate
+      pay_as_you_go:
+        unit_price: 0.0015        # "$1.5 / 1K requests"
+        name: Pay as you go
+        unused_units: unknown     # whether a wallet balance expires is not stated
+        limits: {notes: "\"Unlimited concurrency\" on the pricing page; see `conflicts`."}
+        source: https://brightdata.com/pricing/serp
+        notes: >
+          "There is no minimum commitment". The smallest top-up is not stated. A monthly
+          spend limit can be set.
+      free:
+        units: 5000
+        period: month
+        notes: >
+          5,000 free credits a month, renewed on the 1st, from a pool shared with Web
+          Unlocker API, Web Scraper API, Scraper Studio, Browser API and the MCP server. Not
+          for accounts on a subscription or on custom pay-as-you-go pricing. Separately, the
+          first deposit is matched dollar for dollar up to $500; the matched credit must be
+          used within 90 days and needs at least $5 of usage a month.
+      beyond_published: >
+        Enterprise: custom, "Talk to sales" (volume discounts, account manager, premium SLA,
+        priority support, SSO). The largest Scale plan publishes a rate for further requests,
+        so volumes above it still have a published price.
+
+    conflicts:
+      - topic: Concurrency and rate limits
+        statements:
+          - {text: "There is no limit to the number of concurrent requests", source: "https://brightdata.com/pricing/serp"}
+          - {text: "Starting January 2026, Bright Data is applying a rate limit to its SERP services", source: "https://docs.brightdata.com/general/usage-monitoring/serp-rate-limit"}
+        used: >
+          The rate-limit page. Accounts without funds are limited to 1,000 requests a minute
+          and get HTTP 429 above that; the limit of a funded account is shown per zone in the
+          control panel and is not published.
+
+    benchmark_account:
+      plan: unknown
+    notes: >
+      A Scale plan is a minimum monthly commitment charged on the 1st of each month, with the
+      first month prorated by active days; "Cancel anytime". No annual price is published on
+      the SERP pricing page. Optional auto-recharge tops the wallet up when the balance falls
+      below 85% of a configured amount. The site navigation says "Starts from $1/1k req",
+      which is the rate of the largest Scale plan, not the pay-as-you-go rate. The pricing
+      page speaks of "requests" and of "records", and the free tier of "credits".
+
+adapter:
+  version: "1"

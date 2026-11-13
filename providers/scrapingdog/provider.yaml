@@ -1,0 +1,255 @@
+# Scrapingdog. Facts as declared in its documentation and on its pricing page.
+# A credit subscription with a long ladder. A plan buys credits, a search costs 5 of them,
+# and mobile or "advanced" results double that. Unused credits roll over from one plan
+# upward, there is no overage and no top-up, and annual prices sit behind a toggle.
+# Prices: research/pricing/group-b.md, read on 2026-11-12. Request and response:
+# https://www.scrapingdog.com/documentation/google-search-api/, read on 2026-11-12.
+
+schema_version: 1
+id: scrapingdog
+name: Scrapingdog
+status: conformance   # called with a live key on 2026-11-12: see conformance.json
+homepage: https://www.scrapingdog.com
+docs_url: https://www.scrapingdog.com/documentation/
+
+product:
+  name: Google Search API, standard search ("Google SERP Light API" on the pricing page)
+  endpoint: "GET https://api.scrapingdog.com/google"
+  mode: light
+  settings: {advance_search: false}   # the documented default, sent explicitly; `page` counts from 0
+  alternatives:
+    - name: Google Light Search API
+      why_not: >
+        Listed in the credit table at 5 credits, the same price. Its endpoint and its
+        response were not examined on 2026-11-12, so the documented /google endpoint is used.
+      source: https://www.scrapingdog.com/documentation/
+    - name: Google AI Overview API
+      endpoint: "GET https://api.scrapingdog.com/google/ai_overview"
+      why_not: >
+        Not a search: a second call (5 credits) that fetches the AI Overview when /google
+        returns a link to it instead of the overview itself.
+      source: https://www.scrapingdog.com/documentation/google-ai-overview-api/
+    - name: Google AI Mode API
+      endpoint: "GET https://api.scrapingdog.com/google/ai_mode"
+      why_not: "Dearer (10 credits) and a different product: Google AI Mode, not the web results page."
+      source: https://www.scrapingdog.com/documentation/google-ai-mode-api/
+  notes: >
+    `mode: light` is a standard search on /google (5 credits). `mode: full` is the same
+    endpoint with `advance_search=true` ("Google SERP Advance API" on the pricing page,
+    "advanced feature snippets", 10 credits).
+
+terms:
+  url: https://www.scrapingdog.com/terms/
+  benchmarking: unknown           # the terms were read for refunds and credit expiry, not for this
+
+auth:
+  env: [SCRAPINGDOG_API_KEY]      # sent as the `api_key` query parameter: the API documents no header for it
+
+capabilities:
+  mobile: true                    # `mob_search=true`
+  city_location: true             # `location` (city level), `uule`
+  pagination: true                # `page`, one page per request
+  raw_html: true                  # `html=true`
+  ai_overview: true               # inline when Google renders it inline, otherwise through a second call
+
+billing:
+  - effective_from: 2026-11-12
+    checked_at: 2026-11-12
+    currency: USD
+    sources:
+      - https://www.scrapingdog.com/pricing/
+      - https://www.scrapingdog.com/documentation/
+      - https://www.scrapingdog.com/documentation/google-search-api/
+      - https://www.scrapingdog.com/documentation/google-ai-overview-api/
+      - https://www.scrapingdog.com/documentation/google-ai-mode-api/
+      - https://www.scrapingdog.com/documentation/account-api/
+      - https://www.scrapingdog.com/terms/
+      - https://www.scrapingdog.com/sla/
+    sources_need_browser:
+      - https://www.scrapingdog.com/pricing/    # the annual prices appear only with the annual toggle
+    prices_exclude_tax: unknown
+
+    meter:
+      unit: credit
+      unit_label: credit
+      shared_across_products: true    # "Credits are shared across every API on your plan"
+
+    request_cost:
+      base: 5                     # "Each successful request costs 5 credits for standard search"
+      rules:
+        - when: {mode: full}      # `advance_search=true`
+          set: 10
+          source: https://www.scrapingdog.com/documentation/google-search-api/
+        - when: {device: mobile}  # `mob_search=true`
+          set: 10
+          source: https://www.scrapingdog.com/documentation/google-search-api/
+        - when: {ai_overview: true}
+          add: 5
+          applies: if_returned
+          source: https://www.scrapingdog.com/documentation/google-ai-overview-api/
+          notes: >
+            The AI Overview is part of the /google response when Google renders it inline, at
+            no extra cost. Otherwise the response carries a link for a second call to
+            /google/ai_overview, 5 credits when it succeeds; the link expires after 2 minutes.
+        - when: {option: deep_scrape}
+          add: 5
+          source: https://www.scrapingdog.com/documentation/google-search-api/
+          notes: >
+            `deep_scrape=true` fetches the content of the organic result pages; only with
+            `advance_search=false`. Never sent by the benchmark.
+      # Advanced and mobile are each written as `set: 10` because the documentation gives the
+      # price of each and not of the two together. Two `set` rules cannot both replace the
+      # base, so that combination is quoted as unknown. The second call for an AI Overview is
+      # a request of its own and adds to whatever the search cost.
+      stacking: multiply_then_add
+      per_page: separate_request  # `page` selects one page per request
+      results_per_charge: 10      # "Searches now return upto 10 results per page"
+      # The documentation gives one price for a standard search and names the exceptions
+      # above. It states no surcharge for `html`, `country`, `location`, `uule`, `tbs` or
+      # search operators, and does not call them free either, so they are listed nowhere and
+      # are priced as the base.
+      free_parameters: []
+      undocumented: []
+
+    charges:
+      failed_request:
+        charged: false
+        how: "Failed, blocked and timed-out requests are automatically credited back to your balance."
+        source: https://www.scrapingdog.com/pricing/
+      timeout:
+        charged: false
+        how: 'Credited back, as above. "Requests timeout after 60 seconds" (documentation overview).'
+        source: https://www.scrapingdog.com/pricing/
+      empty_serp: {charged: unknown}
+      client_timeout: {charged: unknown}
+      client_error: {charged: unknown}
+      cached_response: {charged: unknown}
+      billed_statuses: unknown    # billing by status code (404, 410) is not stated
+      notes: >
+        Downtime is compensated with service credits only, on request; the target is 99%
+        monthly uptime (https://www.scrapingdog.com/sla/).
+
+    cache:
+      on_by_default: unknown      # not stated
+
+    usage_reporting:
+      account_endpoint: "GET https://api.scrapingdog.com/account"
+      notes: >
+        The account endpoint returns `requestLimit`, `requestUsed`, `validity`,
+        `concurrency_limit`, `threadCount`, `pack` and `pack_type`. The code samples on the
+        same page read `remainingApiCredits` and `concurrentRequests`, which are not in the
+        documented sample response. No header or field with the charge of one request is
+        documented.
+
+    purchase:
+      model: subscription
+      pricing: plan_units
+      plans:                      # Free and the 27 paid plans of the pricing page
+        - id: free
+          name: Free
+          price: 0
+          period: month           # the contract has no other period for a standing plan; see notes
+          units: 100
+          limits: {concurrency: 1}
+          unused_units: unknown
+          notes: >
+            "$0 forever, 100 Requests Credits": 20 standard searches. Whether the 100 credits
+            come back each month is not stated. Geotargeting starts at Lite.
+        - {id: lite, name: Lite, price: 40, annual_price_per_month: 33, period: month,
+           units: 200000, limits: {concurrency: 5}, unused_units: expire,
+           notes: "Geotargeting is available from this plan up. No rollover: the pricing page gives it \"from the Standard plan upward\"."}
+        - {id: standard, name: Standard, price: 90, annual_price_per_month: 75, period: month,
+           units: 1000000, limits: {concurrency: 50}, unused_units: roll_over}
+        - {id: pro, name: Pro, price: 200, annual_price_per_month: 166, period: month,
+           units: 3000000, limits: {concurrency: 100}, unused_units: roll_over,
+           notes: "Team Support from this plan up."}
+        - {id: premium, name: Premium, price: 350, annual_price_per_month: 291, period: month,
+           units: 6000000, limits: {concurrency: 150}, unused_units: roll_over}
+        - {id: business, name: Business, price: 500, annual_price_per_month: 416, period: month,
+           units: 9000000, limits: {concurrency: 200}, unused_units: roll_over}
+        - {id: business_plus, name: Business Plus, price: 1000, annual_price_per_month: 833, period: month,
+           units: 19000000, limits: {concurrency: 250}, unused_units: roll_over}
+        - {id: business_pro, name: Business Pro, price: 1500, annual_price_per_month: 1250, period: month,
+           units: 29000000, limits: {concurrency: 300}, unused_units: roll_over}
+        - {id: corporate, name: Corporate, price: 2000, annual_price_per_month: 1666, period: month,
+           units: 42000000, limits: {concurrency: 350}, unused_units: roll_over}
+        - {id: corporate_plus, name: Corporate Plus, price: 2500, annual_price_per_month: 2083, period: month,
+           units: 55000000, limits: {concurrency: 400}, unused_units: roll_over}
+        - {id: corporate_pro, name: Corporate Pro, price: 3000, annual_price_per_month: 2500, period: month,
+           units: 65000000, limits: {concurrency: 450}, unused_units: roll_over,
+           notes: "Dearer per credit than Corporate Plus: the price per credit does not fall at every step."}
+        - {id: enterprise_starter, name: Enterprise Starter, price: 4000, annual_price_per_month: 3333, period: month,
+           units: 90000000, limits: {concurrency: 500}, unused_units: roll_over}
+        - {id: enterprise_plus, name: Enterprise Plus, price: 5000, annual_price_per_month: 4166, period: month,
+           units: 120000000, limits: {concurrency: 600}, unused_units: roll_over,
+           notes: "Dedicated Support from this plan up."}
+        - {id: enterprise_pro, name: Enterprise Pro, price: 6000, annual_price_per_month: 5000, period: month,
+           units: 150000000, limits: {concurrency: 650}, unused_units: roll_over}
+        - {id: global_starter, name: Global Starter, price: 7000, annual_price_per_month: 5833, period: month,
+           units: 185000000, limits: {concurrency: 700}, unused_units: roll_over}
+        - {id: global_plus, name: Global Plus, price: 8000, annual_price_per_month: 6666, period: month,
+           units: 220000000, limits: {concurrency: 800}, unused_units: roll_over}
+        - {id: global_pro, name: Global Pro, price: 9000, annual_price_per_month: 7500, period: month,
+           units: 255000000, limits: {concurrency: 850}, unused_units: roll_over}
+        - {id: global_elite, name: Global Elite, price: 10000, annual_price_per_month: 8333, period: month,
+           units: 295000000, limits: {concurrency: 900}, unused_units: roll_over}
+        - {id: ultra_starter, name: Ultra Starter, price: 12000, annual_price_per_month: 10000, period: month,
+           units: 360000000, limits: {concurrency: 1000}, unused_units: roll_over,
+           notes: "Dedicated Account Manager from this plan up."}
+        - {id: ultra_plus, name: Ultra Plus, price: 14000, annual_price_per_month: 11666, period: month,
+           units: 430000000, limits: {concurrency: 1200}, unused_units: roll_over}
+        - {id: ultra_pro, name: Ultra Pro, price: 16000, annual_price_per_month: 13333, period: month,
+           units: 500000000, limits: {concurrency: 1300}, unused_units: roll_over}
+        - {id: titan_starter, name: Titan Starter, price: 18000, annual_price_per_month: 15000, period: month,
+           units: 580000000, limits: {concurrency: 1400}, unused_units: roll_over}
+        - {id: titan_plus, name: Titan Plus, price: 20000, annual_price_per_month: 16666, period: month,
+           units: 660000000, limits: {concurrency: 1500}, unused_units: roll_over}
+        - {id: titan_pro, name: Titan Pro, price: 22000, annual_price_per_month: 18333, period: month,
+           units: 740000000, limits: {concurrency: 1700}, unused_units: roll_over}
+        - {id: titan_elite, name: Titan Elite, price: 24000, annual_price_per_month: 20000, period: month,
+           units: 830000000, limits: {concurrency: 1800}, unused_units: roll_over}
+        - {id: nova_starter, name: Nova Starter, price: 26000, annual_price_per_month: 21666, period: month,
+           units: 920000000, limits: {concurrency: 1900}, unused_units: roll_over}
+        - {id: nova_plus, name: Nova Plus, price: 28000, annual_price_per_month: 23333, period: month,
+           units: 1010000000, limits: {concurrency: 2000}, unused_units: roll_over}
+        - {id: nova_pro, name: Nova Pro, price: 30000, annual_price_per_month: 25000, period: month,
+           units: 1100000000, limits: {concurrency: 2200}, unused_units: roll_over}
+      on_limit: block             # "API requests return an over-limit response until they reset on your next billing date"
+      overage: null               # no overage price on any plan, and no top-ups or packs
+      free:
+        units: 100
+        period: once
+        notes: >
+          "Every account starts with 100 free credits", no credit card. Whether they renew
+          is not stated; see `conflicts`.
+      beyond_published: >
+        Above Nova Pro: a custom plan through sales ("dedicated infrastructure and a named
+        account manager").
+      refunds: "There are no refunds for payments made once Services have been rendered."
+
+    conflicts:
+      - topic: Size of the free allowance
+        statements:
+          - {text: "Every account starts with 100 free credits", source: "https://www.scrapingdog.com/pricing/"}
+          - {text: "Free plan includes 200 requests / month", source: "https://www.scrapingdog.com/documentation/"}
+        used: "The pricing page, where the plan is listed: 100 credits."
+      - topic: What an upgrade in the middle of a period costs
+        statements:
+          - {text: "The terms say an upgrade is charged pro rata.", source: "https://www.scrapingdog.com/terms/"}
+          - {text: "you pay the full amount for the new plan, so nothing is prorated", source: "https://www.scrapingdog.com/pricing/"}
+        used: "Neither: an upgrade does not enter any price computed from this file."
+
+    benchmark_account:
+      plan: lite                  # as the account endpoint reports it (`pack: lite`), 2026-11-12
+    notes: >
+      Annual billing is "ten months for twelve": a year costs 10 times the monthly price, and
+      `annual_price_per_month` is the figure the page shows with the annual toggle. Rollover
+      (Standard and up) has no stated cap or expiry, and is lost on cancelling or downgrading:
+      "any unused credits from your current Billing Period will expire at the end of that
+      Billing Period". On an upgrade unused credits move to the new plan, which is available
+      at once. Exceeding the concurrency of a plan returns HTTP 429.
+
+adapter:
+  version: "1"
+  base_url: https://api.scrapingdog.com
+  base_url_env: SCRAPINGDOG_BASE_URL

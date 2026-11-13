@@ -1,0 +1,339 @@
+# Worked example: a monthly subscription that buys a number of searches, on a long plan
+# ladder (62 published plans). It also shows a speed tier sold as a multiplier on the plan
+# price (`addons`), an hourly cap tied to the plan, a one-hour cache that has to be switched
+# off, and a plan that is bought again early when it runs out (`on_limit: auto_renew`).
+#
+# Every fact comes from research/pricing/group-a.md (section 1), read on 2026-11-12.
+# Not checked against the live service.
+
+schema_version: 1
+id: serpapi
+name: SerpApi
+status: draft
+homepage: https://serpapi.com
+docs_url: https://serpapi.com/search-api
+
+product:
+  name: Google Search API
+  endpoint: "GET https://serpapi.com/search"
+  mode: light                       # the benchmarked mode; SerpApi's own name for it is `engine=google`
+  settings: {engine: google, no_cache: true}    # `no_cache=true` switches the one-hour cache off
+  alternatives:
+    - name: Google Light API (`engine=google_light`)
+      endpoint: "GET https://serpapi.com/search"
+      why_not: >
+        A separate, faster engine. Its documentation gives no price of its own, so what it
+        costs next to the Google Search API is not stated.
+      source: https://serpapi.com/google-light-api
+    - name: Google AI Overview API
+      why_not: >
+        Not a search: a second request that fetches an AI Overview Google loaded separately,
+        with a token from the first response.
+      source: https://serpapi.com/google-ai-overview-api
+  notes: >
+    The Google Search API in the default "Best Effort" speed mode. One successful search
+    uses one search of the plan, whatever the number of results.
+
+terms:
+  url: https://serpapi.com/legal    # read for refunds and service credits only
+  benchmarking: unknown             # a clause about benchmarking has not been looked for
+
+auth:
+  env: []
+
+capabilities:
+  mobile: true                      # `device`
+  city_location: true               # `location` at city level, or `uule`
+  pagination: true                  # each further page is a separate search
+  raw_html: true                    # `output=html`
+  ai_overview: true                 # in the response, or behind a `page_token` that lives one minute
+
+billing:
+  - effective_from: 2026-11-12
+    checked_at: 2026-11-12
+    currency: USD
+    sources:
+      - https://serpapi.com/pricing
+      - https://serpapi.com/pricing.md
+      - https://serpapi.com/enterprise
+      - https://serpapi.com/search-api
+      - https://serpapi.com/ludicrous-speed
+      - https://serpapi.com/ai-overview
+      - https://serpapi.com/google-ai-overview-api
+      - https://serpapi.com/blog/understanding-ai-overview-data-from-serpapi/
+      - https://serpapi.com/google-light-api
+      - https://serpapi.com/api-status-and-error-codes
+      - https://serpapi.com/account-api
+      - https://serpapi.com/legal
+    prices_exclude_tax: unknown
+
+    meter:
+      unit: request
+      unit_label: search
+      # The account has one search allowance, but the pricing page has no sentence saying
+      # that every engine draws one search from it.
+      shared_across_products: unknown
+
+    request_cost:
+      base: 1                       # "responses with 100 results or empty result sets will both count as 1 search"
+      rules:
+        - when: {ai_overview: true}
+          add: 1
+          applies: if_returned
+          source: https://serpapi.com/blog/understanding-ai-overview-data-from-serpapi/
+          notes: >
+            Only when Google loads the AI Overview separately: the response then carries a
+            `page_token`, and fetching the overview is a second request, "it will count as
+            two SerpApi searches". The token expires within one minute. An overview that is
+            already in the first response adds nothing, so this is an upper bound.
+      stacking: unknown             # one rule only; there is nothing to combine
+      per_page: separate_request    # "Pagination queries count as separate searches."
+      results_per_charge: null      # the charge is per search, not per number of results
+      free_parameters: []
+      # No surcharge is stated for a mobile device, a city-level location or search
+      # operators, and nothing says they are free either.
+      undocumented: [device, location, query_operators]
+
+    charges:
+      failed_request:
+        charged: false
+        how: >-
+          "Only successful searches are counted toward your monthly searches. Cached,
+          errored, and failed searches are not."
+        source: https://serpapi.com/pricing
+      timeout: {charged: unknown}
+      empty_serp:
+        charged: true
+        how: '"Note that legitimately empty search queries are counted."'
+        source: https://serpapi.com/enterprise
+      client_timeout: {charged: unknown}
+      client_error: {charged: unknown}
+      cached_response:
+        charged: false
+        how: '"Cached searches are free, and are not counted towards your searches per month."'
+        source: https://serpapi.com/search-api
+      billed_statuses: unknown      # billing is defined by "successful search", not by HTTP status
+      notes: >
+        "Searches blocked, errored, or receiving CAPTCHAs are not counted."
+        (https://serpapi.com/enterprise). Calls to the Account API are free.
+
+    cache:
+      on_by_default: true           # "A cache is served only if the query and all parameters are exactly the same."
+      ttl_seconds: 3600             # "Cache expires after 1h."
+      bypass: "no_cache=true"
+      source: https://serpapi.com/search-api
+
+    usage_reporting:
+      response_header: null
+      response_field: null          # a per-response "units charged" field is not stated
+      account_endpoint: "GET https://serpapi.com/account.json"
+      notes: >
+        Free of charge. Fields: plan_id, plan_name, plan_monthly_price, plan_renewal_date,
+        searches_per_month, plan_searches_left, extra_credits, total_searches_left,
+        this_month_usage, this_hour_searches, last_hour_searches,
+        account_rate_limit_per_hour (https://serpapi.com/account-api).
+
+    purchase:
+      model: subscription           # "Month-to-month. Cancel anytime." No annual option is stated.
+      pricing: plan_units
+      # Every plan on https://serpapi.com/pricing. `requests_per_hour` is the plan's
+      # "throughput": above it the API answers HTTP 429. Up to Infrastructure it is exactly
+      # 20% of the monthly searches (arithmetic on the table, not a sentence of SerpApi's),
+      # which is what `hourly_share_of_plan: 0.2` records. Searches "reset at the start of
+      # the new billing cycle", hence `unused_units: expire`.
+      plans:
+        - {id: free, name: Free, price: 0, period: month, units: 250, unused_units: expire, on_limit: block,
+           limits: {requests_per_hour: 50, hourly_share_of_plan: 0.2}}
+        - {id: starter, name: Starter, price: 25, period: month, units: 1000, unused_units: expire,
+           limits: {requests_per_hour: 200, hourly_share_of_plan: 0.2}}
+        - {id: developer, name: Developer, price: 75, period: month, units: 5000, unused_units: expire,
+           limits: {requests_per_hour: 1000, hourly_share_of_plan: 0.2}}
+        - {id: production, name: Production, price: 150, period: month, units: 15000, unused_units: expire,
+           limits: {requests_per_hour: 3000, hourly_share_of_plan: 0.2}}
+        - {id: big_data, name: "Big Data", price: 275, period: month, units: 30000, unused_units: expire,
+           limits: {requests_per_hour: 6000, hourly_share_of_plan: 0.2}}
+        - {id: searcher, name: Searcher, price: 725, period: month, units: 100000, unused_units: expire,
+           limits: {requests_per_hour: 20000, hourly_share_of_plan: 0.2}}
+        - {id: volume, name: Volume, price: 1475, period: month, units: 250000, unused_units: expire,
+           limits: {requests_per_hour: 50000, hourly_share_of_plan: 0.2}}
+        - {id: infrastructure, name: Infrastructure, price: 2750, period: month, units: 500000, unused_units: expire,
+           limits: {requests_per_hour: 100000, hourly_share_of_plan: 0.2}}
+        - {id: cloud_1m, name: "Cloud 1M", price: 3750, period: month, units: 1000000, unused_units: expire,
+           limits: {requests_per_hour: 110000}}
+        - {id: cloud_2m, name: "Cloud 2M", price: 5675, period: month, units: 2000000, unused_units: expire,
+           limits: {requests_per_hour: 120000}}
+        - {id: cloud_3m, name: "Cloud 3M", price: 7600, period: month, units: 3000000, unused_units: expire,
+           limits: {requests_per_hour: 130000}}
+        - {id: cloud_4m, name: "Cloud 4M", price: 9550, period: month, units: 4000000, unused_units: expire,
+           limits: {requests_per_hour: 140000}}
+        - {id: cloud_5m, name: "Cloud 5M", price: 11475, period: month, units: 5000000, unused_units: expire,
+           limits: {requests_per_hour: 150000}}
+        - {id: cloud_6m, name: "Cloud 6M", price: 13400, period: month, units: 6000000, unused_units: expire,
+           limits: {requests_per_hour: 160000}}
+        - {id: cloud_7m, name: "Cloud 7M", price: 15325, period: month, units: 7000000, unused_units: expire,
+           limits: {requests_per_hour: 170000}}
+        - {id: cloud_8m, name: "Cloud 8M", price: 17250, period: month, units: 8000000, unused_units: expire,
+           limits: {requests_per_hour: 180000}}
+        - {id: cloud_9m, name: "Cloud 9M", price: 19200, period: month, units: 9000000, unused_units: expire,
+           limits: {requests_per_hour: 190000}}
+        - {id: cloud_10m, name: "Cloud 10M", price: 21125, period: month, units: 10000000, unused_units: expire,
+           limits: {requests_per_hour: 200000}}
+        - {id: cloud_11m, name: "Cloud 11M", price: 23050, period: month, units: 11000000, unused_units: expire,
+           limits: {requests_per_hour: 210000}}
+        - {id: cloud_12m, name: "Cloud 12M", price: 24975, period: month, units: 12000000, unused_units: expire,
+           limits: {requests_per_hour: 220000}}
+        - {id: cloud_13m, name: "Cloud 13M", price: 26900, period: month, units: 13000000, unused_units: expire,
+           limits: {requests_per_hour: 230000}}
+        - {id: cloud_14m, name: "Cloud 14M", price: 28850, period: month, units: 14000000, unused_units: expire,
+           limits: {requests_per_hour: 240000}}
+        - {id: cloud_15m, name: "Cloud 15M", price: 30775, period: month, units: 15000000, unused_units: expire,
+           limits: {requests_per_hour: 250000}}
+        - {id: cloud_16m, name: "Cloud 16M", price: 32700, period: month, units: 16000000, unused_units: expire,
+           limits: {requests_per_hour: 260000}}
+        - {id: cloud_17m, name: "Cloud 17M", price: 34625, period: month, units: 17000000, unused_units: expire,
+           limits: {requests_per_hour: 270000}}
+        - {id: cloud_18m, name: "Cloud 18M", price: 36550, period: month, units: 18000000, unused_units: expire,
+           limits: {requests_per_hour: 280000}}
+        - {id: cloud_19m, name: "Cloud 19M", price: 38500, period: month, units: 19000000, unused_units: expire,
+           limits: {requests_per_hour: 290000}}
+        - {id: cloud_20m, name: "Cloud 20M", price: 40425, period: month, units: 20000000, unused_units: expire,
+           limits: {requests_per_hour: 300000}}
+        - {id: cloud_21m, name: "Cloud 21M", price: 42350, period: month, units: 21000000, unused_units: expire,
+           limits: {requests_per_hour: 310000}}
+        - {id: cloud_22m, name: "Cloud 22M", price: 44275, period: month, units: 22000000, unused_units: expire,
+           limits: {requests_per_hour: 320000}}
+        - {id: cloud_23m, name: "Cloud 23M", price: 46200, period: month, units: 23000000, unused_units: expire,
+           limits: {requests_per_hour: 330000}}
+        - {id: cloud_24m, name: "Cloud 24M", price: 48150, period: month, units: 24000000, unused_units: expire,
+           limits: {requests_per_hour: 340000}}
+        - {id: cloud_25m, name: "Cloud 25M", price: 50075, period: month, units: 25000000, unused_units: expire,
+           limits: {requests_per_hour: 350000}}
+        - {id: cloud_26m, name: "Cloud 26M", price: 52000, period: month, units: 26000000, unused_units: expire,
+           limits: {requests_per_hour: 360000}}
+        - {id: cloud_27m, name: "Cloud 27M", price: 53925, period: month, units: 27000000, unused_units: expire,
+           limits: {requests_per_hour: 370000}}
+        - {id: cloud_28m, name: "Cloud 28M", price: 55850, period: month, units: 28000000, unused_units: expire,
+           limits: {requests_per_hour: 380000}}
+        - {id: cloud_29m, name: "Cloud 29M", price: 57800, period: month, units: 29000000, unused_units: expire,
+           limits: {requests_per_hour: 390000}}
+        - {id: cloud_30m, name: "Cloud 30M", price: 59725, period: month, units: 30000000, unused_units: expire,
+           limits: {requests_per_hour: 400000}}
+        - {id: cloud_31m, name: "Cloud 31M", price: 61650, period: month, units: 31000000, unused_units: expire,
+           limits: {requests_per_hour: 410000}}
+        - {id: cloud_32m, name: "Cloud 32M", price: 63575, period: month, units: 32000000, unused_units: expire,
+           limits: {requests_per_hour: 420000}}
+        - {id: cloud_33m, name: "Cloud 33M", price: 65500, period: month, units: 33000000, unused_units: expire,
+           limits: {requests_per_hour: 430000}}
+        - {id: cloud_34m, name: "Cloud 34M", price: 67450, period: month, units: 34000000, unused_units: expire,
+           limits: {requests_per_hour: 440000}}
+        - {id: cloud_35m, name: "Cloud 35M", price: 69375, period: month, units: 35000000, unused_units: expire,
+           limits: {requests_per_hour: 450000}}
+        - {id: cloud_36m, name: "Cloud 36M", price: 71300, period: month, units: 36000000, unused_units: expire,
+           limits: {requests_per_hour: 460000}}
+        - {id: cloud_37m, name: "Cloud 37M", price: 73225, period: month, units: 37000000, unused_units: expire,
+           limits: {requests_per_hour: 470000}}
+        - {id: cloud_38m, name: "Cloud 38M", price: 75150, period: month, units: 38000000, unused_units: expire,
+           limits: {requests_per_hour: 480000}}
+        - {id: cloud_39m, name: "Cloud 39M", price: 77100, period: month, units: 39000000, unused_units: expire,
+           limits: {requests_per_hour: 490000}}
+        - {id: cloud_40m, name: "Cloud 40M", price: 79025, period: month, units: 40000000, unused_units: expire,
+           limits: {requests_per_hour: 500000}}
+        - {id: cloud_41m, name: "Cloud 41M", price: 80950, period: month, units: 41000000, unused_units: expire,
+           limits: {requests_per_hour: 510000}}
+        - {id: cloud_42m, name: "Cloud 42M", price: 82875, period: month, units: 42000000, unused_units: expire,
+           limits: {requests_per_hour: 520000}}
+        - {id: cloud_43m, name: "Cloud 43M", price: 84800, period: month, units: 43000000, unused_units: expire,
+           limits: {requests_per_hour: 530000}}
+        - {id: cloud_44m, name: "Cloud 44M", price: 86750, period: month, units: 44000000, unused_units: expire,
+           limits: {requests_per_hour: 540000}}
+        - {id: cloud_45m, name: "Cloud 45M", price: 88675, period: month, units: 45000000, unused_units: expire,
+           limits: {requests_per_hour: 550000}}
+        - {id: cloud_46m, name: "Cloud 46M", price: 90600, period: month, units: 46000000, unused_units: expire,
+           limits: {requests_per_hour: 560000}}
+        - {id: cloud_47m, name: "Cloud 47M", price: 92525, period: month, units: 47000000, unused_units: expire,
+           limits: {requests_per_hour: 570000}}
+        - {id: cloud_48m, name: "Cloud 48M", price: 94450, period: month, units: 48000000, unused_units: expire,
+           limits: {requests_per_hour: 580000}}
+        - {id: cloud_49m, name: "Cloud 49M", price: 96400, period: month, units: 49000000, unused_units: expire,
+           limits: {requests_per_hour: 590000}}
+        - {id: cloud_50m, name: "Cloud 50M", price: 98325, period: month, units: 50000000, unused_units: expire,
+           limits: {requests_per_hour: 600000}}
+        - {id: cloud_51m, name: "Cloud 51M", price: 100250, period: month, units: 51000000, unused_units: expire,
+           limits: {requests_per_hour: 610000}}
+        - {id: cloud_52m, name: "Cloud 52M", price: 102175, period: month, units: 52000000, unused_units: expire,
+           limits: {requests_per_hour: 620000}}
+        - {id: cloud_53m, name: "Cloud 53M", price: 104100, period: month, units: 53000000, unused_units: expire,
+           limits: {requests_per_hour: 630000}}
+        - {id: cloud_54m, name: "Cloud 54M", price: 106050, period: month, units: 54000000, unused_units: expire,
+           limits: {requests_per_hour: 640000}}
+      # Out of searches: HTTP 429 by default. With the opt-in "Automatic Early Renewal" (or a
+      # manual renewal) the same plan is bought again at full price and the cycle restarts.
+      # There is no per-search overage. `auto_renew` is recorded because it is a published
+      # way to buy more searches within a month; the Free plan is left at `block`.
+      on_limit: auto_renew
+      overage: null
+      free: {units: 250, period: month, notes: "The Free plan: 50 searches an hour."}
+      addons:
+        - name: Ludicrous Speed
+          price_multiply: 2
+          notes: >
+            "2x base price"; "Uses 2x the server resources". Switched on for the plan or
+            account, not per request: it multiplies the price of the plan, not the searches
+            a request uses.
+          source: https://serpapi.com/ludicrous-speed
+        - name: Ludicrous Speed Max
+          price_multiply: 4
+          notes: '"4x base price". "Every plan can be combined with a speed mode."'
+          source: https://serpapi.com/pricing
+      beyond_published: >
+        "For enterprise or custom volume plans, contact contact@serpapi.com."
+        (https://serpapi.com/pricing). The enterprise page describes a different structure:
+        $3,750 a month with 100,000 complimentary searches, and searches billed on top per
+        1,000: $7.50 on demand or $2.75 reserved, on prepaid or postpaid invoices
+        (https://serpapi.com/enterprise).
+      refunds: >
+        "We offer a full refund within 7 days of the date you subscribed to a plan unless
+        you've used more than 20% of your searches."
+
+    conflicts:
+      - topic: What $3,750 a month buys
+        statements:
+          - text: "Cloud 1M: $3,750 a month with 1,000,000 searches included."
+            source: https://serpapi.com/pricing
+          - text: >-
+              "Our Enterprise plan is priced at $3,750 per month. Searches are billed in
+              addition according to your usage."
+            source: https://serpapi.com/enterprise
+        used: >
+          The plan ladder of the pricing page. The two pages do not reconcile the two
+          structures; the enterprise one is described under `beyond_published` and is not
+          priced here.
+      - topic: Who gets ZeroTrace
+        statements:
+          - text: "The plan table includes ZeroTrace from Cloud 1M upwards."
+            source: https://serpapi.com/pricing
+          - text: "The API documentation labels the `zero_trace` parameter 'Enterprise only'."
+            source: https://serpapi.com/search-api
+        used: >
+          Neither changes a price: no surcharge is stated, and the benchmark does not send
+          `zero_trace`.
+
+    benchmark_account:
+      plan: unknown
+    notes: >
+      Not expressed by a field. (1) With Ludicrous Speed the enterprise plan includes
+      50,000 complimentary searches and costs $15.00 on demand or $5.50 reserved per 1,000;
+      with Ludicrous Speed Max 25,000, $30.00 and $11.00. (2) A downgrade moves the old
+      plan's remaining searches to a second balance, "Extra Credits", whose expiry is not
+      stated. (3) An upgrade costs the difference between the two plans and keeps the
+      renewal date. (4) After a cancellation the remaining searches can be used until the
+      renewal date. (5) "Unused search credits don't roll over from month to month" is said
+      on the enterprise page; the pricing page says only that searches reset. (6) Service
+      credits under the SLA: "up to 100% of the monthly price of your plan on your next
+      invoice". (7) Legal Shield comes with Production and larger plans. (8) `async` has no
+      stated price difference; the documentation says not to use it together with
+      `no_cache` or on an account with Ludicrous Speed. (9) A per-second or concurrency
+      limit is not stated.
+
+adapter:
+  version: "1"

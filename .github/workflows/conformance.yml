@@ -1,0 +1,49 @@
+name: Conformance
+
+# Started by hand for one provider. Calls the live service (a handful of requests) and
+# checks the adapter and the declared billing. See providers/README.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: "Provider id (a folder under providers/)"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: conformance-${{ inputs.provider }}
+  cancel-in-progress: false
+
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Secrets are passed by name, one line per provider key. Add a line when a provider
+      # is added. Values are never printed.
+      SCRAPEBEAVER_API_KEY: ${{ secrets.SCRAPEBEAVER_API_KEY }}
+      SCRAPEBEAVER_BASE_URL: ${{ vars.SCRAPEBEAVER_BASE_URL }}
+      DECODO_API_KEY: ${{ secrets.DECODO_API_KEY }}
+      SCRAPINGBEE_API_KEY: ${{ secrets.SCRAPINGBEE_API_KEY }}
+      SCRAPINGDOG_API_KEY: ${{ secrets.SCRAPINGDOG_API_KEY }}
+      INPUT_PROVIDER: ${{ inputs.provider }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync --locked
+      - name: Conformance
+        run: uv run serp-bench conformance --provider "$INPUT_PROVIDER" --out "out/conformance/$INPUT_PROVIDER"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conformance-${{ inputs.provider }}
+          path: out/conformance/
+          retention-days: 30
+          if-no-files-found: warn

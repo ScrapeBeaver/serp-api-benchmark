@@ -1,0 +1,61 @@
+# What is measured, when, and how much.
+#
+# A pool is a named stream of tasks: where its queries come from, how many are sent per
+# day, in which of the day's runs, with which device and results page.
+# `serp-bench plan` prints what this file adds up to.
+
+methodology_version: "0.1"
+
+# Providers measured by default. `--providers mock` runs the offline mock instead.
+providers: [scrapebeaver, decodo, scrapingbee, scrapingdog]
+
+schedule:
+  runs_per_day: 4         # evenly spaced; must divide 24
+  minute: 17              # past the hour
+  rotate_hours: true      # the timetable moves one hour later each day, so every hour
+                          # of the day is sampled within 24 / runs_per_day days
+
+# Development volume: small on purpose while the adapters and checks are being built, so a
+# mistake of ours costs a handful of requests. About 14 tasks per run, 56 a day per provider.
+# The volume planned for publication is 200 / 40 / 30 a day over a list of 400 query pairs
+# (every pair sent every second day); it is switched on here, in this file.
+pools:
+  core:
+    source: queries/smoke.yaml    # the starter set; the full query set replaces it later
+    per_day: 40                   # spread evenly over the pool's runs
+    runs: all                     # or run indexes, e.g. [0, 2]
+    device: desktop
+    page: 1
+    headline: true                # counts towards the main table
+  mobile:
+    from: core                    # the same queries as `core`
+    per_day: 8
+    device: mobile
+    headline: false
+  page2:
+    from: core
+    per_day: 8
+    page: 2
+    headline: false
+
+# Money. `serp-bench budget` works out, from each provider's declared prices, the cheapest
+# plan that covers a month of the pools above, and fails when one costs more than this.
+budget:
+  max_usd_per_provider_per_month: 50
+
+limits:
+  timeout_seconds: 60
+  dispatch_interval_seconds: 15       # one task every 15 s, whether or not answers are back
+  max_in_flight_per_provider: 5       # must exceed timeout / interval, so a slow provider is never skipped
+  max_tasks_per_provider_per_run: 130 # requests per provider per run, warm-up and control repeats included
+  # Step 3: a first page that matched no other provider's page is asked for once more from
+  # the same provider, after the timetable. Development volume; 30 is planned.
+  max_control_repeats_per_provider_per_run: 5
+
+# The results page (`serp-bench site`). None of this changes what is measured.
+site:
+  url: https://benchmark.scrapebeaver.com
+  repository: https://github.com/scrapebeaver/serp-api-benchmark   # the public repository, linked from the page
+  operator: scrapebeaver    # the provider run by whoever runs this benchmark; marked "us" on the page
+  preview: true             # before launch: show every measured provider, say it is a preview,
+                            # and ask search engines not to index the page

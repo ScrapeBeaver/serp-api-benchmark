@@ -1,0 +1,35 @@
+# SYNTHETIC. Not a real provider: a balance in dollars, a price per request, deposit tiers.
+schema_version: 1
+id: example_payg
+name: Example PAYG
+product:
+  name: SERP API, live mode
+  endpoint: "POST https://api.payg.example.com/serp/live"
+  mode: light
+auth:
+  env: [EXAMPLE_PAYG_LOGIN, EXAMPLE_PAYG_PASSWORD]
+billing:
+  - effective_from: 2026-01-01
+    checked_at: 2026-01-01
+    sources: [https://payg.example.com/pricing]
+    meter: {unit: usd, shared_across_products: true}
+    request_cost:
+      base: 0.002
+      rules:
+        - when: {query_operators: true}
+          multiply: 5
+        - when: {page: "2+"}
+          multiply: 1
+      stacking: product
+      per_page: separate_request
+    charges:
+      failed_request: {charged: unknown}
+    purchase:
+      model: pay_as_you_go
+      pricing: pay_as_you_go
+      tiers:
+        - {from_amount: 100, rate_multiplier: 0.5}
+        - {from_amount: 1000, rate_multiplier: 0.25}
+      minimum_topup: 50
+      unused_units: never_expire
+    benchmark_account: {plan: "n/a"}

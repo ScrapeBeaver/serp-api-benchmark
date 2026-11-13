@@ -1,0 +1,22 @@
+{
+  "description": "A successful search.",
+  "source": "Built from the documented response shape (https://scrapebeaver.com/docs/google-search/request-and-response). Illustrative values; not a recorded response.",
+  "task": {"query": "coffee shops london", "country": "GB", "locale": "en-GB", "device": "desktop", "page": 1},
+  "response": {
+    "status": 200,
+    "headers": {"content-type": "application/json"},
+    "body": {
+      "search_metadata": {"id": "6f1c2a9e-0000-4000-8000-000000000001", "status": "Success", "verdict": "ok", "total_time_taken": 1.62},
+      "search_parameters": {"engine": "google", "q": "coffee shops london", "gl": "gb", "hl": "en-GB", "device": "desktop", "start": 0},
+      "search_information": {"query_displayed": "coffee shops london", "total_results": 48200000},
+      "organic_results": [
+        {"position": 1, "title": "The best coffee shops in London", "link": "https://www.example.com/london/coffee-shops", "displayed_link": "example.com › london", "snippet": "Our pick of the best coffee shops in London.", "source": "Example"},
+        {"position": 2, "title": "London coffee guide", "link": "https://coffee.example.org/guides/london?utm_source=newsletter", "redirect_link": "https://www.google.com/goto?url=CAESZQ", "displayed_link": "coffee.example.org › guides", "snippet": "Where to drink coffee in London."},
+        {"position": 3, "title": "Independent cafes in Soho", "link": "https://example.net/soho-cafes/", "displayed_link": "example.net › soho-cafes"}
+      ],
+      "organic_success": true,
+      "pagination": {"current": 1, "next_start": 10}
+    }
+  },
+  "expect": {"outcome": "delivered", "organic_count": 3, "billed_units": 1.0, "provider_request_id": "6f1c2a9e-0000-4000-8000-000000000001"}
+}

@@ -1,0 +1,217 @@
+# Example: a monthly subscription counted in requests, with a surcharge that depends on the
+# outcome. An AI Overview costs 3 searches only when Google returns one (`applies:
+# if_returned`), an opt-in cache answers for free, a client that hangs up is still billed,
+# and the account is blocked at the limit: nothing is published above the largest plan.
+#
+# Written from research/pricing/group-d.md (read 2026-11-12). Not called with a live key.
+
+schema_version: 1
+id: zenserp
+name: Zenserp
+status: draft
+homepage: https://zenserp.com/
+docs_url: https://app.zenserp.com/documentation
+
+product:
+  name: Google Search
+  endpoint: "GET https://app.zenserp.com/api/v2/search"
+  mode: light
+  settings: {cache: false}        # the default, sent explicitly: a cached answer is not a measurement
+  alternatives:
+    - name: Batch endpoint
+      endpoint: "POST /api/v1/batches"
+      why_not: "Asynchronous, available from the Medium plan; the price of a job is not stated."
+      source: https://app.zenserp.com/documentation#batches
+  notes: >
+    The cheapest synchronous Google mode: one request is one search. `ai_overview=1` is
+    not sent.
+
+terms:
+  # The Terms of Service link on zenserp.com points to the generic Idera terms. That page
+  # was not read, so there is no `checked_at` and nothing is known about benchmarking.
+  url: https://www.ideracorp.com/Legal/Terms-of-Use
+  benchmarking: unknown
+
+auth:
+  env: []
+
+capabilities:
+  mobile: true                    # `device=mobile`
+  city_location: true             # `location`, or latitude and longitude
+  pagination: true                # `start`, one page per call
+  raw_html: unknown               # `output` takes html and markdown; whether next to the JSON is not stated
+  ai_overview: true               # `ai_overview=1`, from the Small plan
+
+billing:
+  - effective_from: 2026-11-12
+    checked_at: 2026-11-12
+    currency: USD
+    sources:
+      - https://zenserp.com/pricing-plans/
+      - https://app.zenserp.com/documentation#search
+      - https://app.zenserp.com/documentation#aiOverview
+      - https://app.zenserp.com/documentation#outputFormat
+      - https://app.zenserp.com/documentation#first100Results
+      - https://app.zenserp.com/documentation#errorCodes
+      - https://app.zenserp.com/documentation#authentification
+    sources_need_browser:
+      - https://zenserp.com/pricing-plans/        # the yearly prices are computed by the page script
+      - https://app.zenserp.com/documentation     # the body is drawn by a script
+    prices_exclude_tax: unknown
+
+    meter:
+      unit: request
+      unit_label: search
+      # One balance per API key for every endpoint and engine of Zenserp. Whether it is
+      # shared with other APILayer products is not stated.
+      shared_across_products: true
+
+    request_cost:
+      base: 1
+      rules:
+        - when: {ai_overview: true}
+          multiply: 3
+          applies: if_returned
+          source: https://app.zenserp.com/documentation#aiOverview
+          notes: >
+            "The 3x multiplier applies only when an overview is actually returned. A query
+            Google answers without one is charged the normal single credit". When the
+            overview fails upstream the search is fetched again without it and costs 1.
+      stacking: unknown           # there is one surcharge, so nothing is documented about combining
+      per_page: separate_request  # each call with `start` is a request of its own
+      results_per_charge: unknown # 10 results by default; no surcharge is stated for a larger page
+      free_parameters: [output]   # html and markdown: "same credit cost"
+      undocumented: [device, location]    # no surcharge is stated, and neither is called free
+
+    charges:
+      failed_request:
+        charged: false
+        how: >
+          "We only charge you for successful responses." An HTTP 200 whose
+          `ai_overview.reason` is `upstream_refused`, with empty `organic`, is charged nothing.
+        source: https://zenserp.com/pricing-plans/
+      timeout:
+        charged: unknown
+        how: "Not stated separately; the pricing page says only successful responses are charged."
+      empty_serp:
+        charged: unknown
+        how: "HTTP 404 'There were no results found': whether it is charged is not stated."
+        source: https://app.zenserp.com/documentation#errorCodes
+      client_timeout:
+        charged: true
+        how: >
+          Stated in the AI Overview section: "The upstream budget is 140 seconds, so allow
+          at least that on your own client rather than timing out on a request you will
+          still be charged for."
+        source: https://app.zenserp.com/documentation#aiOverview
+      client_error:
+        charged: false
+        how: >
+          "Invalid requests are not going to affect your usage volume!" For AI Overview
+          requests the documentation lists HTTP 400, HTTP 403 `feature_not_in_plan` and
+          HTTP 429 as not charged.
+        source: https://zenserp.com/pricing-plans/
+      cached_response:
+        charged: false
+        how: "A cached response is not charged (X-RateLimit-Remaining is unchanged)."
+        source: https://app.zenserp.com/documentation#search
+      billed_statuses: n/a        # billing is defined as "successful responses", not as a list of statuses
+      notes: null
+
+    cache:
+      on_by_default: false        # opt-in with `cache=true`
+      ttl_seconds: 86400          # entries live 24 hours, keyed on the whole request
+      bypass: "cache=false"       # the default
+      source: https://app.zenserp.com/documentation#search
+
+    usage_reporting:
+      response_header: null       # no header carries the charge for one request
+      response_field: null
+      account_endpoint: "GET https://app.zenserp.com/api/v2/status"
+      notes: >
+        The status endpoint returns `remaining_requests`. The response header
+        `X-RateLimit-Remaining` is named in the description of the `cache` parameter (it
+        is unchanged by a cached response). `X-Zenserp-Expires` is set on cached responses.
+
+    purchase:
+      model: subscription
+      pricing: plan_units
+      plans:
+        - id: free
+          name: Free
+          price: 0
+          period: month
+          units: 50
+          unused_units: unknown
+          notes: "'Free forever'. Google Search only; an AI Overview request is refused with HTTP 403."
+        - id: small
+          name: Small
+          price: 49.99
+          annual_price_per_month: 39.99
+          period: month
+          units: 25000
+          limits: {notes: "AI Overview: 15 requests a minute, 3 concurrent."}
+          unused_units: unknown
+        - id: medium
+          name: Medium
+          price: 149.99
+          annual_price_per_month: 119.99
+          period: month
+          units: 100000
+          limits: {notes: "AI Overview: 40 requests a minute, 8 concurrent."}
+          unused_units: unknown
+        - id: large
+          name: Large
+          price: 299.99
+          annual_price_per_month: 239.99
+          period: month
+          units: 250000
+          limits: {notes: "AI Overview: 100 requests a minute, 20 concurrent."}
+          unused_units: unknown
+        - id: premium
+          name: Premium
+          price: 499.99
+          annual_price_per_month: 399.99
+          period: month
+          units: 500000
+          limits: {notes: "AI Overview: 200 requests a minute, 40 concurrent."}
+          unused_units: unknown
+        - id: enterprise
+          name: Enterprise
+          price: 899
+          annual_price_per_month: 719.20
+          period: month
+          units: 1000000
+          limits: {notes: "AI Overview: 500 requests a minute, 100 concurrent."}
+          unused_units: unknown
+      on_limit: block             # HTTP 403 "Not enough requests."; no overage is published
+      overage: null
+      minimum: {amount: 49.99, period: month}
+      free:
+        units: 50
+        period: month
+        notes: "Google Search only, no AI Overview."
+      beyond_published: >
+        "Need more than 1,000,000 searches? Tell us your volume and we'll put together a
+        custom quote."
+      refunds: unknown            # not stated
+
+    conflicts:
+      - topic: Monthly price of the Enterprise plan
+        statements:
+          - {text: "$899.99", source: "https://zenserp.com/"}
+          - {text: "$899", source: "https://zenserp.com/pricing-plans/"}
+        used: "The pricing page: the page and its script both say $899."
+
+    notes: >
+      The same unit is called "searches" on the pricing page, "requests" in the status
+      endpoint and "credits" in the AI Overview text. Yearly billing is 20% cheaper. For
+      plain searches no hard concurrency cap is published: "we encourage not to exceed 400
+      concurrent connections"; per-plan rate limits exist only for the AI features.
+      Features are gated by plan, not surcharged: other engines, verticals, Markdown
+      output and the AI Overview from Small; the batch endpoint and Answer Engines from
+      Medium. Answer Engine requests are billed at a "premium (per-answer) rate" that the
+      pricing page does not publish. An email is sent at 90% and 100% of the monthly usage.
+
+adapter:
+  version: "1"

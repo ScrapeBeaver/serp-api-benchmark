@@ -1,0 +1,29 @@
+{
+ "description": "A parameter the API refuses: HTTP 400 with the documented `errors` body. Not billed.",
+ "source": "Built from the documented request and response of the Google Search API (https://www.scrapingbee.com/documentation/google-api/). Illustrative values; not a recorded response. To be replaced by a recorded one after the first live call.",
+ "task": {
+  "query": "pizza new york",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 400,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "errors": {
+    "query": {
+     "extra_params": [
+      "Unknown parameter"
+     ]
+    }
+   }
+  }
+ },
+ "expect": {
+  "outcome": "http_4xx"
+ }
+}

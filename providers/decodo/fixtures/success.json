@@ -1,0 +1,110 @@
+{
+ "description": "A delivered search as the live API returned it: nine organic results, one of them (rank 5) still Google's own /goto redirect instead of the destination.",
+ "source": "Recorded on 2026-11-12 from POST https://data.decodo.com/v1/search. Descriptions and the blocks other than `organic` were emptied; ranks, titles and links are as returned.",
+ "task": {
+  "query": "best running shoes",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json; charset=utf-8"
+  },
+  "body": {
+   "status": "done",
+   "url": "",
+   "search_parameters": {
+    "engine": "fast_search",
+    "query": "best running shoes",
+    "locale": "en",
+    "gl": "US",
+    "geo_location": "US"
+   },
+   "organic": [
+    {
+     "rank": 1,
+     "title": "7 Best Running Shoes in 2026",
+     "link": "https://runrepeat.com/guides/best-running-shoes",
+     "original_link": "",
+     "description": "",
+     "extensions": []
+    },
+    {
+     "rank": 2,
+     "title": "The 15 Best Running Shoes of 2026",
+     "link": "https://www.runnersworld.com/gear/a19663621/best-running-shoes/",
+     "original_link": "",
+     "description": "",
+     "extensions": []
+    },
+    {
+     "rank": 3,
+     "title": "What are the best running shoes that you'd actually buy ...",
+     "link": "https://www.reddit.com/r/runninglifestyle/comments/1u5x7mx/what_are_the_best_running_shoes_that_youd/",
+     "original_link": "",
+     "description": "",
+     "extensions": []
+    },
+    {
+     "rank": 4,
+     "title": "Best Running Shoes of the Year: 6 Top-Shelf Models",
+     "link": "https://sixminutemile.com/post/six-of-the-best-running-shoes-of-the-year/",
+     "original_link": "",
+     "description": "",
+     "extensions": []
+    },
+    {
+     "rank": 5,
+     "title": "The Best Running Shoe From Every Brand in 2026!",
+     "link": "https://www.google.com/goto?url=CAESaAHEIkXX_Dymtk8TEgoIIcIWZiU9SNsWF5t5q7QodcpIXtmNReF4aqLxi0fCEFSCUhLcYNO_Xa7HPhrcGxeBh_tgQSeUKAVL1o78yUU36C-uJ0Jz4prnVXJIg2r6oEb7A28uc0R1W-hM&gsessionid=64AB0yr6H8UQMvFpA_WIo14XNwpvLz70AriUfVW7H2ApUgTNmdPW8Q",
+     "original_link": "",
+     "description": "",
+     "extensions": []
+    },
+    {
+     "rank": 6,
+     "title": "Men's Best Sellers Running Shoes",
+     "link": "https://www.nike.com/w/mens-best-running-shoes-37v7jz76m50znik1zy7ok",
+     "original_link": "",
+     "description": "",
+     "extensions": []
+    },
+    {
+     "rank": 7,
+     "title": "Best Men's Road Running Shoes",
+     "link": "https://www.amazon.com/Best-Sellers-Men's-Road-Running-Shoes/zgbs/fashion/14210389011",
+     "original_link": "",
+     "description": "",
+     "extensions": []
+    },
+    {
+     "rank": 8,
+     "title": "The Best Running Shoes 2026",
+     "link": "https://theruntesters.com/running-shoes/the-best-running-shoes-to-buy/",
+     "original_link": "",
+     "description": "",
+     "extensions": []
+    },
+    {
+     "rank": 9,
+     "title": "In your opinion what is the best running shoes?",
+     "link": "https://www.letsrun.com/forum/flat_read.php?thread=8528045&page=1",
+     "original_link": "",
+     "description": "",
+     "extensions": []
+    }
+   ],
+   "top_stories": [],
+   "people_also_ask": [],
+   "related_searches": [],
+   "answer_box": {}
+  }
+ },
+ "expect": {
+  "outcome": "delivered",
+  "organic_count": 9
+ }
+}

@@ -1,0 +1,33 @@
+{
+ "description": "No organic results: the documented shape with an empty list.",
+ "source": "Built from the documented request and response of the Google Search API (https://www.scrapingbee.com/documentation/google-api/). Illustrative values; not a recorded response. To be replaced by a recorded one after the first live call.",
+ "task": {
+  "query": "pizza new york",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json",
+   "spb-cost": "10"
+  },
+  "body": {
+   "meta_data": {
+    "url": "https://www.google.com/search?q=pizza+new+york&gl=us&hl=en",
+    "number_of_results": 1000000,
+    "location": null,
+    "number_of_organic_results": 0,
+    "number_of_ads": 0,
+    "number_of_page": 1
+   },
+   "organic_results": []
+  }
+ },
+ "expect": {
+  "outcome": "empty_results",
+  "organic_count": 0
+ }
+}

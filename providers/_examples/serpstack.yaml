@@ -1,0 +1,196 @@
+# Example: a monthly subscription counted in requests, with automatic overage at a rate
+# published per plan (`on_limit: overage`, `overage_unit_price` on each plan). The ladder
+# is short, so above the largest plan the declared price is that plan plus overage. The
+# vendor's own Terms describe a hard stop instead: both statements are under `conflicts`.
+#
+# Written from research/pricing/group-e.md (read 2026-11-12). Not called with a live key.
+
+schema_version: 1
+id: serpstack
+name: serpstack
+status: draft
+homepage: https://serpstack.com/
+docs_url: https://docs.apilayer.com/serpstack/docs/quickstart-guide
+
+product:
+  name: Google Search API
+  endpoint: "GET https://api.serpstack.com/search"
+  mode: light
+  settings: {}
+  notes: >
+    The search endpoint of the quickstart guide; the service is real-time only ("without
+    the need of a queue"). The parameter reference page could not be opened (HTTP 404), so
+    what the page, device, location and AI Overview parameters do to the bill is not known.
+
+terms:
+  # This page was read for its billing clauses. Whether it mentions benchmarking was not
+  # recorded, so there is no `checked_at` for that question.
+  url: https://serpstack.com/terms
+  benchmarking: unknown
+
+auth:
+  env: []
+
+capabilities:
+  mobile: true                    # `device=mobile` in the quickstart
+  city_location: true             # `location=New York` in the quickstart
+  pagination: unknown
+  raw_html: unknown
+  ai_overview: unknown
+
+billing:
+  - effective_from: 2026-11-12
+    checked_at: 2026-11-12
+    currency: USD
+    sources:
+      - https://serpstack.com/pricing
+      - https://serpstack.com/billing-overages-documentation
+      - https://serpstack.com/terms
+      - https://serpstack.com/agreement
+      - https://serpstack.com/faq
+      - https://serpstack.com/
+      - https://docs.apilayer.com/serpstack/docs/quickstart-guide
+      - https://docs.apilayer.com/serpstack/docs/getting-started
+    prices_exclude_tax: unknown
+
+    meter:
+      unit: request
+      unit_label: search
+      # The quota is per serpstack subscription. Whether it is shared with other APILayer
+      # products is not stated.
+      shared_across_products: unknown
+
+    request_cost:
+      base: 1                     # "each SERP lookup uses one request"
+      rules: []                   # no multiplier or surcharge is documented
+      stacking: unknown
+      per_page: unknown
+      results_per_charge: unknown
+      free_parameters: []         # no parameter is documented as free
+      undocumented: [device, page, location, ai_overview]
+
+    charges:
+      failed_request:
+        charged: false
+        how: "API errors are not counted towards your monthly quota."
+        source: https://serpstack.com/pricing
+      timeout: {charged: unknown}
+      empty_serp: {charged: unknown}
+      client_timeout: {charged: unknown}
+      client_error:
+        charged: unknown
+        how: "Not stated separately; the pricing page says API errors are not counted."
+      cached_response: {charged: unknown}
+      billed_statuses: unknown
+      notes: null
+
+    cache:
+      on_by_default: unknown      # a cache is not mentioned
+
+    usage_reporting:
+      response_header: null
+      response_field: null
+      account_endpoint: null
+      notes: >
+        Not stated: no usage endpoint, response field or header was found in the
+        documentation. Usage is shown in the dashboard and sent in email notifications.
+        Error 104 `usage_limit_reached` signals that the allowance is used up.
+
+    purchase:
+      model: subscription
+      pricing: plan_units
+      plans:
+        - id: free
+          name: Free
+          price: 0
+          period: month
+          units: 100
+          unused_units: expire
+          on_limit: unknown       # no overage rate is listed; what happens is not stated
+          notes: "Non-commercial use, JSON only, no support."
+        - id: basic
+          name: Basic
+          price: 29.99
+          annual_price_per_month: 26.99
+          period: month
+          units: 5000
+          limits: {notes: "'No Rate Limit'. Concurrency is not stated."}
+          unused_units: expire
+          overage_unit_price: 0.023992
+        - id: business
+          name: Business
+          price: 99.99
+          annual_price_per_month: 87.99
+          period: month
+          units: 20000
+          limits: {notes: "'No Rate Limit'. Concurrency is not stated."}
+          unused_units: expire
+          overage_unit_price: 0.019998
+        - id: business_pro
+          name: Business Pro
+          price: 199.99
+          annual_price_per_month: 169.99
+          period: month
+          units: 50000
+          limits: {notes: "'No Rate Limit'. Concurrency is not stated."}
+          unused_units: expire
+          overage_unit_price: 0.0159992
+      # Paid plans: "After reaching 100% of the allowance, overages fees will apply". No
+      # cap and no way to switch it off are stated. See `conflicts`.
+      on_limit: overage
+      overage: null               # each plan has its own rate, listed on the pricing page
+      minimum: {amount: 29.99, period: month}
+      free:
+        units: 100
+        period: month
+        notes: "Non-commercial use, JSON only, no support."
+      addons:
+        - name: Platinum Support
+          notes: >
+            Billed annually: Standard $479.88, Professional $599.88, Professional Plus
+            $719.88, Enterprise custom. Described as pre-checked when a plan is selected.
+            These tier names are not serpstack's plan names.
+          source: https://serpstack.com/faq
+      beyond_published: >
+        Enterprise ("Volume Searches"): custom, "Contact us for a quote". The largest
+        published plan is Business Pro, 50,000 searches a month.
+      refunds: >
+        Payments applied to invoices are generally not refunded; a partial or full refund
+        is only considered for yearly subscribers "with appropriate reasons" (service
+        agreement, 6.8.2 and 7.3). The Terms allow a refund of the latest term when the
+        customer terminates after more than three outages in a calendar week.
+
+    conflicts:
+      - topic: What happens when the monthly allowance is used up
+        statements:
+          - text: "After reaching 100% of the allowance, overages fees will apply"
+            source: https://serpstack.com/billing-overages-documentation
+          - text: >-
+              The Terms say that on exceeding the monthly limit the API returns an error
+              and no further calls are possible in that term.
+            source: https://serpstack.com/terms
+          - text: "The documentation defines error 104 `usage_limit_reached`."
+            source: https://docs.apilayer.com/serpstack/docs/getting-started
+        used: >
+          Overage: the pricing page lists an overage rate for every paid plan and the
+          overage page describes the billing. Which of the two a live key gets has to be
+          measured.
+      - topic: Ending a subscription
+        statements:
+          - text: "Clause 7.1: notice of non-renewal at least 30 days before the end of the term."
+            source: https://serpstack.com/agreement
+          - text: "Clause 7.4: the plan can be ended at any time by downgrading."
+            source: https://serpstack.com/agreement
+        used: "Neither: this file does not model cancellation."
+
+    notes: >
+      Each overage rate is exactly four times the plan's own price per search (29.99 /
+      5,000 x 4 = 0.023992, and the same for the other two plans). This is arithmetic on
+      the published figures, not a rule the vendor states. Overage is billed to the card
+      after the billing period ends; notifications are sent at 75%, 90% and 100% of the
+      allowance. The allowance is monthly on yearly billing too. Yearly billing is "up to
+      15%" cheaper, and the discount differs by plan. Features are gated by plan: CSV
+      output and commercial use only on paid plans.
+
+adapter:
+  version: "1"

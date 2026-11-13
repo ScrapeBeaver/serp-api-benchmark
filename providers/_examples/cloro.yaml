@@ -1,0 +1,270 @@
+# Example: credits with additive add-ons instead of multipliers. A synchronous request, each
+# further page and the AI Overview each add a flat 2 credits; the AI Overview is charged
+# even when Google shows none. The response reports its own charge in a header. The Terms
+# of Service forbid benchmarking, so this file cannot leave `status: draft`.
+#
+# Written from research/pricing/group-e.md (read 2026-11-12). Not called with a live key.
+
+schema_version: 1
+id: cloro
+name: cloro
+status: draft                     # see `terms`: stays here until a written permission is recorded
+homepage: https://cloro.dev
+docs_url: https://cloro.dev/docs/guides/providers.md
+
+product:
+  name: Google Search (synchronous)
+  endpoint: "POST https://api.cloro.dev/v1/monitor/google"
+  mode: light
+  settings: {}                    # one page, no `include` add-ons
+  alternatives:
+    - name: Google Search, async/batch
+      why_not: "Cheaper (3 credits for one page) but asynchronous; the benchmark measures synchronous requests."
+      source: https://cloro.dev/docs/guides/providers.md
+    - name: Google News
+      why_not: "A different product: news results, not web search. 3 credits and 2 for each further page, async."
+      source: https://cloro.dev/docs/guides/providers.md
+    - name: Google AI Mode
+      why_not: "A different product: AI Mode, not web search. 4 credits, async."
+      source: https://cloro.dev/docs/guides/providers.md
+  notes: >
+    The published price list is for async/batch requests; the synchronous endpoint adds 2
+    credits to every request. A full Google `url` may be passed instead of parameters and
+    is billed as the equivalent standard request (`num=30` is billed as `pages: 3`).
+
+terms:
+  url: https://cloro.dev/terms    # clause 2.3(e); the page says it was last updated on 19 July 2026
+  checked_at: 2026-11-12
+  benchmarking: prohibited
+  quote: "for purposes of benchmarking or competitive analysis"
+  permission: null
+
+auth:
+  env: []
+
+capabilities:
+  mobile: true                    # `desktop`, `mobile`/`android`, `ios`
+  city_location: true             # `location` or `uule`
+  pagination: true                # `pages`, up to 10 in one request
+  raw_html: true                  # `include.html`
+  ai_overview: true               # `include.aioverview`
+
+billing:
+  - effective_from: 2026-11-12
+    checked_at: 2026-11-12
+    currency: USD
+    sources:
+      - https://cloro.dev/pricing
+      - https://cloro.dev/docs/guides/providers.md
+      - https://cloro.dev/docs/guides/billing.md
+      - https://cloro.dev/docs/guides/concurrency.md
+      - https://cloro.dev/docs/guides/error-handling.md
+      - https://cloro.dev/docs/api-reference/endpoint/monitor-google.md
+      - https://cloro.dev/docs/api-reference/endpoint/google/ai-overview.md
+      - https://cloro.dev/docs/api-reference/endpoint/get-credits.md
+      - https://cloro.dev/terms
+    sources_need_browser:
+      - https://cloro.dev/pricing     # the cost calculator only; the plan table is in the page
+    prices_exclude_tax: unknown
+
+    meter:
+      unit: credit
+      unit_label: credit
+      shared_across_products: true    # one balance for every endpoint and every API key of an organization
+
+    request_cost:
+      base: 5
+      derived: >
+        Google Search is 3 credits on the published (async/batch) list; "sync requests add
+        a +2 credit surcharge". 3 + 2 = 5 for one page.
+      rules:
+        - when: {option: sync}
+          add: 2
+          source: https://cloro.dev/docs/guides/providers.md
+          notes: >
+            Documentation only: this surcharge is already inside `base`. It is added once
+            to every request on the synchronous `/v1/monitor/*` endpoints.
+        - when: {page: "2+"}
+          add: 2
+          source: https://cloro.dev/docs/guides/providers.md
+          notes: >
+            Pages come inside one request (`pages`, at most 10), and each page from 2 to
+            10 adds 2 credits. This rule adds 2 once, which is the cost of asking for two
+            pages; a request for N pages adds 2 x (N - 1).
+        - when: {ai_overview: true}
+          add: 2
+          applies: always
+          source: https://cloro.dev/docs/api-reference/endpoint/google/ai-overview.md
+          notes: >
+            One flat add-on that covers `include.aioverview` and `include.paaAioverview`.
+            It is still charged when Google shows no AI Overview.
+        - when: {option: state_targeting}
+          add: 2
+          source: https://cloro.dev/docs/guides/providers.md
+          notes: >
+            Documentation only: this add-on is listed for ChatGPT, Perplexity, Gemini and
+            Bing AI Mode, not for Google Search.
+      stacking: sum               # base + add-ons + the sync surcharge
+      per_page: included
+      results_per_charge: 10      # from the vendor's example: `num=30` is billed as `pages: 3`
+      free_parameters: [include.html]     # "HTML responses are included at no additional cost"
+      undocumented: [device, location]    # no charge is stated for Google, and neither is called free
+
+    charges:
+      failed_request:
+        charged: false
+        how: "Errors, FAILED tasks and internal retries are free."
+        source: https://cloro.dev/docs/guides/billing.md
+      timeout:
+        charged: unknown
+        how: >
+          Not stated separately. Errors are free; a synchronous request can run for about
+          5 minutes, with up to 5 internal attempts.
+        source: https://cloro.dev/docs/guides/error-handling.md
+      empty_serp:
+        charged: unknown
+        how: >
+          Not stated for a page without organic results. A successful response is charged
+          even when optional fields (ads, shopping cards, sources) come back empty.
+        source: https://cloro.dev/docs/guides/billing.md
+      client_timeout:
+        charged: true
+        how: >
+          "Service Credits are charged for API calls that you cancel or terminate before
+          they are completed" (Terms, 1.4). The billing guide differs: see `conflicts`.
+        source: https://cloro.dev/terms
+      client_error:
+        charged: false
+        how: "Errors are free; a synchronous request is charged on HTTP 200 with `success: true`."
+        source: https://cloro.dev/docs/guides/billing.md
+      cached_response: {charged: unknown}
+      billed_statuses: [200]      # and only with `success: true` in the body
+      notes: >
+        A request sent again is a new billable request. The recommended client timeout is
+        at least 300 seconds.
+
+    cache:
+      on_by_default: unknown      # a cache is not mentioned
+
+    usage_reporting:
+      response_header: X-Credits-Charged      # "reports the exact charge"
+      response_field: null
+      account_endpoint: "GET /v1/credits"
+      notes: >
+        Charged synchronous responses also carry `X-Credits-Remaining`. The account
+        endpoint returns `remaining`, `perCycle` and `cycleResetsAt`.
+
+    purchase:
+      model: subscription
+      pricing: plan_units
+      plans:
+        - id: free
+          name: Free
+          price: 0
+          period: month
+          units: 500
+          limits: {concurrency: 1, requests_per_second: 1000}
+          unused_units: expire
+        - id: lite
+          name: Lite
+          price: 30
+          period: month
+          units: 37500
+          limits: {concurrency: 10, requests_per_second: 1000}
+          unused_units: expire
+        - id: hobby
+          name: Hobby
+          price: 100
+          period: month
+          units: 250000
+          limits: {concurrency: 20, requests_per_second: 1000}
+          unused_units: expire
+        - id: starter
+          name: Starter
+          price: 250
+          period: month
+          units: 650000
+          limits: {concurrency: 50, requests_per_second: 1000}
+          unused_units: expire
+        - id: growth
+          name: Growth
+          price: 500
+          period: month
+          units: 1350000
+          limits: {concurrency: 75, requests_per_second: 1000}
+          unused_units: expire
+          notes: "Growth in the comparison table; the plan card is labelled 'Scale, $500+'."
+        - id: business
+          name: Business
+          price: 1000
+          period: month
+          units: 2800000
+          limits: {concurrency: 100, requests_per_second: 1000}
+          unused_units: expire
+        - id: enterprise_2k
+          name: Enterprise 2K
+          price: 2000
+          period: month
+          units: 5871025
+          limits: {concurrency: 135, requests_per_second: 1000}
+          unused_units: expire
+        - id: enterprise_3k
+          name: Enterprise 3K
+          price: 3000
+          period: month
+          units: 9306606
+          limits: {concurrency: 175, requests_per_second: 1000}
+          unused_units: expire
+        - id: enterprise_4k
+          name: Enterprise 4K
+          price: 4000
+          period: month
+          units: 12756261
+          limits: {concurrency: 215, requests_per_second: 1000}
+          unused_units: expire
+        - id: enterprise_5k
+          name: Enterprise 5K
+          price: 5000
+          period: month
+          units: 16391783
+          limits: {concurrency: 255, requests_per_second: 1000}
+          unused_units: expire
+      on_limit: block             # `403 INSUFFICIENT_CREDITS` on every self-serve plan
+      overage: null
+      minimum: {amount: 30, period: month}
+      free:
+        units: 500
+        period: month
+        notes: >
+          No card, 1 concurrent request, all endpoints. Monthly bonuses while the action
+          stays live: 500 for a G2 review, 500 for a backlink, 200 for a Reddit intro.
+      beyond_published: >
+        Enterprise above $5,000 a month: custom, through sales. A 12-month Enterprise
+        contract gives 20% more credits a month at the same fee, 1.3x concurrency and a
+        price lock, and bills overage at the contracted rate per credit.
+      refunds: "None on cancellation or for unused credits."
+
+    conflicts:
+      - topic: Whether a call cancelled by the client is charged
+        statements:
+          - text: "Service Credits are charged for API calls that you cancel or terminate before they are completed"
+            source: https://cloro.dev/terms
+          - text: >-
+              The billing guide says a 499 after cancelling is free, but an attempt that is
+              already running can still be charged if it succeeds.
+            source: https://cloro.dev/docs/guides/billing.md
+        used: >
+          The Terms (charged): both pages say a cancelled call can be charged. What a
+          cancelled call was actually charged has to be measured.
+
+    notes: >
+      No annual option and no pay-as-you-go on the self-serve plans. The limit of 1,000
+      requests a second is per endpoint and per API key; concurrency is a hard limit for
+      synchronous and async requests together, and a request over it is refused with
+      `429 CONCURRENCY_LIMIT_EXCEEDED`. Email alerts are sent at 80% and 100% of the
+      credits. On an upgrade inside a cycle the new balance is the new plan's credits
+      minus those already used, and the price is prorated. The vendor's examples, async:
+      3 pages with the AI Overview cost 9 credits, 10 pages with it cost 23.
+
+adapter:
+  version: "1"

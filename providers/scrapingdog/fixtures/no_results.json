@@ -1,0 +1,31 @@
+{
+ "description": "No organic results: the documented shape with an empty list.",
+ "source": "Built from the documented request and response of the Google Search API (https://www.scrapingdog.com/documentation/google-search-api/). Illustrative values; not a recorded response. To be replaced by a recorded one after the first live call.",
+ "task": {
+  "query": "football",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "search_information": {
+    "time_taken": 0.48,
+    "total_results": 3690000,
+    "query_displayed": "football",
+    "organic_results_state": "Fully empty",
+    "url": "https://www.google.com/search?q=football&gl=us&hl=en"
+   },
+   "organic_results": []
+  }
+ },
+ "expect": {
+  "outcome": "empty_results",
+  "organic_count": 0
+ }
+}

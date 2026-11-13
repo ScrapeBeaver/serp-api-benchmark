@@ -1,0 +1,75 @@
+name: Publish the page
+
+# Builds the results page from the records on the `benchmark-data` branch and publishes it
+# with GitHub Pages. Started by the benchmark run when it has stored new records, by a
+# change to the page or the code on the default branch, or by hand.
+#
+# One-time setup: Settings, Pages, Source: GitHub Actions; then the custom domain there.
+#
+# A push builds the page only in a public repository: a private fork has no Pages to
+# publish to. Starting this workflow by hand works wherever Pages is set up.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "src/**"
+      - "providers/**"
+      - "bench.yaml"
+      - ".github/workflows/pages.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only the newest build matters.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.event_name == 'workflow_dispatch' || !github.event.repository.private
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash   # with pipefail, so a failed build is a failed job
+    steps:
+      - uses: actions/checkout@v4
+      - name: Records
+        # Every run file stored so far. Before the first run there are none, and the page
+        # says so.
+        run: |
+          mkdir -p data/raw
+          if git fetch --quiet --depth 1 origin benchmark-data 2>/dev/null; then
+            git archive FETCH_HEAD raw 2>/dev/null | tar -x -C data || echo "The data branch has no records yet."
+          else
+            echo "There is no data branch yet."
+          fi
+          echo "Run files: $(find data/raw -name 'run-*.jsonl.gz' | wc -l)"
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync --locked
+      - name: Build
+        run: uv run serp-bench site --records data/raw --out dist | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

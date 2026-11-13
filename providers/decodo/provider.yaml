@@ -1,0 +1,277 @@
+# Decodo. Facts as declared in its documentation and on its pricing page.
+# Its prices are a rate card: a plan is a monthly budget in dollars, every kind of request
+# has its own price per 1,000, and that price falls as the plan grows. Two endpoints return
+# Google results at different rates; the cheaper one that is documented to work is measured.
+# Prices: research/pricing/group-b.md, read on 2026-11-12. Request and response: the
+# documentation pages under `docs_url`, read on 2026-11-12.
+
+schema_version: 1
+id: decodo
+name: Decodo
+status: conformance   # called with a live key on 2026-11-12: see conformance.json
+homepage: https://decodo.com
+docs_url: https://help.decodo.com/docs/web-data-api-introduction
+
+product:
+  name: Web Data API /search
+  endpoint: "POST https://data.decodo.com/v1/search"
+  mode: light
+  settings: {}          # query, geo, locale and page only: the endpoint has no other switches
+  alternatives:
+    - name: "Web Data API /scrape with `target: google_search`, Premium proxy pool"
+      endpoint: "POST https://data.decodo.com/v1/scrape"
+      why_not: >
+        Dearer on every plan: $1.00 to $0.50 per 1,000 against $0.75 to $0.40 for /search.
+        "All Google templates use the Premium Proxy Pool by default". With JavaScript
+        rendering (`headless`), which the published request example sets and the AI Overview
+        needs, it is $1.50 to $0.85.
+      source: https://help.decodo.com/docs/web-data-api-billing
+    - name: "Web Data API /scrape with `target: google_search`, Standard proxy pool"
+      endpoint: "POST https://data.decodo.com/v1/scrape"
+      why_not: >
+        Would be cheaper ($0.50 to $0.15 per 1,000), but the documentation does not say that
+        a Google template accepts `proxy_pool: standard`: the parameter table says the
+        Premium pool is "used for Target Templates". To be checked with a live key.
+      source: https://help.decodo.com/docs/web-data-api-scrape-parameters
+    - name: Web Scraping API (legacy)
+      endpoint: "POST https://scraper-api.decodo.com/v2/scrape"
+      why_not: >
+        "Web Scraping API is a legacy product. It's replaced by /scrape in Web Data API." Its
+        Core and Advanced plans are no longer for sale.
+      source: https://help.decodo.com/docs/web-scraping-api-introduction
+    - name: Fast Search API (legacy)
+      endpoint: "https://fastsearch.decodo.com/v0/search"
+      why_not: "Replaced by /v1/search."
+      source: https://help.decodo.com/docs/web-data-api-migration-guide
+  notes: >
+    /v1/search "gets Google search results for a query in under a second" and returns
+    "parsed Google organic results and top stories"; it is synchronous only, returns one
+    page per call and no AI Overview. /v1/scrape with `target: google_search` is the full
+    Google results page template, "built to obtain Google Search and Google AI Overview
+    results", parsed (`parse: true`) or as raw HTML, in real time, asynchronously or in
+    batches. Both are covered by one subscription and one API key.
+
+terms:
+  benchmarking: unknown           # the terms of service were not read
+
+auth:
+  env: [DECODO_API_KEY]           # sent as `Authorization: Bearer <key>`; one key for the whole Web Data API
+
+capabilities:                     # of /v1/search, whose documented parameters are query, geo, uule, gl, locale, page
+  mobile: false                   # no device parameter (the /scrape template has `device_type`)
+  city_location: true             # `uule` is accepted (live call, 2026-11-12); how precisely it is honoured is not stated
+  pagination: true                # `page`
+  raw_html: false                 # no parameter for it; raw HTML comes from /scrape
+  ai_overview: false              # "If you require detailed, rich data including AI overview Google Search target would suit your needs better"
+
+billing:
+  - effective_from: 2026-11-12
+    checked_at: 2026-11-12
+    currency: USD
+    sources:
+      - https://decodo.com/web-data-api/pricing
+      - https://help.decodo.com/docs/web-data-api-billing
+      - https://help.decodo.com/docs/web-data-api-introduction
+      - https://help.decodo.com/docs/web-data-api-search-introduction
+      - https://help.decodo.com/docs/web-data-api-search-parameters
+      - https://help.decodo.com/docs/web-scraping-api-google-search
+      - https://help.decodo.com/docs/web-scraping-api-google-templates
+      - https://help.decodo.com/docs/web-data-api-response-codes
+      - https://help.decodo.com/docs/web-data-api-response-headers
+      - https://help.decodo.com/docs/web-scraping-api-statistics
+      - https://help.decodo.com/docs/trials
+      - https://decodo.com/faq/billing/can-i-get-a-refund
+      - https://decodo.com/web-data-api
+    prices_exclude_tax: unknown
+
+    meter:
+      unit: request               # "Each endpoint is priced per 1K requests"
+      unit_label: request
+      shared_across_products: true    # one budget for /scrape, /search, /crawl and /map; proxies are separate subscriptions
+
+    request_cost:
+      base: 1                     # one call to /v1/search is one request, priced by the plan's rate below
+      rules: []                   # /search has a "single rate per plan": no parameter changes the price
+      per_page: separate_request  # each call returns one page
+      results_per_charge: unknown # not stated for /search
+      free_parameters: [query, geo, uule, gl, locale, page]
+      # /v1/search has no device parameter and returns no AI Overview, and the fuller results
+      # page comes from another endpoint at another rate: none of the three has a price here.
+      undocumented: [mode, device, ai_overview]
+
+    charges:
+      failed_request:
+        charged: false
+        how: "You only pay for successful requests ... failures on our side (500, 524 and 613) are never charged."
+        source: https://help.decodo.com/docs/web-data-api-billing
+      timeout:
+        charged: unknown
+        how: "The status a timeout returns is not stated. Statuses 500, 524 and 613 are not billed."
+        source: https://help.decodo.com/docs/web-data-api-response-codes
+      empty_serp: {charged: unknown}
+      client_timeout: {charged: unknown}
+      client_error:
+        charged: true
+        how: "Statuses 400, 401, 403, 404 and 429 are billed \"if response is not empty\"."
+        source: https://help.decodo.com/docs/web-data-api-response-codes
+      cached_response: {charged: unknown}
+      billed_statuses: [200, 204, 400, 401, 403, 404, 429]
+      notes: >
+        "Responses with 2xx or 4xx status codes are considered successful if the results are
+        retrieved." The 4xx statuses are billed only "if response is not empty". 204 ("The
+        job is not yet completed") is listed as billed. 429 is returned both for exceeding
+        the plan's rate limit and when requests to a domain are limited for a low success
+        rate.
+
+    cache:
+      on_by_default: unknown      # not stated
+
+    usage_reporting:
+      notes: >
+        No header or field carries the charge or the remaining budget: the response headers
+        are `x-task-id` and `x-traffic-generated` (bytes). "Web Data API usage cannot be
+        retrieved through the Public API yet"; the statistics endpoints cover only the legacy
+        Web Scraping API and proxies. The dashboard shows request count, success rate,
+        traffic and spend.
+
+    purchase:
+      model: subscription
+      pricing: rate_card
+      shapes:                     # the rows of the published rate card that can return Google results
+        search:
+          when: {option: search_endpoint}
+          notes: "/v1/search: one rate per plan, whatever the parameters."
+        search_page_2:            # the same rate, written out so that a later page can be quoted
+          when: {option: search_endpoint, page: "2+"}
+          notes: "/v1/search with `page`: each call returns one page, at the single rate."
+        search_operators:
+          when: {option: search_endpoint, query_operators: true}
+          notes: "/v1/search with operators in `query`: the single rate."
+        scrape_standard:
+          when: {option: scrape_standard_proxy}
+          notes: "/v1/scrape on the Standard proxy pool. Not documented as available to Google templates."
+        scrape_standard_js:
+          when: {option: scrape_standard_proxy_js}
+          notes: "Standard pool with `headless` set: any value turns JavaScript rendering on."
+        scrape_premium:
+          when: {option: scrape_premium_proxy}
+          notes: "/v1/scrape on the Premium pool: what `target: google_search` uses when `proxy_pool` is left out."
+        scrape_premium_js:
+          when: {option: scrape_premium_proxy_js}
+          notes: "Premium pool with `headless` set; the documentation advises it for the AI Overview."
+      benchmarked_shape: search
+      plans:
+        - id: free
+          name: Free
+          price: 0
+          period: month
+          rates_per_1k: {search: 0.75, search_page_2: 0.75, search_operators: 0.75,
+                         scrape_standard: 0.50, scrape_standard_js: 0.75, scrape_premium: 1.00, scrape_premium_js: 1.50}
+          limits: {requests_per_second: 10}
+          notes: >
+            The budget is "$5 in free credit" a month, not the price: "up to 5K crawls or 10K
+            pages scraped". A plan's budget is its `price` in this contract, so this plan
+            never covers a volume in a quote.
+        - id: p19
+          name: "$19"
+          price: 19
+          period: month
+          rates_per_1k: {search: 0.75, search_page_2: 0.75, search_operators: 0.75,
+                         scrape_standard: 0.50, scrape_standard_js: 0.75, scrape_premium: 1.00, scrape_premium_js: 1.50}
+          limits: {requests_per_second: 10}
+          notes: "Up to 19K crawls or 38K pages scraped."
+        - id: p49
+          name: "$49"
+          price: 49
+          period: month
+          rates_per_1k: {search: 0.65, search_page_2: 0.65, search_operators: 0.65,
+                         scrape_standard: 0.40, scrape_standard_js: 0.65, scrape_premium: 0.75, scrape_premium_js: 1.25}
+          limits: {requests_per_second: 25}
+          notes: "Up to 65K crawls or 122K pages scraped."
+        - id: p99
+          name: "$99"
+          price: 99
+          period: month
+          rates_per_1k: {search: 0.60, search_page_2: 0.60, search_operators: 0.60,
+                         scrape_standard: 0.30, scrape_standard_js: 0.60, scrape_premium: 0.70, scrape_premium_js: 1.10}
+          limits: {requests_per_second: 50}
+          notes: "Up to 141K crawls or 330K pages scraped."
+        - id: p249
+          name: "$249"
+          price: 249
+          period: month
+          rates_per_1k: {search: 0.55, search_page_2: 0.55, search_operators: 0.55,
+                         scrape_standard: 0.20, scrape_standard_js: 0.55, scrape_premium: 0.65, scrape_premium_js: 1.00}
+          limits: {requests_per_second: 100}
+          notes: "Up to 383K crawls or 1.2M pages scraped."
+        - id: p499
+          name: "$499"
+          price: 499
+          period: month
+          rates_per_1k: {search: 0.50, search_page_2: 0.50, search_operators: 0.50,
+                         scrape_standard: 0.18, scrape_standard_js: 0.50, scrape_premium: 0.60, scrape_premium_js: 0.95}
+          limits: {requests_per_second: 150}
+          notes: "Up to 831K crawls or 2.7M pages scraped. At $0.50 per 1,000 it buys 998,000 searches, just under a million."
+        - id: p999
+          name: "$999"
+          price: 999
+          period: month
+          rates_per_1k: {search: 0.45, search_page_2: 0.45, search_operators: 0.45,
+                         scrape_standard: 0.16, scrape_standard_js: 0.45, scrape_premium: 0.55, scrape_premium_js: 0.90}
+          limits: {requests_per_second: 200}
+          notes: "Up to 1.8M crawls or 6.2M pages scraped."
+        - id: p1499
+          name: "$1,499"
+          price: 1499
+          period: month
+          rates_per_1k: {search: 0.40, search_page_2: 0.40, search_operators: 0.40,
+                         scrape_standard: 0.15, scrape_standard_js: 0.40, scrape_premium: 0.50, scrape_premium_js: 0.85}
+          limits: {requests_per_second: 200}
+          notes: "Up to 2.9M crawls or 9.9M pages scraped."
+      on_limit: unknown           # what happens when the budget of a paid plan is spent is not stated
+      overage: null
+      free:
+        units: 10000
+        period: month
+        notes: >
+          A free plan, not a trial: "up to 10K requests per month", recurring, no credit
+          card, every endpoint. The figure is the vendor's upper bound; see `conflicts` for
+          what the $5 of credit buys on /search. Activating it gives up the 14-day refund on
+          later Web Data API purchases.
+      beyond_published: >
+        Above $1,499: "Need more? Chat with us", contact sales. The pricing page has a
+        Regular / Enterprise toggle and publishes no enterprise prices.
+      refunds: >
+        14-day money-back, for the first purchase only, self-service, not paid in crypto, and
+        for scraping products only when no more than 20% of the plan has been used.
+
+    conflicts:
+      - topic: How many searches the free plan covers
+        statements:
+          - {text: "The free plan includes 10k requests", source: "https://help.decodo.com/docs/web-data-api-search-introduction"}
+          - {text: "$5 in free credit, up to 10K requests across all endpoints; /search costs $0.75 per 1,000 on the Free plan, so $5 buys 6,667 searches", source: "https://help.decodo.com/docs/web-data-api-billing"}
+        used: >
+          Neither enters a price. `free.units` carries the vendor's "up to 10K"; by the rate
+          card, 10K is reached only with /scrape on the Standard pool ($0.50 per 1,000).
+      - topic: Whether JavaScript rendering and protected sites cost more
+        statements:
+          - {text: "No pricing multipliers ... no hidden multipliers for JavaScript rendering or protected sites", source: "https://decodo.com/web-data-api"}
+          - {text: "The rate card has separate, higher rates for '+ JS' and for the Premium proxy pool", source: "https://help.decodo.com/docs/web-data-api-billing"}
+        used: "The rate card in the billing documentation."
+
+    benchmark_account:
+      plan: free                  # the recurring free plan, no card; confirmed by the account owner on 2026-11-12
+    notes: >
+      The pricing cards state what a plan buys ("$19/month - Up to 19K crawls or 38K pages
+      scraped"); on every plan that equals the price divided by a rate of the card, which is
+      why a plan is read as a budget. The documentation does not use that word. Rows of the
+      rate card left out of `shapes`: /crawl and /map (the same rates as /scrape on the
+      Premium pool, with and without JS) and the LLM templates, Google AI Mode among them: $1
+      per 1,000 on every plan, $1.50 from 2026-11-16. Unused budget, an annual price and a
+      price for asynchronous requests are not stated. The subscription renews monthly;
+      pay-as-you-go exists only for Decodo's proxy products.
+
+adapter:
+  version: "1"
+  base_url: https://data.decodo.com
+  base_url_env: DECODO_BASE_URL

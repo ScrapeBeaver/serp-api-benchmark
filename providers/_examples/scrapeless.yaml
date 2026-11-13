@@ -1,0 +1,192 @@
+# Scrapeless: a balance in dollars, drawn down per request. A subscription is not an
+# allowance of searches: it is a monthly prepaid commitment that expires with the month
+# and buys a discount on every unit price. Top-ups without a subscription never expire.
+# Facts from research/pricing/group-c.md, section 4, read on 2026-11-12.
+schema_version: 1
+id: scrapeless
+name: Scrapeless
+status: draft
+homepage: https://www.scrapeless.com
+docs_url: https://docs.scrapeless.com/en/docs/scraping-api/google-search/endpoints/
+
+product:
+  name: Google Search API (scraper.google.search)
+  endpoint: "POST https://api.scrapeless.com/api/v1/scraper/request"
+  mode: light                     # the only Google web search mode; there is no dearer one
+  settings: {actor: scraper.google.search}
+  alternatives:
+    - name: AI Overview actor (scraper.overview)
+      why_not: >
+        Dearer ($1.80 per 1,000 at the list rate) and a separate actor for AI Overviews,
+        not the web search endpoint.
+      source: https://www.scrapeless.com/en/pricing
+    - name: AI Mode actor (scraper.aimode)
+      why_not: "Dearer ($1.80 per 1,000 at the list rate) and a different Google product."
+      source: https://www.scrapeless.com/en/pricing
+  notes: >
+    One endpoint for every actor. HTTP 200 returns the result directly; HTTP 201 returns
+    a `taskId` to poll at `GET /api/v1/scraper/result/{taskId}`. There is no separately
+    priced synchronous mode. Other search types (`tbm`) are modes of the same endpoint
+    with no separate price stated.
+
+terms:
+  url: https://www.scrapeless.com/en/legal/terms
+  checked_at: 2026-11-12
+  benchmarking: unknown           # the terms were read for billing only
+
+auth:
+  env: []
+
+capabilities:
+  mobile: false                   # the endpoint documentation says device support is desktop
+  city_location: true             # `location`, `uule`
+  pagination: true                # `start`
+  raw_html: true                  # `metadata.rawUrl` points to the stored raw HTML
+  ai_overview: unknown            # see `conflicts`
+
+billing:
+  - effective_from: 2026-11-12
+    checked_at: 2026-11-12
+    currency: USD
+    sources:
+      - https://www.scrapeless.com/en/pricing
+      - https://www.scrapeless.com/en/product/google-search-api
+      - https://www.scrapeless.com/en/solutions/google-search-seo
+      - https://docs.scrapeless.com/en/help/faq/subscription-billing/
+      - https://docs.scrapeless.com/en/docs/scraping-api/google-search/endpoints/
+      - https://docs.scrapeless.com/en/docs/scraping-api/google-search/quickstart/
+      - https://docs.scrapeless.com/en/docs/scraping-api/results-and-polling/
+      - https://apidocs.scrapeless.com/api-11949851
+      - https://www.scrapeless.com/en/legal/terms
+    sources_need_browser:         # a plain download of these pages has no price tables
+      - https://www.scrapeless.com/en/pricing
+      - https://www.scrapeless.com/en/product/google-search-api
+    prices_exclude_tax: unknown
+
+    meter:
+      unit: usd
+      unit_label: Credits (USD)   # the provider calls the dollar balance "Credits"
+      shared_across_products: true    # every actor, browser hours, proxies per GB, Web Unlocker
+
+    request_cost:
+      base: 0.001                 # the list rate, without a subscription ("Basic")
+      derived: "$1.00 per 1,000 requests of scraper.google.search on the pricing page, divided by 1,000"
+      rules:
+        - when: {option: scraper.overview}    # a separate actor, not a flag of the search
+          set: 0.0018
+          source: https://www.scrapeless.com/en/pricing
+          notes: "$1.80 per 1,000 at the list rate. Listed so the AI Overview price is on record."
+        - when: {option: scraper.aimode}
+          set: 0.0018
+          source: https://www.scrapeless.com/en/pricing
+          notes: "$1.80 per 1,000 at the list rate."
+      stacking: unknown           # only one factor is documented: the subscription discount
+      per_page: separate_request  # `start` offset; no surcharge is stated for it
+      results_per_charge: unknown # `num` exists; the parameter reference was not read
+      free_parameters: [location] # city-level location is described as included
+      # `device`: only desktop is documented. `query_operators`: not mentioned.
+      # `ai_overview`: whether an AI Overview inside a search response costs extra is
+      # not stated.
+      undocumented: [device, query_operators, ai_overview]
+
+    charges:
+      failed_request:
+        charged: false
+        how: "Only requests that succeed are billed; blocked attempts are retried at the provider's cost."
+        source: https://www.scrapeless.com/en/solutions/google-search-seo
+      timeout: {charged: unknown}
+      empty_serp: {charged: unknown}
+      client_timeout: {charged: unknown}
+      client_error: {charged: unknown}
+      cached_response: {charged: unknown}
+      billed_statuses: unknown
+      notes: >
+        The billing FAQ says of AI Scraper tasks that producing a result can be charged
+        even if the application never retrieves it. A Google search can also complete as
+        a task (HTTP 201, then polling); whether the same applies to it is not stated.
+
+    cache:
+      on_by_default: unknown      # a cache is not mentioned
+
+    usage_reporting:
+      account_endpoint: "GET https://api.scrapeless.com/api/v1/me"
+      notes: >
+        Sent with `x-api-token`. Returns `credits` (the account balance, a string),
+        `excessCredits`, and `plan.credits` (what is left of the subscription),
+        `plan.endAt`, `plan.price`, `plan.status`, `plan.usage`. The charge for one
+        request is not reported in the response: `metadata` documents `engine` and
+        `rawUrl` only.
+
+    purchase:
+      model: pay_as_you_go
+      pricing: pay_as_you_go
+      tiers:                      # a subscription: paid every month, used or not
+        - {name: Growth, from_amount: 49, basis: monthly_commitment, rate_multiplier: 0.90}
+        - {name: Scale, from_amount: 199, basis: monthly_commitment, rate_multiplier: 0.85}
+        - {name: Business, from_amount: 399, basis: monthly_commitment, rate_multiplier: 0.80}
+        - {name: Enterprise, from_amount: 699, basis: monthly_commitment, rate_multiplier: 0.75}
+        - {name: Enterprise Plus, from_amount: 999, basis: monthly_commitment, rate_multiplier: 0.70}
+      minimum_topup: null         # not stated
+      unused_units: never_expire  # top-ups ("Team Credits"); the subscription balance expires each period
+      limits:
+        concurrency: 50
+        notes: >
+          Maximum concurrency by tier, as shown in the Browser/Crawl block of the pricing
+          page: Basic 50, Growth 100, Scale 200, Business 400, Enterprise 600, Enterprise
+          Plus 1000, Custom "Unlimited". HTTP 429 is returned when a rate limit is
+          exceeded; no request-rate figures are published.
+      beyond_published: >
+        Custom volume pricing through sales. The product page advertises enterprise
+        pricing below $0.50 per 1,000 searches on qualifying plans; it is not a published
+        tier.
+      refunds: "Subscription fees, credits and billed extra requests are non-refundable; exceptions case by case."
+
+    conflicts:
+      - topic: Range of the subscription discount
+        statements:
+          - text: "The plan cards show discounts of 10% to 30%."
+            source: https://www.scrapeless.com/en/pricing
+          - text: "The billing FAQ says subscription discounts range from 10% to 50%."
+            source: https://docs.scrapeless.com/en/help/faq/subscription-billing/
+        used: "The pricing page: it lists a discount for each plan."
+      - topic: Whether the AI Overview is part of the Google Search API
+        statements:
+          - text: "The product page lists Google AI Overview and Google AI Mode under what all plans include."
+            source: https://www.scrapeless.com/en/product/google-search-api
+          - text: "The solutions page says AI Overviews come from the separate scraper.overview actor."
+            source: https://www.scrapeless.com/en/solutions/google-search-seo
+          - text: "The pricing table prices scraper.overview at $1.80 per 1,000, against $1.00 for scraper.google.search."
+            source: https://www.scrapeless.com/en/pricing
+        used: "Neither: the cost of a search with an AI Overview is left undocumented, and the actor's price is recorded as an option."
+      - topic: List prices shown on marketing pages
+        statements:
+          - text: "Basic: $1.00 per 1,000 requests of scraper.google.search; Business: $399 a month, 20% off."
+            source: https://www.scrapeless.com/en/pricing
+          - text: "A pricing widget on the solutions page shows Basic at $0.00 per 1,000 and Business at $0 with 0% off."
+            source: https://www.scrapeless.com/en/solutions/google-search-seo
+        used: "The pricing page; the product page gives the same Google rates."
+
+    benchmark_account:
+      plan: unknown
+    notes: >
+      Subscription. The plan fee is prepaid usage: it is deposited into the balance each
+      month, and what is not used expires at the end of the period. The plan cards read
+      "$49 then Consumption-Based Pricing at 10% off", so usage beyond the prepaid amount
+      continues at the plan's discounted rate; the price curve follows that reading. How
+      the excess is paid (from top-up credits, by an early renewal, or in arrears) is not
+      stated. If it can only be bought by renewing the whole plan, the monthly cost rounds
+      up to a multiple of the plan fee.
+      Auto-renewal. With automatic renewal on, exceeding the commitment triggers a
+      renewal; without it, more balance has to be arranged before continuing. Automatic
+      top-ups exist and are set up through support.
+      Two balances. The subscription balance is spent first, then top-up credits. Top-up
+      credits never expire.
+      Yearly billing takes 10% off the plan fee: $44, $179, $359, $629 and $899 a month
+      for Growth to Enterprise Plus. An annual subscription gives a longer credit validity
+      period of unstated length.
+      Free trial. Activated on sign-up, once per user; the amount is not published. Trial
+      credits expire on the first top-up.
+      Minimum top-up: not stated. Payment by cryptocurrency is accepted.
+
+adapter:
+  version: "1"

@@ -1,0 +1,67 @@
+name: CI
+
+# No secrets are used here. Everything runs against fixtures and the offline mock.
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+
+jobs:
+  test:
+    name: Lint, tests, provider folders
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync --locked
+      - name: Lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+      - name: Tests
+        run: uv run pytest
+      - name: Provider folders (YAML, adapter, fixtures, conformance age)
+        run: uv run serp-bench check-providers
+      - name: The README's metrics section matches the code
+        run: |
+          uv run serp-bench metrics --update-readme README.md
+          git diff --exit-code README.md
+
+  smoke:
+    name: Smoke run (offline mock)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync --locked
+      - name: Run 20 tasks against the mock
+        run: uv run serp-bench run --providers mock --run 0 --limit 20 --interval 0.2
+      - name: Recompute the report from the records alone
+        run: uv run serp-bench verify "$(find out -name '*.jsonl.gz' | head -n 1)"
+      - name: Conformance of the mock
+        run: uv run serp-bench conformance --provider mock --out out/conformance
+      - name: Build the results page from those records
+        run: uv run serp-bench site --records out/raw --out dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-records
+          path: out/
+          retention-days: 7
+          if-no-files-found: error

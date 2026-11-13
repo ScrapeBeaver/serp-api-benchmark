@@ -1,0 +1,106 @@
+{
+ "description": "A delivered light request as the live API returned it: eight organic results, every link resolved, charged 10 credits.",
+ "source": "Recorded on 2026-11-12 from GET https://app.scrapingbee.com/api/v1/google. Descriptions and the blocks other than `organic_results` were emptied; positions, titles and links are as returned.",
+ "task": {
+  "query": "best running shoes",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json",
+   "spb-cost": "10",
+   "spb-request-id": "00000000-0000-4000-8000-000000000001"
+  },
+  "body": {
+   "meta_data": {
+    "url": "https://www.google.com/search?q=best+running+shoes&hl=en&gl=us&oq=best+running+shoes&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIHCAEQABiABDIHCAIQABiABDIKCAMQABgKGBYYHjIICAQQABgWGB4yCAgFEAAYFhgeMgoIBhAAGAoYFhgeMgoIBxAAGAoYFhgeMggICBAAGBYYHjIICAkQABgWGB7SAQgyOTQ2ajBqOagCBbACAfEFL9EfhdGcf3w&sourceid=chrome&ie=UTF-8",
+    "number_of_results": 194,
+    "zero_results_for_original_query": false,
+    "location": null,
+    "number_of_organic_results": 8,
+    "number_of_ads": 0,
+    "number_of_page": 10,
+    "goto_urls": {
+     "found": 0,
+     "resolved": 0
+    }
+   },
+   "organic_results": [
+    {
+     "position": 1,
+     "title": "7 Best Running Shoes in 2026",
+     "url": "https://runrepeat.com/guides/best-running-shoes",
+     "displayed_url": "https://runrepeat.com› guides › best-running-shoes",
+     "domain": "runrepeat.com",
+     "description": null
+    },
+    {
+     "position": 2,
+     "title": "The 15 Best Running Shoes of 2026",
+     "url": "https://www.runnersworld.com/gear/a19663621/best-running-shoes/",
+     "displayed_url": "https://www.runnersworld.com› ... › Running Shoes",
+     "domain": "www.runnersworld.com",
+     "description": null
+    },
+    {
+     "position": 3,
+     "title": "What are the best running shoes that you'd actually buy ...",
+     "url": "https://www.reddit.com/r/runninglifestyle/comments/1u5x7mx/what_are_the_best_running_shoes_that_youd/",
+     "displayed_url": "230+ comments  ·  5 months ago",
+     "domain": "www.reddit.com",
+     "description": null
+    },
+    {
+     "position": 4,
+     "title": "Best Running Shoes of the Year: 6 Top-Shelf Models",
+     "url": "https://sixminutemile.com/post/six-of-the-best-running-shoes-of-the-year/",
+     "displayed_url": "https://sixminutemile.com› post › six-of-the-best-runni...",
+     "domain": "sixminutemile.com",
+     "description": null
+    },
+    {
+     "position": 5,
+     "title": "Men's Best Sellers Running Shoes",
+     "url": "https://www.nike.com/w/mens-best-running-shoes-37v7jz76m50znik1zy7ok",
+     "displayed_url": "https://www.nike.com› Running › Shoes",
+     "domain": "www.nike.com",
+     "description": null
+    },
+    {
+     "position": 6,
+     "title": "Best Men's Road Running Shoes",
+     "url": "https://www.amazon.com/Best-Sellers-Men's-Road-Running-Shoes/zgbs/fashion/14210389011",
+     "displayed_url": "https://www.amazon.com› zgbs › fashion",
+     "domain": "www.amazon.com",
+     "description": null
+    },
+    {
+     "position": 7,
+     "title": "The Best Running Shoes 2026",
+     "url": "https://theruntesters.com/running-shoes/the-best-running-shoes-to-buy/",
+     "displayed_url": "https://theruntesters.com› Running Shoes",
+     "domain": "theruntesters.com",
+     "description": null
+    },
+    {
+     "position": 10,
+     "title": "The Best Running Shoe From Every Brand in 2026!",
+     "url": "https://www.youtube.com/watch?v=9qv6rh34rXU",
+     "displayed_url": null,
+     "domain": "www.youtube.com",
+     "description": null
+    }
+   ]
+  }
+ },
+ "expect": {
+  "outcome": "delivered",
+  "organic_count": 8,
+  "billed_units": 10.0,
+  "provider_request_id": "00000000-0000-4000-8000-000000000001"
+ }
+}

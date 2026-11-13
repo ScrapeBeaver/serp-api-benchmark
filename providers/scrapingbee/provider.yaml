@@ -1,0 +1,284 @@
+# ScrapingBee. Facts as declared in its documentation and on its pricing page.
+# A monthly credit subscription where the cheap request mode is the default, billing is
+# defined by HTTP status, and a plan can renew early when it is nearly used up instead of
+# charging overage. The ladder is not monotonic: the 1M-credit and the 14M-credit plans cost
+# almost the same per search.
+# Prices: research/pricing/group-c.md, section 2, read on 2026-11-12. Request and response:
+# the documentation page under `docs_url`, read on 2026-11-12.
+schema_version: 1
+id: scrapingbee
+name: ScrapingBee
+status: conformance   # called with a live key on 2026-11-12: see conformance.json
+homepage: https://www.scrapingbee.com
+docs_url: https://www.scrapingbee.com/documentation/google-api/
+
+product:
+  name: Google Search API (light request)
+  endpoint: "GET https://app.scrapingbee.com/api/v1/google"
+  mode: light
+  settings: {extra_params: "locale=<language>"}   # the only way to ask for a language; `light_request`
+                                                  # is left at its default, true, which is the cheap value
+  alternatives:
+    - name: Google Search API, regular request (`light_request=false`)
+      why_not: "Dearer: 15 credits instead of 10. Priced below as `mode: full`."
+      source: https://www.scrapingbee.com/documentation/google-api/
+    - name: Fast Search API
+      endpoint: "/api/v1/fast_search"
+      why_not: >
+        Not cheaper: 10 credits flat, the same as a light Google Search API request. A
+        separate product; the pages read do not say whether it returns the same parsed
+        Google results.
+      source: https://www.scrapingbee.com/documentation/fast-search/
+    - name: HTML API with a Google URL
+      why_not: >
+        Dearer and returns the page, not parsed results: 15 credits with classic or premium
+        proxies (switching JavaScript rendering off does not lower it), 75 with the stealth
+        proxy.
+      source: https://help.scrapingbee.com/en/article/credit-system-explained-1h2ackp/
+  notes: >
+    The Google Search API with its default light request: no browser is used, so some
+    content may be missing. A regular request costs 15 credits.
+
+terms:
+  benchmarking: unknown           # the terms of service were not read
+
+auth:
+  env: [SCRAPINGBEE_API_KEY]      # sent as `Authorization: Bearer <key>`; the `api_key` query parameter is deprecated
+
+capabilities:
+  mobile: true                    # `device=mobile`
+  city_location: false            # offered, but as `latitude`, `longitude` and `radius`: the benchmark names
+                                  # places, not coordinates, so tasks with a place are not sent here yet
+  pagination: true                # `page` for one page, `pages` for up to 10 aggregated in one response
+  raw_html: true                  # `add_html=true`
+  ai_overview: true               # `expand_aio=true`, best effort, with `search_type=classic` or `ads`
+
+billing:
+  - effective_from: 2026-11-12
+    checked_at: 2026-11-12
+    currency: USD
+    sources:
+      - https://www.scrapingbee.com/pricing/
+      - https://www.scrapingbee.com/features/google/
+      - https://www.scrapingbee.com/documentation/google-api/
+      - https://www.scrapingbee.com/documentation/
+      - https://www.scrapingbee.com/documentation/fast-search/
+      - https://www.scrapingbee.com/faq/
+      - https://help.scrapingbee.com/en/article/credit-system-explained-1h2ackp/
+      - https://help.scrapingbee.com/en/article/auto-renewal-f79j19/
+      - https://help.scrapingbee.com/en/article/manual-auto-renew-subscription-1t3adu8/
+      - https://help.scrapingbee.com/en/article/what-will-happen-to-my-unused-credits-11zt09p/
+      - https://help.scrapingbee.com/en/article/do-you-have-usage-based-pricing-or-one-time-prepay-credits-1ql2npn/
+      - https://help.scrapingbee.com/en/article/unable-to-purchase-one-time-add-on-1tsj28p/
+      - https://help.scrapingbee.com/en/article/do-you-offer-larger-trial-plans-1t3zlg2/
+      - https://help.scrapingbee.com/en/article/available-plans-explained-kbinm/
+    prices_exclude_tax: true      # the pricing page: all prices are exclusive of VAT
+
+    meter:
+      unit: credit
+      unit_label: API credit
+      shared_across_products: true    # HTML API, Google, Fast Search, Amazon, Walmart, ChatGPT, Gemini, YouTube
+
+    request_cost:
+      base: 10                    # a light request, the default
+      rules:
+        - when: {mode: full}      # `light_request=false`
+          set: 15
+          source: https://www.scrapingbee.com/documentation/google-api/
+        - when: {ai_overview: true}   # `expand_aio=true`
+          set: 15
+          source: https://www.scrapingbee.com/documentation/google-api/
+          notes: >
+            An expanded AI Overview needs JavaScript rendering, so the request costs 15
+            credits whether or not `light_request` is set. It is best effort; the
+            documentation does not say what is charged when no AI Overview comes back.
+      # The documentation gives a fixed table (10 light, 15 regular, 15 with an expanded
+      # AI Overview), not factors: a regular request with an expanded AI Overview is 15.
+      stacking: max
+      per_page: included          # `pages` returns up to 10 pages in one response
+      results_per_charge: unknown
+      free_parameters: []         # none is documented as free; see the note on `undocumented`
+      # `page`: the credit cost of each further page of `pages` is not stated.
+      # `query_operators`: search operators are not mentioned.
+      # No surcharge is stated for `device=mobile`, `add_html=true`, `country_code` or
+      # `latitude`/`longitude`/`radius`; they are not in the cost table, so they are
+      # taken to cost the same as the base.
+      undocumented: [page, query_operators]
+
+    charges:
+      failed_request:
+        charged: false
+        how: >
+          Only responses with a billed status are charged; a 500 from ScrapingBee is not
+          billed. A failed Google search is retried for up to 30 seconds first.
+        source: https://www.scrapingbee.com/faq/
+      timeout: {charged: unknown}
+      empty_serp: {charged: unknown}
+      client_timeout: {charged: unknown}
+      client_error:
+        charged: false
+        how: "400, 401, 403 and 429 are not billed. 404, 410 and 413 are billed."
+        source: https://www.scrapingbee.com/documentation/
+      cached_response: {charged: unknown}
+      billed_statuses: [200, 404, 410, 413]
+      notes: >
+        The status table is written for the HTML API. Whether a Google search can return a
+        billed 404, 410 or 413 is not stated. 401 means out of credits or an invalid key;
+        429 means too many concurrent requests.
+
+    cache:
+      on_by_default: unknown      # a cache is not mentioned
+
+    usage_reporting:
+      response_header: Spb-cost
+      account_endpoint: "GET https://app.scrapingbee.com/api/v1/usage"
+      notes: >
+        `Spb-cost` (the request's cost in credits) is documented in the general API
+        documentation; the Google API page does not list response headers. The usage
+        endpoint takes the API key as a Bearer token, returns `max_api_credit`,
+        `used_api_credit`, `max_concurrency`, `current_concurrency` and
+        `renewal_subscription_date` in real time, may be called 6 times a minute and does
+        not count toward concurrency.
+
+    purchase:
+      model: subscription
+      pricing: plan_units
+      plans:                      # monthly only: the pricing page shows no annual option
+        - id: hobby
+          name: Hobby
+          price: 19
+          period: month
+          units: 75000
+          limits: {concurrency: 25}
+          unused_units: expire
+        - id: freelance
+          name: Freelance
+          price: 49
+          period: month
+          units: 250000
+          limits: {concurrency: 50}
+          unused_units: expire
+        - id: startup
+          name: Startup
+          price: 99
+          period: month
+          units: 1000000
+          limits: {concurrency: 100}
+          unused_units: expire
+        - id: business
+          name: Business
+          price: 249
+          period: month
+          units: 3000000
+          limits: {concurrency: 200}
+          unused_units: expire
+        - id: business_plus
+          name: Business +
+          price: 599
+          period: month
+          units: 8000000
+          limits: {concurrency: 400}
+          unused_units: expire
+        - id: enterprise_14
+          name: Enterprise 14
+          price: 999
+          period: month
+          units: 14000000
+          limits: {concurrency: 500}
+          unused_units: expire
+        - id: enterprise_24
+          name: Enterprise 24
+          price: 1599
+          period: month
+          units: 24000000
+          limits: {concurrency: 600}
+          unused_units: expire
+        - id: enterprise_41
+          name: Enterprise 41
+          price: 2399
+          period: month
+          units: 41000000
+          limits: {concurrency: 700}
+          unused_units: expire
+        - id: enterprise_69
+          name: Enterprise 69
+          price: 3599
+          period: month
+          units: 69000000
+          limits: {concurrency: 800}
+          unused_units: expire
+        - id: enterprise_120
+          name: Enterprise 120
+          price: 5799
+          period: month
+          units: 120000000
+          limits: {concurrency: 900}
+          unused_units: expire
+      # There is no metered overage. Auto-renewal is an opt-in setting available on all
+      # plans; without it requests are refused (HTTP 401). See `notes` at the end of this
+      # entry for the threshold and the remainder.
+      on_limit: auto_renew
+      auto_renew_at: 0.98         # the plan is bought again when 98% of its credits are used
+      overage: null
+      minimum: {amount: 19, period: month}    # the smallest plan; usage-based pricing is not offered
+      free:
+        units: 1000
+        period: once
+        notes: >
+          Given on registration, no card required. The pages read do not say whether it
+          recurs, when it expires or what concurrency it has.
+      addons:
+        - name: One-time credit add-on
+          notes: >
+            For active subscribers. The credits are added to the current subscription and
+            expire when it renews or ends. Sizes and prices are not published.
+          source: https://help.scrapingbee.com/en/article/do-you-have-usage-based-pricing-or-one-time-prepay-credits-1ql2npn/
+      beyond_published: >
+        Custom plans with more credits or higher concurrency by contacting ScrapingBee
+        ("Talk to Product Expert" on the pricing page). No price is published.
+
+    conflicts:
+      - topic: Cost of a Google Search API request
+        statements:
+          - text: "The credit-cost section: a light request costs 10 credits, a regular one 15."
+            source: https://www.scrapingbee.com/documentation/google-api/
+          - text: "An older sentence on the same page: each successful API call costs 15 API credits."
+            source: https://www.scrapingbee.com/documentation/google-api/
+        used: "The credit-cost section; the features page also counts searches at 10 credits each."
+      - topic: Billed HTTP statuses
+        statements:
+          - text: "Only successful requests are charged: those returning 200, 404 or 410."
+            source: https://www.scrapingbee.com/faq/
+          - text: "The status table marks 200, 404, 410 and 413 as billed."
+            source: https://www.scrapingbee.com/documentation/
+        used: "The status table in the documentation: it is the more detailed of the two."
+      - topic: Plan ladder
+        statements:
+          - text: "Ten plans from Hobby ($19, 25 concurrent requests) to Enterprise 120 ($5,799, 120M credits)."
+            source: https://www.scrapingbee.com/pricing/
+          - text: >-
+              A help article updated on 17/10/2025 lists prices such as $49.99 and $99.99,
+              concurrency of 10/50/100/200, and stops at a 41M-credit plan.
+            source: https://help.scrapingbee.com/en/article/available-plans-explained-kbinm/
+          - text: "The FAQ still asks about needing more than 41,000,000 credits a month."
+            source: https://www.scrapingbee.com/faq/
+        used: "The pricing page; the features page shows the same ladder."
+
+    benchmark_account:
+      plan: n/a                   # no subscription yet: the 1,000 credits given on registration
+    notes: >
+      At the limit. By default requests are refused with HTTP 401 until the plan is
+      upgraded or renewed. Auto-renewal (opt-in, all plans) renews the subscription when
+      98% of its credits have been used: the full plan price is charged, the remaining 2%
+      carries over into the new period and the renewal date moves to that day. A manual
+      early renewal also charges the full plan price at once, and the left-over credits are
+      lost. The price curve counts a renewed plan as whole plans (needed credits / plan
+      credits, rounded up); because renewal fires at 98%, a month that uses more than 98%
+      of the last plan bought is charged for one more.
+      Unused credits. They expire at each renewal, but an upgrade or downgrade transfers
+      them to the new subscription.
+
+adapter:
+  version: "1"
+  base_url: https://app.scrapingbee.com
+  base_url_env: SCRAPINGBEE_BASE_URL

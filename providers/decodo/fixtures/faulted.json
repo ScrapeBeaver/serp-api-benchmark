@@ -1,0 +1,30 @@
+{
+ "description": "A search the provider could not complete: status `faulted`.",
+ "source": "Built from the documented request and response of /v1/search (https://help.decodo.com/docs/web-data-api-search-parameters). Illustrative values; not a recorded response. To be replaced by a recorded one after the first live call.",
+ "task": {
+  "query": "laptop",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "status": "faulted",
+   "organic": [],
+   "search_parameters": {
+    "query": "laptop",
+    "gl": "US",
+    "locale": "en",
+    "page": 1
+   }
+  }
+ },
+ "expect": {
+  "outcome": "provider_error"
+ }
+}
