@@ -247,18 +247,18 @@ schedule:
 pools:
   core:
     source: queries/smoke.yaml
-    per_day: 40           # spread evenly over the pool's runs
+    per_day: 80           # spread evenly over the pool's runs
     runs: all             # or run indexes, e.g. [0, 2]
     device: desktop
     page: 1
     headline: true        # counts towards the main table
   mobile:
     from: core            # the same queries as `core`
-    per_day: 8
+    per_day: 16
     device: mobile
   page2:
     from: core
-    per_day: 8
+    per_day: 16
     page: 2
 
 limits:

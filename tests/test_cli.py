@@ -356,7 +356,7 @@ def test_budget_fails_when_the_cheapest_covering_plan_is_above_the_ceiling(tmp_p
     """Enough volume to outgrow ScrapeBeaver's $25 plan: the $80 one breaks a $50 ceiling."""
     shutil.copytree(ROOT / "queries", tmp_path / "queries")
     text = (ROOT / "bench.yaml").read_text(encoding="utf-8")
-    text = text.replace("per_day: 40 ", "per_day: 900 ")
+    text = text.replace("per_day: 80 ", "per_day: 900 ")
     assert "per_day: 900" in text
     (tmp_path / "bench.yaml").write_text(text, encoding="utf-8")
     args = ["budget", "--config", str(tmp_path / "bench.yaml")]

@@ -133,7 +133,7 @@ def test_config_hash_follows_the_configuration_and_the_queries(tmp_path):
     assert first == config_hash(load_config(write(tmp_path, data)), tmp_path)
     assert len(first) == 12
 
-    data["pools"]["core"]["per_day"] = 80
+    data["pools"]["core"]["per_day"] += 1  # whatever the file says today
     changed = config_hash(load_config(write(tmp_path, data)), tmp_path)
     assert changed != first
 
