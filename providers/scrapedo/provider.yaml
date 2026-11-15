@@ -174,7 +174,7 @@ billing:
         used: "Neither is entered: `billed_statuses` stays unknown until the cost header of live answers shows it."
 
     benchmark_account:
-      plan: free                  # 1,000 credits a month, no card
+      plan: hobby                 # 250,000 credits a month; the free plan until 2026-11-15
 
 adapter:
   version: "1"

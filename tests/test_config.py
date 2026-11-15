@@ -37,7 +37,7 @@ def test_the_shipped_configuration_loads():
     assert set(config.pools) == {"core", "page2"}
     assert config.pools["core"].headline and not config.pools["page2"].headline
     assert config.source_of("page2") == "queries/smoke.yaml"
-    assert config.pool_runs("core") == [0, 1, 2, 3]
+    assert config.pool_runs("core") == list(range(config.schedule.runs_per_day))  # every run
 
 
 # --- schedule ---------------------------------------------------------------------------------
@@ -98,8 +98,9 @@ def test_from_must_name_a_pool_with_a_source(tmp_path):
 
 def test_pool_runs_must_exist_in_the_schedule(tmp_path):
     data = base()
-    data["pools"]["mobile"]["runs"] = [0, 7]
-    assert "names runs [7]" in error(tmp_path, data)
+    beyond = data["schedule"]["runs_per_day"]  # the first index the schedule does not have
+    data["pools"]["mobile"]["runs"] = [0, beyond]
+    assert f"names runs [{beyond}]" in error(tmp_path, data)
     data["pools"]["mobile"]["runs"] = []
     assert "empty list of runs" in error(tmp_path, data)
 

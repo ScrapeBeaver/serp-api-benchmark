@@ -161,7 +161,7 @@ billing:
         used: "Neither changes a price here: the overage rate is not published, so no overage is entered."
 
     benchmark_account:
-      plan: free                  # the 7-day trial with 5,000 credits first
+      plan: hobby                 # 100,000 credits a month; the trial until 2026-11-15
 
 adapter:
   version: "1"

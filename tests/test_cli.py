@@ -185,8 +185,9 @@ def test_auto_exits_cleanly_when_no_run_is_due(tmp_path, capsys, monkeypatch):
 def test_unknown_provider_and_bad_run_are_readable_errors(tmp_path, capsys):
     assert cli.main(["run", *CONFIG, "--providers", "nobody", "--run", "0"]) == 2
     assert "unknown provider(s) ['nobody']" in capsys.readouterr().err
-    assert cli.main(["run", *CONFIG, "--providers", "mock", "--run", "9"]) == 2
-    assert "must be `auto`, `next` or a run index from 0 to 3" in capsys.readouterr().err
+    last = load_config(ROOT / "bench.yaml").schedule.runs_per_day - 1
+    assert cli.main(["run", *CONFIG, "--providers", "mock", "--run", str(last + 1)]) == 2
+    assert f"must be `auto`, `next` or a run index from 0 to {last}" in capsys.readouterr().err
 
 
 def test_plan_prints_the_arithmetic(capsys):
@@ -356,8 +357,8 @@ def test_budget_fails_when_the_cheapest_covering_plan_is_above_the_ceiling(tmp_p
     """Enough volume to outgrow ScrapeBeaver's $25 plan: the $80 one breaks a $50 ceiling."""
     shutil.copytree(ROOT / "queries", tmp_path / "queries")
     text = (ROOT / "bench.yaml").read_text(encoding="utf-8")
-    text = text.replace("per_day: 80 ", "per_day: 900 ")
-    assert "per_day: 900" in text
+    text, changed = re.subn(r"(  core:\n(?:.*\n)*?    per_day: )\d+", r"\g<1>900", text, count=1)
+    assert changed == 1 and "per_day: 900" in text
     (tmp_path / "bench.yaml").write_text(text, encoding="utf-8")
     args = ["budget", "--config", str(tmp_path / "bench.yaml")]
     args += ["--providers-dir", str(ROOT / "providers"), "--providers", "scrapebeaver"]

@@ -81,7 +81,8 @@ def test_a_pool_can_ask_for_mobile_searches(tmp_path):
 
 
 def test_a_day_adds_up_to_per_day(config):
-    day = [task for run in range(4) for task in plan(config, ROOT, DAY, run)]
+    runs = range(config.schedule.runs_per_day)
+    day = [task for run in runs for task in plan(config, ROOT, DAY, run)]
     assert Counter(t.pool for t in day) == {n: p.per_day for n, p in config.pools.items()}
 
 
@@ -145,7 +146,7 @@ def test_resolve_run(config):
     assert resolve_run(config, "auto", now) == due
     quiet = dt.datetime(2026, 11, 12, (config.schedule.due_hour(DAY, 0) + 1) % 24, tzinfo=dt.UTC)
     assert resolve_run(config, "auto", quiet) is None
-    for bad in ("4", "-1", "noon"):
+    for bad in (str(config.schedule.runs_per_day), "-1", "noon"):
         with pytest.raises(ConfigError):
             resolve_run(config, bad, now)
 
