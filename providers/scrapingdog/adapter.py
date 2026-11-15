@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from urllib.parse import parse_qs, urlparse
 
+from serp_bench.ai_overview import read as read_ai_overview
 from serp_bench.models import Echo, HttpRequest, OrganicResult, RawResponse, Serp, Task
 from serp_bench.provider import Provider
 from serp_bench.uule import uule
@@ -55,6 +56,7 @@ class Scrapingdog(Provider):
         state = str(info.get("organic_results_state") or "").lower()
         return Serp(
             organic=organic,
+            ai_overview=read_ai_overview(data.get("ai_overview")),
             echo=Echo(
                 query=(used.get("q") or [None])[0],
                 country=(used.get("gl") or [None])[0],

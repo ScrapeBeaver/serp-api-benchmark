@@ -93,6 +93,13 @@ class Capabilities(Strict):
     pagination: Tri = "unknown"
     raw_html: Tri = "unknown"
     ai_overview: Tri = "unknown"
+    # How the AI Overview is obtained when the answer to a plain search does not carry its
+    # text: `second_request` (another call, usually charged), `parameter` (an option of the
+    # same call), `other_product` (a different endpoint or product), `none` (there is
+    # nothing more to ask for).
+    ai_overview_more: Literal["second_request", "parameter", "other_product", "none", "unknown"] = (
+        "unknown"
+    )
     full_mode: Tri = "unknown"  # a dearer mode that returns every block of the page exists
 
 

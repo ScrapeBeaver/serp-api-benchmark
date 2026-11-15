@@ -8,6 +8,7 @@ https://developers.oxylabs.io/products/web-api/authentication
 
 from __future__ import annotations
 
+from serp_bench.ai_overview import read as read_ai_overview
 from serp_bench.models import (
     Device,
     Echo,
@@ -60,6 +61,7 @@ class Oxylabs(Provider):
         asked = data.get("params") or {}
         return Serp(
             organic=organic,
+            ai_overview=read_ai_overview(page["results"].get("ai_overviews")),
             provider_request_id=(data.get("metadata") or {}).get("request_id"),
             # Google found nothing for the query as asked and shows results for another one.
             substituted=found.get("no_results_for_original_query_found"),

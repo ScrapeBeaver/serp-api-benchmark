@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import base64
 
+from serp_bench.ai_overview import read as read_ai_overview
 from serp_bench.models import (
     VOID_AUTH_OR_CREDITS,
     Device,
@@ -98,8 +99,11 @@ class DataForSEO(Provider):
         # `spell` is null unless Google answered for another query than the one asked.
         spell = result.get("spell") or {}
         substitutes = ("no_results_found_for", "showing_results_for")
+        # The overview, when the endpoint returns one, is an item of its own type.
+        overview = [item for item in result.get("items") or [] if item.get("type") == "ai_overview"]
         return Serp(
             organic=organic,
+            ai_overview=read_ai_overview(overview or None),
             provider_request_id=task.get("id"),
             substituted=spell.get("type") in substitutes,
             echo=Echo(

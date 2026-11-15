@@ -47,6 +47,7 @@ capabilities:
   pagination: true                  # each further page is a separate search
   raw_html: true                    # `output=html`
   ai_overview: true                 # in the response, or behind a `page_token` that lives one minute
+  ai_overview_more: second_request  # the Google AI Overview API with the `page_token`; counts as a search
 
 billing:
   - effective_from: 2026-11-12

@@ -50,6 +50,7 @@ capabilities:
   pagination: true                # `start`, an offset
   raw_html: unknown
   ai_overview: unknown
+  ai_overview_more: unknown         # the documentation of the endpoint does not mention it
 
 billing:
   - effective_from: 2026-11-12

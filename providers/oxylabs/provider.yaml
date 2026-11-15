@@ -54,6 +54,7 @@ capabilities:
   pagination: true                # `start_page`; "each page is a separate fetch and charge"
   raw_html: true                  # `output: ["html"]`, the default
   ai_overview: true               # returned inside the page; `expand_aio` expands it
+  ai_overview_more: parameter       # `expand_aio`
 
 billing:
   - effective_from: 2026-11-12

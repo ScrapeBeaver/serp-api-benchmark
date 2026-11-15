@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from urllib.parse import parse_qs, urlparse
 
+from serp_bench.ai_overview import read as read_ai_overview
 from serp_bench.models import Echo, HttpRequest, OrganicResult, RawResponse, Serp, Task
 from serp_bench.provider import Provider
 from serp_bench.uule import uule
@@ -66,6 +67,7 @@ class ScraperApi(Provider):
         shown = (data.get("search_information") or {}).get("query_displayed")
         return Serp(
             organic=organic,
+            ai_overview=read_ai_overview(data.get("ai_box")),
             echo=Echo(
                 query=(used.get("q") or [shown])[0],
                 country=(used.get("gl") or [None])[0],

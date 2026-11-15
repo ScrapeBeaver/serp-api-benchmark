@@ -52,6 +52,7 @@ capabilities:
   pagination: true                # `page` for one page, `pages` for up to 10 aggregated in one response
   raw_html: true                  # `add_html=true`
   ai_overview: true               # `expand_aio=true`, best effort, with `search_type=classic` or `ads`
+  ai_overview_more: parameter       # `expand_aio=true`, best effort
 
 billing:
   - effective_from: 2026-11-12

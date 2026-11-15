@@ -10,11 +10,12 @@ from __future__ import annotations
 
 import datetime as dt
 from collections import Counter
-from collections.abc import Iterable, Mapping
+from collections.abc import Collection, Iterable, Mapping
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from serp_bench.ai_overview import has_text, searches_with_one
 from serp_bench.contract import BillingEntry, ProviderConfig
 from serp_bench.models import OUTCOME_DELIVERED, OUTCOME_VOID, Record
 from serp_bench.poison import CLEAN, POISONED, UNJUDGED, Key, Verdict, judge
@@ -56,6 +57,7 @@ RUN_FIGURES: tuple[str, ...] = (
     "resolved",
     "resolved_pages",
     "poisoned",
+    "ai_overview",
     "p50",
     "p95",
 )
@@ -66,6 +68,7 @@ COMPARED_SHAPES: dict[str, dict[str, object]] = {
     "page2": {"page": 2},
     "full": {"mode": "full"},
     "operators": {"query_operators": True},
+    "ai_overview": {"ai_overview": True},
 }
 
 
@@ -119,6 +122,8 @@ def link_counts(records: Iterable[Record]) -> tuple[int, int]:
 
 
 Verdicts = Mapping[Key, Verdict]
+# The (run, task) pairs taken to have had an AI Overview.
+Overviews = Collection[tuple[str, str]]
 
 
 def _verdict(record: Record, verdicts: Verdicts) -> str | None:
@@ -127,7 +132,11 @@ def _verdict(record: Record, verdicts: Verdicts) -> str | None:
     return None if verdict is None else verdict.verdict
 
 
-def measure(records: Iterable[Record], verdicts: Verdicts | None = None) -> dict[str, Any]:
+def measure(
+    records: Iterable[Record],
+    verdicts: Verdicts | None = None,
+    overviews: Overviews | None = None,
+) -> dict[str, Any]:
     """The figures of one provider over one set of requests. Void requests (our own key or
     credit, a task the provider does not offer) are counted and left out of every share.
 
@@ -141,6 +150,12 @@ def measure(records: Iterable[Record], verdicts: Verdicts | None = None) -> dict
     is counted on the pages that passed step 2 whole: the poisoned share is poisoned pages
     out of the fully resolved pages that got a verdict either way. Pages that could not be
     judged are left out of it and reported next to it, as a share of those pages.
+
+    `overviews` are the searches taken to have had an AI Overview
+    (`ai_overview.searches_with_one`). `ai_overview` is the share of this provider's
+    delivered answers to those searches that carried the overview's text, in the same
+    request and with no option asked for. `ai_overview_chars` is the median length of
+    that text and how many texts it is the median of.
     """
     records = list(records)
     counted = [r for r in records if r.outcome != OUTCOME_VOID]
@@ -148,6 +163,10 @@ def measure(records: Iterable[Record], verdicts: Verdicts | None = None) -> dict
     seconds = [r.total_ms / 1000 for r in delivered if r.total_ms is not None]
     good = [r for r in delivered if resolved(r)]
     step3 = Counter(_verdict(r, verdicts or {}) or UNJUDGED for r in good)
+    had_one = [r for r in delivered if (r.run_id, r.task_id) in (overviews or ())]
+    texts = sorted(
+        r.ai_overview.chars for r in had_one if r.ai_overview and has_text(r.ai_overview)
+    )
     figures: dict[str, Any] = {
         "tasks": len(counted),
         "void": len(records) - len(counted),
@@ -156,6 +175,8 @@ def measure(records: Iterable[Record], verdicts: Verdicts | None = None) -> dict
         "resolved_pages": _share(len(good), len(delivered)),
         "poisoned": _share(step3[POISONED], step3[CLEAN] + step3[POISONED]),
         "unjudged": _share(step3[UNJUDGED], len(good)) if verdicts else None,
+        "ai_overview": _share(len(texts), len(had_one)) if overviews is not None else None,
+        "ai_overview_chars": [texts[len(texts) // 2], len(texts)] if texts else None,
         "p50": _percentile(seconds, 50),
         "p95": _percentile(seconds, 95),
     }
@@ -267,6 +288,7 @@ def _provider(
     operator: str | None,
     verdicts: Verdicts,
     runs: list[dict[str, str]],
+    overviews: Overviews,
 ) -> dict[str, Any]:
     """One provider's entry: its figures for each window, day by day, run by run, and by
     outcome."""
@@ -288,13 +310,14 @@ def _provider(
             "resolved",
             "resolved_pages",
             "poisoned",
+            "ai_overview",
             "p50",
             "p95",
             *NOT_MEASURED_YET,
         )
     }
     for day in days:
-        figures = measure(by_day.get(day, []), verdicts)
+        figures = measure(by_day.get(day, []), verdicts, overviews)
         for key, series in daily.items():
             value = figures[key]
             series.append(None if value is None else value[0])
@@ -308,7 +331,7 @@ def _provider(
         rows = by_run.get(run_id)
         if not rows:
             return None
-        figures = measure(rows, verdicts)
+        figures = measure(rows, verdicts, overviews)
         return {key: figures[key] for key in RUN_FIGURES}
 
     account = config.current_billing.benchmark_account
@@ -320,7 +343,9 @@ def _provider(
         "status": config.status,
         "plan": account.plan if account else None,
         "product": config.product.name,
-        "windows": {str(n): measure(within(n), verdicts) for n in WINDOWS},
+        # How the overview is obtained when the answer does not carry it, as declared.
+        "ai_overview_more": config.capabilities.ai_overview_more,
+        "windows": {str(n): measure(within(n), verdicts, overviews) for n in WINDOWS},
         "daily": daily,
         "outcomes": _outcomes(within(30), verdicts),
         "runs": [of_run(run["id"]) for run in runs],
@@ -338,11 +363,19 @@ def per_search(config: ProviderConfig, billing: BillingEntry) -> dict[str, objec
         "mobile": config.capabilities.mobile,
         "page2": config.capabilities.pagination,
         "full": config.capabilities.full_mode,
+        "ai_overview": config.capabilities.ai_overview,
     }
+    cost = billing.request_cost
     result: dict[str, object] = {"desktop": 1.0}
     for key, kwargs in COMPARED_SHAPES.items():
         if offered.get(key) is False:
             result[key] = "not_offered"
+            continue
+        if key == "ai_overview" and not (
+            any(rule.when.ai_overview for rule in cost.rules) or key in cost.free_parameters
+        ):
+            # Nothing prices it and nothing says it is free: not stated, never "no charge".
+            result[key] = None
             continue
         if key == "full" and config.product.mode == "full":
             result[key] = 1.0
@@ -426,6 +459,7 @@ def build_summary(
     needs the other providers' pages of the same moment and the earlier runs.
     """
     verdicts = judge(records)
+    overviews = searches_with_one(records)
     counted = [r for r in records if r.headline and r.counts]
     known_days = [day for day in map(day_of, counted) if day is not None]
     last = max(known_days) if known_days else now.date()
@@ -444,7 +478,7 @@ def build_summary(
     # headline tasks to the last.
     runs = run_list(counted)
     providers = [
-        _provider(config, by_provider[config.id], days, operator, verdicts, runs)
+        _provider(config, by_provider[config.id], days, operator, verdicts, runs, overviews)
         for config in shown
     ]
     on_page = [record for config in shown for record in by_provider[config.id]]

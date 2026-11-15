@@ -5,6 +5,7 @@ Documentation: https://scrape.do/documentation/google-scraper-api/search/search/
 
 from __future__ import annotations
 
+from serp_bench.ai_overview import read as read_ai_overview
 from serp_bench.models import (
     Device,
     Echo,
@@ -71,6 +72,7 @@ class ScrapeDo(Provider):
         ).lower()
         return Serp(
             organic=organic,
+            ai_overview=read_ai_overview(data.get("ai_overview")),
             provider_request_id=_header(raw, REQUEST_ID_HEADER),
             echo=Echo(query=asked.get("q"), country=asked.get("gl"), locale=asked.get("hl")),
             substituted=True if _SUBSTITUTED in state else False if state == _EXACT else None,

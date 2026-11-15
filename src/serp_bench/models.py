@@ -113,6 +113,14 @@ class Echo(BaseModel):
     locale: str | None = None
 
 
+class AiOverview(BaseModel):
+    """Google's AI Overview as an answer carried it, reduced to what can be compared.
+    See `serp_bench.ai_overview`."""
+
+    chars: int  # characters of the overview's own text; sources, addresses and ids left out
+    deferred: bool = False  # no text, but a token or a link for a second request
+
+
 class Serp(BaseModel):
     """A provider's answer in the shape every provider is reduced to."""
 
@@ -122,6 +130,8 @@ class Serp(BaseModel):
     # True when the provider itself says the results are not for the query as asked (Google
     # found nothing for it and shows results for something close). None: it does not say.
     substituted: bool | None = None
+    # The AI Overview block of the answer. None: the answer has no such block.
+    ai_overview: AiOverview | None = None
 
 
 class CheckResult(BaseModel):
@@ -186,6 +196,9 @@ class Record(BaseModel):
     billed_units: float | None = None
     # The provider's own statement that the results are substitutes for the query asked.
     substituted: bool | None = None
+    # The AI Overview block of the answer: how much text it had. None: no such block, or a
+    # record written before the block was looked at.
+    ai_overview: AiOverview | None = None
     warmup: bool = False
     # A control repeat: the same task sent to the same provider once more, after the run's
     # last measured request, because its first page did not match the other providers'.

@@ -51,6 +51,7 @@ capabilities:
   pagination: true                # `page`, one page per request
   raw_html: true                  # `html=true`
   ai_overview: true               # inline when Google renders it inline, otherwise through a second call
+  ai_overview_more: second_request  # /google/ai_overview, 5 credits when it succeeds
 
 billing:
   - effective_from: 2026-11-12

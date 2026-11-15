@@ -280,6 +280,7 @@ def test_each_provider_has_its_figures_run_by_run(summary):
         "resolved",
         "resolved_pages",
         "poisoned",
+        "ai_overview",
         "p50",
         "p95",
     }

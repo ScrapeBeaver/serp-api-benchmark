@@ -35,6 +35,7 @@ capabilities:
   pagination: true      # `start`, one page per call
   raw_html: true        # `format: html | both`
   ai_overview: true
+  ai_overview_more: parameter       # the overview that loads after the page can be asked for; the benchmark does not
   full_mode: false      # Google Search Advanced (POST /v1/search) is announced, not released
 
 billing:

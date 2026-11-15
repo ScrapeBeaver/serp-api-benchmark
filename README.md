@@ -27,6 +27,9 @@ Measured today:
 - **Poisoned results**: pages that are not Google's real results for the query (step 3,
   below). For now a page is judged by whether it matches the other providers' pages of the
   same minute; the history check that confirms a mismatch needs several days of runs.
+- **AI Overview**: how often the answer to an ordinary search carries the text of Google's
+  AI Overview, on the searches that had one. Counted apart from the three steps: see
+  "AI Overview" below.
 
 Specified, not built yet:
 
@@ -70,6 +73,30 @@ was aborted. Void requests are counted, shown in the report, and left out of eve
 The rule is mechanical and lives in one function (`validate.void_reason`); nothing is
 excluded by hand.
 
+## AI Overview
+
+Whether a provider's answer to an ordinary search carries Google's AI Overview. It is not
+one of the three steps and does not make an answer usable or not.
+
+- **What is asked.** Nothing more than the search itself: the same request as every other
+  measurement, with the provider's default settings. Several providers return the overview
+  through a second request, an option or another product, often at a price
+  (`capabilities.ai_overview_more` in each `provider.yaml`); that path is not sent, so the
+  figure says what a customer gets for the price of one search.
+- **What counts.** The overview's own text. An adapter only points at the block; the
+  shared code (`src/serp_bench/ai_overview.py`) counts its characters and leaves out the
+  list of sources, addresses, tokens and ids. Less than 200 characters is a first line or
+  a token, not the overview.
+- **Which searches.** Google shows an overview for some searches and not for others, and
+  one answer cannot tell which. A search is taken to have had one when at least two
+  providers returned its text for the same task of the same run.
+- **The figure.** Answers that carried the text ÷ this provider's delivered answers to
+  those searches. The median length of the text is in the summary next to it
+  (`ai_overview_chars`).
+- **The price.** The pricing page shows what a search with an overview costs next to a
+  plain one where the provider's documentation prices it, and says "not stated" where it
+  does not.
+
 ## Changes to how numbers are computed
 
 A change is listed here with its date. Nothing in the records changes with any of them:
@@ -81,6 +108,8 @@ recomputed by anyone.
   the whole page as lost. It is now the share of result links that are resolved. The
   share of whole pages is still computed (`resolved_pages` in the summary) and still
   decides which pages go on to step 3.
+- **2026-11-15. AI Overview is recorded.** Records written before this release have no
+  `ai_overview` field, so the figure starts with the first run after it.
 - **2026-11-15. The 95th and 99th percentiles are shown from 50 answers** (they needed
   100 and 500). They appear sooner and are rougher at first: at 50 answers the 95th
   percentile rests on the three slowest ones.
@@ -349,6 +378,7 @@ One JSON object per line, gzip-compressed, `schema_version: 1`.
 | `results` | For each result: `pos`, `host`, `url_hash`, `on_google`, `wrapper`, `well_formed` |
 | `provider_request_id` | The provider's own id for the request, when it gives one |
 | `billed_units` | The units the response itself says were charged, when it says |
+| `ai_overview` | The AI Overview block of the answer: `chars`, the characters of its own text, and `deferred`, true when it had no text but a token for a second request. Null when the answer had no such block, and in records written before 2026-11-15 |
 | `warmup` | True for the warm-up request, which is never counted |
 | `control` | True for a control repeat (step 3), which is never counted |
 

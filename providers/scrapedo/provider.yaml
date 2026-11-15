@@ -53,6 +53,7 @@ capabilities:
   pagination: true                # `start`, in steps of 10, up to 100
   raw_html: true                  # `include_html=true`
   ai_overview: true               # in the answer when Google renders it; otherwise a second, charged call
+  ai_overview_more: second_request  # /plugin/google/search/ai-overview, 5 credits
 
 billing:
   - effective_from: 2026-11-12

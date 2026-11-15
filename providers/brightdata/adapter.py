@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from urllib.parse import urlencode
 
+from serp_bench.ai_overview import read as read_ai_overview
 from serp_bench.models import (
     Device,
     Echo,
@@ -76,6 +77,7 @@ class BrightData(Provider):
         general = data.get("general") or {}
         return Serp(
             organic=organic,
+            ai_overview=read_ai_overview(data.get("ai_overview")),
             provider_request_id=(data.get("input") or {}).get("request_id"),
             echo=Echo(
                 query=general.get("query"),

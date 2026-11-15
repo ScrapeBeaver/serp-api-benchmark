@@ -165,6 +165,7 @@ def build_record(
         results=step.results,
         provider_request_id=step.serp.provider_request_id if step.serp else None,
         substituted=step.serp.substituted if step.serp else None,
+        ai_overview=step.serp.ai_overview if step.serp else None,
         billed_units=billed,
         warmup=warmup,
         control=control,

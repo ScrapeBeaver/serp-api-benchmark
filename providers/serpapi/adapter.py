@@ -6,6 +6,7 @@ Status and error codes: https://serpapi.com/api-status-and-error-codes
 
 from __future__ import annotations
 
+from serp_bench.ai_overview import read as read_ai_overview
 from serp_bench.models import (
     VOID_AUTH_OR_CREDITS,
     Device,
@@ -72,6 +73,7 @@ class SerpApi(Provider):
         ).lower()
         return Serp(
             organic=organic,
+            ai_overview=read_ai_overview(data.get("ai_overview")),
             provider_request_id=(data.get("search_metadata") or {}).get("id"),
             echo=Echo(query=asked.get("q"), country=asked.get("gl"), locale=asked.get("hl")),
             substituted=True if _SUBSTITUTED in state else False if state == _EXACT else None,

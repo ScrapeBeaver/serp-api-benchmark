@@ -56,6 +56,7 @@ capabilities:
   pagination: true                # `start=`, one page per request
   raw_html: true                  # raw HTML is one of the output formats, at the same price
   ai_overview: true               # `brd_ai_overview=2`
+  ai_overview_more: parameter       # `brd_ai_overview=2`
 
 billing:
   - effective_from: 2026-11-12

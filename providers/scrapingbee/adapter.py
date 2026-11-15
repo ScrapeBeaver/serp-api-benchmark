@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from urllib.parse import parse_qs, urlparse
 
+from serp_bench.ai_overview import read as read_ai_overview
 from serp_bench.models import Echo, HttpRequest, OrganicResult, RawResponse, Serp, Task
 from serp_bench.provider import Provider
 
@@ -58,6 +59,7 @@ class ScrapingBee(Provider):
         used = parse_qs(urlparse(meta.get("url") or "").query)
         return Serp(
             organic=organic,
+            ai_overview=read_ai_overview(data.get("ai_overviews")),
             provider_request_id=_header(raw, REQUEST_ID_HEADER),
             # `zero_results_for_original_query`: Google found nothing for the query as asked.
             substituted=meta.get("zero_results_for_original_query"),

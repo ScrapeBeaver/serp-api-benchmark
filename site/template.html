@@ -499,6 +499,7 @@ footer { padding: 24px 0 36px; font-size: 13px; color: var(--faint); }
             <div class="ln"><span>Result</span><code>900 usable answers out of 1,000 sent → usable answers 90.0%</code></div>
           </div>
           <dl class="gloss calc" id="gloss"></dl>
+          <p><b>AI Overview</b> is counted apart from the three checks: an answer without it is still a usable answer. We look at what comes back from the same ordinary search, with no option asked for and at the same price, and count the overview's own text: its sources, addresses and tokens are left out, and less than 200 characters is a first line, not the overview. Google shows an overview for some searches only, so a search is taken to have had one when at least two providers returned its text, and each provider is counted on those searches. Several providers return the overview through a second request or another product, often at a price; that path is not measured, and the pricing page says what it costs where the provider states it.</p>
           <h3>Where the searches of the last 30 days ended up</h3>
           <p id="outcomes-note"></p>
           <div class="tablewrap" tabindex="0" role="region" aria-label="Outcome of every search"><table id="outcomes"></table></div>
@@ -605,6 +606,8 @@ const METRICS = [
     tip: "Google sometimes answers a scraper with a normal-looking page whose results are fake: sites that do not rank for the search. No error, no captcha.", formula: "poisoned pages ÷ (clean pages + poisoned pages); pages that could not be verified are left out and shown separately" }
   : { key: "poisoned", label: "Poisoned results", unit: "%", hi: false, sub: "Share of compared pages · lower is better",
     tip: "Google sometimes answers a scraper with a normal-looking page whose results are fake. For now a page is counted as poisoned when its sites share less than half with every page of the providers that agree with each other: real pages coincide, fake ones do not. A page can also differ for another reason, such as a different location; the history check that tells the two apart is still collecting data.", formula: "pages that match no page of the agreeing group ÷ (pages in the group + pages outside it); pages with unresolved URLs and pages that could not be compared are left out" },
+  { key: "ai_overview", label: "AI Overview", unit: "%", hi: true, sub: "Share of searches that had one · higher is better",
+    tip: "Google's AI Overview, in the answer to an ordinary search: the same request, the same price, no option asked for. A first line or a token for a second request does not count. Many providers sell the overview as a second request or a separate product; that is not measured here.", formula: "answers that carried the overview's text ÷ answers to the searches that had one (at least two providers returned its text)" },
   { key: "p50", label: "Median time", unit: "s", hi: false, sub: "Seconds · lower is better",
     tip: "How long a typical search takes: half of all successful answers arrive faster than this.", formula: "the middle value of the response times of successful searches" },
   { key: "p95", label: "95th pct", unit: "s", hi: false, sub: "Seconds · lower is better",
@@ -734,7 +737,7 @@ function renderResults() {
       const c = m.unit === "%" ? cell(p, m.key) : null;
       const left = m.key === "poisoned" ? cell(p, "unjudged") : null;
       const whole = m.key === "resolved" ? cell(p, "resolved_pages") : null;
-      const of = m.key === "poisoned" ? "compared pages" : m.key === "resolved" ? "result links" : "searches";
+      const of = m.key === "poisoned" ? "compared pages" : m.key === "resolved" ? "result links" : m.key === "ai_overview" ? "searches that had an AI Overview" : "searches";
       const range = c ? ` title="Very likely between ${pct(c[1])} and ${pct(c[2])}: ${c[3]} of ${c[4]} ${of}${left ? `. ${left[3]} of ${left[4]} resolved pages could not be compared` : ""}${whole ? `. On ${whole[3]} of ${whole[4]} pages every link was resolved` : ""}"` : "";
       return `<td class="r${first ? " best" : ""}${main(m)}"${range}>${first ? '<i class="mark"></i>' : ""}<span class="v">${fmt(m, v)}</span></td>`;
     }).join("")}<td>${sparkline(p)}</td></tr>`).join("") + "</tbody>";

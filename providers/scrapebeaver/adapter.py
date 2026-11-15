@@ -5,6 +5,7 @@ Documentation: https://scrapebeaver.com/docs/google-search/request-and-response
 
 from __future__ import annotations
 
+from serp_bench.ai_overview import read as read_ai_overview
 from serp_bench.models import (
     VOID_AUTH_OR_CREDITS,
     Echo,
@@ -55,6 +56,7 @@ class ScrapeBeaver(Provider):
         used = data.get("search_parameters") or {}
         return Serp(
             organic=organic,
+            ai_overview=read_ai_overview(data.get("ai_overview")),
             provider_request_id=(data.get("search_metadata") or {}).get("id"),
             echo=Echo(query=used.get("q"), country=used.get("gl"), locale=used.get("hl")),
         )

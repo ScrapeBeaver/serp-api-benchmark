@@ -36,6 +36,7 @@ capabilities:                       # none is stated on the public pages; from l
   pagination: true                  # `page`
   raw_html: unknown
   ai_overview: unknown
+  ai_overview_more: unknown         # the documentation of /search does not mention it
 
 billing:
   - effective_from: 2026-11-12

@@ -63,6 +63,7 @@ capabilities:                     # of /v1/search, whose documented parameters a
   pagination: true                # `page`
   raw_html: false                 # no parameter for it; raw HTML comes from /scrape
   ai_overview: false              # "If you require detailed, rich data including AI overview Google Search target would suit your needs better"
+  ai_overview_more: other_product   # the Google Search target, not the light /search one
 
 billing:
   - effective_from: 2026-11-12
