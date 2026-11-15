@@ -334,13 +334,19 @@ def cmd_run(args: argparse.Namespace) -> int:
     config, root, specs = _setup(args)
     day = _day(args.date)
     now = dt.datetime.now(dt.UTC)
-    run_index = resolve_run(config, args.run, now)
+    stored = Path(args.stored) if args.stored else Path(args.out) / "raw"
+    run_index = resolve_run(config, args.run, now, day=day, stored=stored)
     if run_index is None:
         times = ", ".join(
             config.schedule.due_time(day, k) for k in range(config.schedule.runs_per_day)
         )
-        print(f"Nothing due: no run is scheduled in the current hour ({now:%H}:00 UTC).")
-        print(f"Today's runs are due at {times} UTC. Pass --run N to run one now.")
+        if args.run == "next":
+            print(f"Nothing to do: every run of {day} is stored already ({times} UTC).")
+        elif config.schedule.run_due_in_hour(now) is not None:
+            print(f"Nothing to do: the run due in this hour ({now:%H}:00 UTC) is stored already.")
+        else:
+            print(f"Nothing due: no run is scheduled in the current hour ({now:%H}:00 UTC).")
+            print(f"Today's runs are due at {times} UTC. Pass --run next to do the next one now.")
         return 0
 
     providers = _select(config, specs, args.providers, args.allow_draft)
@@ -1124,7 +1130,18 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("run", parents=[common, logging_args], help="run once and write records")
     p.add_argument("--providers", help="comma-separated ids, default: bench.yaml")
     p.add_argument("--date", help="YYYY-MM-DD, default: today (UTC)")
-    p.add_argument("--run", default="auto", help="run index, or auto (the run due this hour)")
+    p.add_argument(
+        "--run",
+        default="auto",
+        help="auto (the run due this hour), next (the first of today's runs not stored yet), "
+        "or a run index",
+    )
+    p.add_argument(
+        "--stored",
+        metavar="DIR",
+        help="folder with the runs stored so far (YYYY/MM/DD/run-*.jsonl.gz), which `auto` "
+        "and `next` never repeat; default: raw/ under --out",
+    )
     p.add_argument("--limit", type=int, help="send only the first N tasks")
     p.add_argument("--interval", type=float, help="seconds between tasks, default: bench.yaml")
     p.add_argument("--out", default="out", help="output directory, default: out/")

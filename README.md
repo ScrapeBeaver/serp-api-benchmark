@@ -20,8 +20,8 @@ Measured today:
 - **Delivery**: did a usable answer come back on the first attempt (step 1, below).
 - **Latency**: how long it took, and what share of requests were answered within 5, 10
   and 30 seconds.
-- **Resolved links**: do the result links point at the destination, or at a Google
-  redirect (step 2).
+- **Resolved links**: what share of the result links point at the destination, not at a
+  Google redirect (step 2). Pages where every link does are counted next to it.
 - **Declared prices**: what a provider's own pricing page says a request costs, as a
   machine-readable contract with sources and dates.
 - **Poisoned results**: pages that are not Google's real results for the query (step 3,
@@ -70,6 +70,21 @@ was aborted. Void requests are counted, shown in the report, and left out of eve
 The rule is mechanical and lives in one function (`validate.void_reason`); nothing is
 excluded by hand.
 
+## Changes to how numbers are computed
+
+A change is listed here with its date. Nothing in the records changes with any of them:
+every figure, before and after, is computed from the same record files, so both can be
+recomputed by anyone.
+
+- **2026-11-15. Resolved URLs is the share of links, not of pages.** It was the share of
+  successful pages where every result link was resolved, so one missing address counted
+  the whole page as lost. It is now the share of result links that are resolved. The
+  share of whole pages is still computed (`resolved_pages` in the summary) and still
+  decides which pages go on to step 3.
+- **2026-11-15. The 95th and 99th percentiles are shown from 50 answers** (they needed
+  100 and 500). They appear sooner and are rougher at first: at 50 answers the 95th
+  percentile rests on the three slowest ones.
+
 ## How each number is computed
 
 This section is generated from the registry in `src/serp_bench/metrics.py`, which is the
@@ -113,7 +128,7 @@ The checks run in this order. The first one that fails names the outcome; a requ
 
 - **Interval of a share.** Every share is printed with a Wilson 95% score interval. The intervals assume independent requests; cluster-aware intervals arrive with the statistics module.
 - **Quantiles.** Latency percentiles of delivered answers use Hyndman and Fan's type 7 (linear interpolation between the two nearest values, the default of NumPy and R). The all-tasks view contains 'never', which cannot be interpolated, so it uses the inverse of the empirical distribution (type 1): the smallest observed value that at least p% of the tasks did not exceed.
-- **Enough data for a quantile.** A quantile is printed only with enough values behind it: p50 needs 20, p90 needs 50, p95 needs 100, p99 needs 500. Otherwise the report says n/a and how many values there were.
+- **Enough data for a quantile.** A quantile is printed only with enough values behind it: p50 needs 20, p90 needs 50, p95 needs 50, p99 needs 50. Otherwise the report says n/a and how many values there were.
 - **One attempt.** Every figure describes single calls. The benchmark does not retry; a provider's own retries inside one call are part of what is measured.
 <!-- metrics:end -->
 
@@ -209,7 +224,8 @@ uv run serp-bench run --providers scrapebeaver --run 0 --limit 20 --allow-draft
 Tasks leave on a timetable, one every 15 seconds by default, so 20 tasks take five
 minutes. `--interval SECONDS` changes that for a single run.
 
-`--run auto` (the default) runs whichever run is due in the current UTC hour and exits
+`--run next` does the first of today's runs that is not stored yet, so a run started by
+hand needs no index. `--run auto` (the default) runs whichever run is due in the current UTC hour and exits
 with "nothing due" otherwise, which is what a scheduler calls. `--allow-draft` is needed
 while a provider's status is `draft`.
 

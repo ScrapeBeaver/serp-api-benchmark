@@ -50,7 +50,15 @@ HISTORY_READY_SHARE = 0.9
 LATENCY_EXACT_MAX = 2000
 LATENCY_POINTS = 201
 # The figures of one run that the page draws over time.
-RUN_FIGURES: tuple[str, ...] = ("tasks", "success", "resolved", "poisoned", "p50", "p95")
+RUN_FIGURES: tuple[str, ...] = (
+    "tasks",
+    "success",
+    "resolved",
+    "resolved_pages",
+    "poisoned",
+    "p50",
+    "p95",
+)
 
 # The request shapes whose cost is shown next to a plain desktop search.
 COMPARED_SHAPES: dict[str, dict[str, object]] = {
@@ -99,9 +107,15 @@ def _percentile(seconds: list[float], p: int) -> list[float] | None:
 
 
 def resolved(record: Record) -> bool:
-    """Step 2: every organic result of the page points at its destination, none at Google's
-    own redirect."""
+    """Step 2 for one page: every organic result points at its destination, none at Google's
+    own redirect. This is what lets a page go on to step 3."""
     return not any(result.wrapper for result in record.results)
+
+
+def link_counts(records: Iterable[Record]) -> tuple[int, int]:
+    """Step 2 by links: (resolved organic results, organic results) over these pages."""
+    links = [result for record in records for result in record.results]
+    return sum(1 for link in links if not link.wrapper), len(links)
 
 
 Verdicts = Mapping[Key, Verdict]
@@ -117,10 +131,16 @@ def measure(records: Iterable[Record], verdicts: Verdicts | None = None) -> dict
     """The figures of one provider over one set of requests. Void requests (our own key or
     credit, a task the provider does not offer) are counted and left out of every share.
 
+    Step 2 is reported twice. `resolved` is the share of result links that point at their
+    destination, over the delivered pages: nine addresses out of ten is nine tenths. Its
+    interval treats links as independent, which links of one page are not, so it is
+    narrower than it should be. `resolved_pages` is the share of delivered pages where
+    every link is resolved.
+
     `verdicts` are the step-3 verdicts (`poison.judge`). The steps are a funnel, so step 3
-    is counted on the pages that passed step 2: the poisoned share is poisoned pages out
-    of the resolved pages that got a verdict either way. Pages that could not be judged
-    are left out of it and reported next to it, as a share of the resolved pages.
+    is counted on the pages that passed step 2 whole: the poisoned share is poisoned pages
+    out of the fully resolved pages that got a verdict either way. Pages that could not be
+    judged are left out of it and reported next to it, as a share of those pages.
     """
     records = list(records)
     counted = [r for r in records if r.outcome != OUTCOME_VOID]
@@ -132,7 +152,8 @@ def measure(records: Iterable[Record], verdicts: Verdicts | None = None) -> dict
         "tasks": len(counted),
         "void": len(records) - len(counted),
         "success": _share(len(delivered), len(counted)),
-        "resolved": _share(len(good), len(delivered)),
+        "resolved": _share(*link_counts(delivered)),
+        "resolved_pages": _share(len(good), len(delivered)),
         "poisoned": _share(step3[POISONED], step3[CLEAN] + step3[POISONED]),
         "unjudged": _share(step3[UNJUDGED], len(good)) if verdicts else None,
         "p50": _percentile(seconds, 50),
@@ -261,7 +282,16 @@ def _provider(
         return [r for day, rows in by_day.items() if first <= day <= last for r in rows]
 
     daily: dict[str, list[float | None]] = {
-        key: [] for key in ("success", "resolved", "poisoned", "p50", "p95", *NOT_MEASURED_YET)
+        key: []
+        for key in (
+            "success",
+            "resolved",
+            "resolved_pages",
+            "poisoned",
+            "p50",
+            "p95",
+            *NOT_MEASURED_YET,
+        )
     }
     for day in days:
         figures = measure(by_day.get(day, []), verdicts)

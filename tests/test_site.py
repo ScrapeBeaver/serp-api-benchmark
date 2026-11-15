@@ -17,6 +17,7 @@ from serp_bench.summary import (
     WINDOWS,
     build_summary,
     latency,
+    link_counts,
     load_records,
     measure,
     resolved,
@@ -62,7 +63,9 @@ def test_the_shares_are_counted_from_the_records(records):
     assert (successes, n) == (len(delivered), len(valid))
     assert percent == pytest.approx(100 * successes / n, abs=0.01)
     assert low <= percent <= high
-    assert figures["resolved"][4] == len(delivered)  # judged on delivered pages only
+    # Step 2 is judged on delivered pages only: by links, and by whole pages.
+    assert figures["resolved"][4] == sum(len(r.results) for r in delivered)
+    assert figures["resolved_pages"][4] == len(delivered)
 
 
 def test_what_is_not_measured_yet_is_empty_not_zero(records):
@@ -73,7 +76,7 @@ def test_what_is_not_measured_yet_is_empty_not_zero(records):
 def test_a_percentile_needs_enough_answers(records):
     delivered = [r for r in records if r.outcome == OUTCOME_DELIVERED]
     assert measure(delivered[:19])["p50"] is None  # 20 are needed for a median
-    assert measure(delivered[:5])["p95"] is None  # and 100 for a 95th percentile
+    assert measure(delivered[:5])["p95"] is None  # and 50 for a 95th percentile
 
 
 def test_one_link_back_to_google_makes_a_page_unresolved(records):
@@ -81,6 +84,22 @@ def test_one_link_back_to_google_makes_a_page_unresolved(records):
     assert resolved(page)
     unresolved_link = page.results[0].model_copy(update={"wrapper": True})
     assert not resolved(page.model_copy(update={"results": [unresolved_link, *page.results[1:]]}))
+
+
+def test_resolved_is_the_share_of_links_and_the_whole_pages_are_counted_next_to_it(records):
+    """One address missing on one page costs that one link in the headline figure, and the
+    whole page in the figure that decides which pages go on to step 3."""
+    pages = [r for r in records if r.outcome == OUTCOME_DELIVERED and len(r.results) >= 3][:4]
+    assert len(pages) == 4 and all(resolved(p) for p in pages)
+    links = sum(len(p.results) for p in pages)
+    assert link_counts(pages) == (links, links)
+    broken = pages[0].results[0].model_copy(update={"wrapper": True})
+    pages[0] = pages[0].model_copy(update={"results": [broken, *pages[0].results[1:]]})
+    assert link_counts(pages) == (links - 1, links)
+    figures = measure(pages)
+    assert figures["resolved"][3:] == [links - 1, links]
+    assert figures["resolved"][0] == pytest.approx(100 * (links - 1) / links, abs=0.01)
+    assert figures["resolved_pages"][3:] == [3, 4]
 
 
 def test_the_summary_has_every_window_and_a_day_by_day_history(summary):
@@ -255,7 +274,15 @@ def test_each_provider_has_its_figures_run_by_run(summary):
     provider = summary["providers"][0]
     assert len(provider["runs"]) == len(summary["runs"])
     one = provider["runs"][0]
-    assert set(one) == {"tasks", "success", "resolved", "poisoned", "p50", "p95"}
+    assert set(one) == {
+        "tasks",
+        "success",
+        "resolved",
+        "resolved_pages",
+        "poisoned",
+        "p50",
+        "p95",
+    }
     # One run in the window: the run's figures are the window's.
     window = provider["windows"]["30"]
     assert all(one[key] == window[key] for key in one)

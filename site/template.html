@@ -401,7 +401,7 @@ footer { padding: 24px 0 36px; font-size: 13px; color: var(--faint); }
           <ol class="steps">
             <li><b>Same search, same second</b>From a published list, to every provider at once, four times a day. One attempt, no retries.</li>
             <li><b>Did it succeed?</b>A valid response within 60 seconds with at least three results.</li>
-            <li><b>Are the URLs resolved?</b>All ten results must point at websites, not back at google.com.</li>
+            <li><b>Are the URLs resolved?</b>Result links must point at websites, not back at google.com. We count the share of links that do.</li>
             <li><b>Is it poisoned?</b>The sites must be the ones this search usually returns, or the ones another provider got in the same minute.</li>
           </ol>
           <div class="foot"><span>Run by ScrapeBeaver, one of the providers measured.</span><span>No overall score.</span><span>Code and data are public: <a class="link" href="#" data-repo>repository</a></span></div>
@@ -457,7 +457,8 @@ footer { padding: 24px 0 36px; font-size: 13px; color: var(--faint); }
             <div class="ln"><span class="tag no">not resolved</span><code>(empty)</code></div>
           </div>
           <p>An address counts as not resolved when it points at a Google search host (<code>/goto</code>, <code>/url</code>, <code>/aclk</code>, <code>/search</code>, a block page), is relative, or is empty.</p>
-          <p><b>A page passes only when every organic result in its first ten is resolved.</b> The rule is strict on purpose: for anyone who tracks rankings, one missing address is one missing site.</p>
+          <p><b>The number is the share of result links that are resolved, over all successful pages.</b> A page with nine addresses out of ten gives nine tenths of what it should, and the number says exactly that.</p>
+          <p>For the next step a page still has to be whole: only a page where every link is resolved is compared with the others, because for anyone who tracks rankings one missing address is one missing site. How many pages were whole is counted next to the number and shown with it.</p>
         </section>
 
         <section id="m-poison">
@@ -493,8 +494,8 @@ footer { padding: 24px 0 36px; font-size: 13px; color: var(--faint); }
           <div class="ex">
             <div class="cap">Example · 1,000 searches sent to one provider</div>
             <div class="ln"><span>1,000 sent</span><code>980 succeeded → success rate 98.0%</code></div>
-            <div class="ln"><span>980 succeeded</span><code>950 had all ten URLs resolved → resolved URLs 96.9%</code></div>
-            <div class="ln"><span>950 resolved</span><code>920 verified: 900 clean, 20 poisoned → poisoned results 2.2% · 30 could not be verified</code></div>
+            <div class="ln"><span>980 succeeded</span><code>9,310 of their 9,500 result links resolved → resolved URLs 98.0% · 950 pages had every link resolved</code></div>
+            <div class="ln"><span>950 whole pages</span><code>920 verified: 900 clean, 20 poisoned → poisoned results 2.2% · 30 could not be verified</code></div>
             <div class="ln"><span>Result</span><code>900 usable answers out of 1,000 sent → usable answers 90.0%</code></div>
           </div>
           <dl class="gloss calc" id="gloss"></dl>
@@ -527,7 +528,7 @@ footer { padding: 24px 0 36px; font-size: 13px; color: var(--faint); }
             <li><b>Every percentage has a margin.</b> It comes from a sample of searches: about one point either way over 30 days, about five over a single day. Point at a number in the table to see its range.</li>
             <li><b>Searches are not independent.</b> Poisoning comes in streaks and a bad hour affects everything sent in it. So the ranges are computed by resampling whole runs and whole searches, not single requests, which makes them wider and more honest.</li>
             <li><b>Providers are compared search by search.</b> Everyone got the same search in the same second, so we look at the difference on each one. <i class="mark"></i>This mark shows the best result in a column only when the gap to the next provider is too large to be luck. When two providers are that close, nobody gets it.</li>
-            <li><b>Slow-answer figures need enough answers.</b> A median is shown from 20 successful searches, a 95th percentile from 100. Below that the page says so instead of showing a number.</li>
+            <li><b>Slow-answer figures need enough answers.</b> A median is shown from 20 successful searches, a 95th percentile from 50. Below that the page says so instead of showing a number.</li>
             <li><b>The detector is checked too.</b> A person compares a random sample of pages with an ordinary browser without seeing which provider they came from. How often the detector was wrong is published next to its results.</li>
           </ul>
         </section>
@@ -597,8 +598,8 @@ const METRICS = [
     tip: "The answers you can actually use: the search succeeded, every URL is resolved and the results are not poisoned. Counted out of all searches sent. This is the main number.", formula: "searches that passed all three checks ÷ searches sent" },
   { key: "success", label: "Success rate", unit: "%", hi: true, sub: "Share of all searches sent · higher is better",
     tip: "A valid response came back within 60 seconds on the first try, with at least three results. The number most benchmarks stop at.", formula: "successful searches ÷ searches sent" },
-  { key: "resolved", label: "Resolved URLs", unit: "%", hi: true, sub: "Share of successful pages · higher is better",
-    tip: "Google hides result addresses behind its own /goto redirect. A page counts when all ten results point at the destination sites, not at google.com.", formula: "pages with all ten URLs resolved ÷ successful pages" },
+  { key: "resolved", label: "Resolved URLs", unit: "%", hi: true, sub: "Share of result links · higher is better",
+    tip: "Google hides result addresses behind its own /goto redirect. This is the share of result links that point at the destination sites, not at google.com. Pages where every link is resolved are counted next to it.", formula: "resolved result links ÷ result links of successful pages" },
   BY_HISTORY
   ? { key: "poisoned", label: "Poisoned results", unit: "%", hi: false, sub: "Share of verified pages · lower is better",
     tip: "Google sometimes answers a scraper with a normal-looking page whose results are fake: sites that do not rank for the search. No error, no captcha.", formula: "poisoned pages ÷ (clean pages + poisoned pages); pages that could not be verified are left out and shown separately" }
@@ -732,8 +733,9 @@ function renderResults() {
       if (v == null) return `<td class="r${main(m)}"><span class="np">${emptyWord(m)}</span></td>`;
       const c = m.unit === "%" ? cell(p, m.key) : null;
       const left = m.key === "poisoned" ? cell(p, "unjudged") : null;
-      const of = m.key === "poisoned" ? "compared pages" : "searches";
-      const range = c ? ` title="Very likely between ${pct(c[1])} and ${pct(c[2])}: ${c[3]} of ${c[4]} ${of}${left ? `. ${left[3]} of ${left[4]} resolved pages could not be compared` : ""}"` : "";
+      const whole = m.key === "resolved" ? cell(p, "resolved_pages") : null;
+      const of = m.key === "poisoned" ? "compared pages" : m.key === "resolved" ? "result links" : "searches";
+      const range = c ? ` title="Very likely between ${pct(c[1])} and ${pct(c[2])}: ${c[3]} of ${c[4]} ${of}${left ? `. ${left[3]} of ${left[4]} resolved pages could not be compared` : ""}${whole ? `. On ${whole[3]} of ${whole[4]} pages every link was resolved` : ""}"` : "";
       return `<td class="r${first ? " best" : ""}${main(m)}"${range}>${first ? '<i class="mark"></i>' : ""}<span class="v">${fmt(m, v)}</span></td>`;
     }).join("")}<td>${sparkline(p)}</td></tr>`).join("") + "</tbody>";
   el("results-note").textContent = `Last ${winLabel(win)} · ${samples().toLocaleString("en-US")} searches per provider`;

@@ -74,7 +74,7 @@ def test_quantile_with_never():
 
 
 def test_minimum_sample_sizes():
-    assert MIN_N_FOR_QUANTILE == {50: 20, 90: 50, 95: 100, 99: 500}
+    assert MIN_N_FOR_QUANTILE == {50: 20, 90: 50, 95: 50, 99: 50}
 
 
 # --- the all-tasks view: inverse of the empirical distribution -----------------------------

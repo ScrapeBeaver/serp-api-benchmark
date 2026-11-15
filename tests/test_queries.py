@@ -12,7 +12,13 @@ from conftest import DAY, ROOT
 
 from serp_bench.config import ConfigError, load_config
 from serp_bench.models import Device
-from serp_bench.queries import load_query_set, per_run_counts, plan, resolve_run
+from serp_bench.queries import (
+    load_query_set,
+    per_run_counts,
+    plan,
+    resolve_run,
+    stored_runs,
+)
 
 
 @pytest.fixture
@@ -142,6 +148,39 @@ def test_resolve_run(config):
     for bad in ("4", "-1", "noon"):
         with pytest.raises(ConfigError):
             resolve_run(config, bad, now)
+
+
+def _store(config, folder, day, index):
+    """A record file for one run, laid out as on the data branch."""
+    due = config.schedule.due_time(day, index).replace(":", "")
+    path = folder / f"{day:%Y/%m/%d}" / f"run-{due}.jsonl.gz"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"")
+
+
+def test_next_is_the_first_run_of_the_day_that_is_not_stored(config, tmp_path):
+    """A run started by hand needs no index: it does what is left of the day, in order."""
+    now = dt.datetime(2026, 11, 12, 6, 30, tzinfo=dt.UTC)
+    assert resolve_run(config, "next", now, day=DAY, stored=tmp_path) == 0
+    _store(config, tmp_path, DAY, 0)
+    _store(config, tmp_path, DAY, 2)
+    assert stored_runs(config, DAY, tmp_path) == {0, 2}
+    assert resolve_run(config, "next", now, day=DAY, stored=tmp_path) == 1
+    for index in range(config.schedule.runs_per_day):
+        _store(config, tmp_path, DAY, index)
+    assert resolve_run(config, "next", now, day=DAY, stored=tmp_path) is None
+    # Another day starts from its first run again.
+    tomorrow = DAY + dt.timedelta(days=1)
+    assert resolve_run(config, "next", now, day=tomorrow, stored=tmp_path) == 0
+
+
+def test_auto_does_not_repeat_a_run_that_is_stored(config, tmp_path):
+    """The schedule must not do again the run someone already did by hand."""
+    now = dt.datetime(2026, 11, 12, config.schedule.due_hour(DAY, 1), 30, tzinfo=dt.UTC)
+    assert resolve_run(config, "auto", now, day=DAY, stored=tmp_path) == 1
+    _store(config, tmp_path, DAY, 1)
+    assert resolve_run(config, "auto", now, day=DAY, stored=tmp_path) is None
+    assert resolve_run(config, "1", now, day=DAY, stored=tmp_path) == 1  # a number is obeyed
 
 
 def test_query_files_are_validated(tmp_path):

@@ -91,14 +91,48 @@ def per_run_counts(per_day: int, run_count: int) -> list[int]:
     return [base + (1 if index < rest else 0) for index in range(run_count)]
 
 
-def resolve_run(config: BenchConfig, run: str, now: dt.datetime) -> int | None:
-    """A run index from the command line. `auto` is the run due in the current UTC hour,
-    or None when no run is due in this hour."""
+def stored_runs(config: BenchConfig, day: dt.date, stored: Path | None) -> set[int]:
+    """The indexes of the day's runs that already have a record file under `stored`
+    (a folder laid out like the data branch: YYYY/MM/DD/run-HHMM.jsonl.gz)."""
+    if stored is None:
+        return set()
+    folder = stored / f"{day:%Y/%m/%d}"
+    return {
+        index
+        for index in range(config.schedule.runs_per_day)
+        if any(
+            folder.glob(f"run-{config.schedule.due_time(day, index).replace(':', '')}*.jsonl.gz")
+        )
+    }
+
+
+def resolve_run(
+    config: BenchConfig,
+    run: str,
+    now: dt.datetime,
+    *,
+    day: dt.date | None = None,
+    stored: Path | None = None,
+) -> int | None:
+    """Which of the day's runs to do, from the command line.
+
+    `auto` is the run due in the current UTC hour: what the schedule asks for. `next` is
+    the first of the day's runs that is not stored yet: what a person who starts a run by
+    hand wants, without having to know which runs were done. A number is that run.
+    None when there is nothing to do: no run is due in this hour, or the run is stored
+    already (a run is recorded once and never written again).
+    """
+    day = now.date() if day is None else day
+    done = stored_runs(config, day, stored)
     if run == "auto":
-        return config.schedule.run_due_in_hour(now)
+        due = config.schedule.run_due_in_hour(now)
+        return None if due in done else due
+    if run == "next":
+        left = [index for index in range(config.schedule.runs_per_day) if index not in done]
+        return left[0] if left else None
     last = config.schedule.runs_per_day - 1
     if not re.fullmatch(r"\d+", run) or not 0 <= int(run) <= last:
-        raise ConfigError(f"--run '{run}' must be `auto` or a run index from 0 to {last}")
+        raise ConfigError(f"--run '{run}' must be `auto`, `next` or a run index from 0 to {last}")
     return int(run)
 
 

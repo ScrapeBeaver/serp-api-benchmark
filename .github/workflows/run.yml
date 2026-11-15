@@ -6,7 +6,8 @@ name: Benchmark run
 #
 # On a schedule it wakes up every hour; `serp-bench run --run auto` then decides whether one
 # of the day's runs is due in this hour (the hours move from day to day, see bench.yaml)
-# and does nothing otherwise. It can also be started by hand.
+# and does nothing otherwise. Started by hand, it does the next of today's runs that is
+# not stored yet, so nobody has to know which ones were done. A run is never done twice.
 #
 # A schedule fires only from the default branch.
 
@@ -20,9 +21,9 @@ on:
         required: false
         default: ""
       run:
-        description: "Run index (0, 1, ...) or auto (the run due this UTC hour)"
+        description: "next (the first of today's runs not stored yet), auto (the run due this UTC hour) or a run index"
         required: true
-        default: "auto"
+        default: "next"
       limit:
         description: "Send only the first N tasks (empty: the whole run)"
         required: false
@@ -86,9 +87,18 @@ jobs:
       - run: uv sync --locked
       - name: Providers and keys
         run: uv run serp-bench providers
+      - name: Runs stored today
+        # What `auto` and `next` look at, so that a run that is already on the data branch
+        # is not done again.
+        run: |
+          mkdir -p stored
+          if git fetch --quiet --depth 1 origin benchmark-data 2>/dev/null; then
+            git archive FETCH_HEAD "raw/$(date -u +%Y/%m/%d)" 2>/dev/null | tar -x -C stored || true
+          fi
+          find stored -name 'run-*.jsonl.gz' | sort
       - name: Run
         run: |
-          args=(run --run "$INPUT_RUN")
+          args=(run --run "$INPUT_RUN" --stored stored/raw)
           if [ -n "$INPUT_PROVIDERS" ]; then args+=(--providers "$INPUT_PROVIDERS"); fi
           if [ -n "$INPUT_LIMIT" ]; then args+=(--limit "$INPUT_LIMIT"); fi
           if [ "$INPUT_ALLOW_DRAFT" = "true" ]; then args+=(--allow-draft); fi

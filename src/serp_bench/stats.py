@@ -13,7 +13,10 @@ Z_95 = 1.959963984540054  # the 97.5th percentile of the standard normal distrib
 
 # A quantile is only printed when there are at least this many values behind it. Below
 # that, the tail it describes is a handful of requests and the figure would mislead.
-MIN_N_FOR_QUANTILE = {50: 20, 90: 50, 95: 100, 99: 500}
+# The tail percentiles start at 50 values so that they appear within the first days of a
+# provider: at 50 values p95 rests on the three slowest answers and p99 on the slowest
+# two, so both are rough until there are a few hundred.
+MIN_N_FOR_QUANTILE = {50: 20, 90: 50, 95: 50, 99: 50}
 
 
 def wilson_interval(successes: int, n: int, z: float = Z_95) -> tuple[float, float] | None:

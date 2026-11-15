@@ -186,7 +186,7 @@ def test_unknown_provider_and_bad_run_are_readable_errors(tmp_path, capsys):
     assert cli.main(["run", *CONFIG, "--providers", "nobody", "--run", "0"]) == 2
     assert "unknown provider(s) ['nobody']" in capsys.readouterr().err
     assert cli.main(["run", *CONFIG, "--providers", "mock", "--run", "9"]) == 2
-    assert "must be `auto` or a run index from 0 to 3" in capsys.readouterr().err
+    assert "must be `auto`, `next` or a run index from 0 to 3" in capsys.readouterr().err
 
 
 def test_plan_prints_the_arithmetic(capsys):

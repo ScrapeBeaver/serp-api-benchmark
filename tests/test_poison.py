@@ -424,7 +424,8 @@ def test_the_poisoned_share_is_counted_on_resolved_pages_that_got_a_verdict():
     assert figures("a")["poisoned"][0] == 0.0 and figures("a")["poisoned"][3:] == [0, 2]
     assert figures("b")["poisoned"][3:] == [0, 1]  # its second page is unresolved
     c = figures("c")
-    assert c["resolved"][3:] == [2, 3]
+    assert c["resolved_pages"][3:] == [2, 3]
+    assert c["resolved"][3] == c["resolved"][4] - 1  # by links: one address of all is missing
     assert c["poisoned"][3:] == [1, 1]  # task-1; task-2 is unresolved, task-3 is not judged
     assert c["unjudged"][3:] == [1, 2]
     assert c["usable"] is None  # still not measured: see summary.NOT_MEASURED_YET

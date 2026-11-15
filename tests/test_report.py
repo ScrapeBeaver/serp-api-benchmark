@@ -97,14 +97,17 @@ def test_deadline_shares_are_over_all_tasks():
 
 def test_two_latency_views():
     rows = records_for([float(ms) for ms in range(1000, 1090)], {"timeout": 10})  # 90 of 100
+    few = {q.p: q for q in summarise(rows[:40])[0].latency_delivered}
+    assert few[50].state == "ok"  # 40 values: enough for a median, not for the tail
+    assert few[95].state == "too_few" and few[95].text() == "n/a (n=40, needs 50)"
     report = summarise(rows)[0]
     delivered = {q.p: q for q in report.latency_delivered}
     overall = {q.p: q for q in report.time_to_answer}
 
-    # Delivered only: 90 values. p50 and p90 have enough data, p95 does not.
+    # Delivered only: 90 values, enough for every percentile (the tail ones need 50).
     assert delivered[50].state == "ok" and delivered[50].value_ms == pytest.approx(1044.5)
     assert delivered[90].state == "ok" and delivered[90].value_ms == pytest.approx(1080.1)
-    assert delivered[95].state == "too_few" and delivered[95].text() == "n/a (n=90, needs 100)"
+    assert delivered[95].state == "ok" and delivered[95].value_ms == pytest.approx(1084.55)
 
     # All tasks: 100 values, ten of them never answered. The view is the inverse of the
     # empirical distribution: p50 is the 50th shortest wait, p90 the 90th. Exactly 90% were
@@ -112,7 +115,7 @@ def test_two_latency_views():
     assert overall[50].state == "ok" and overall[50].value_ms == pytest.approx(1049.0)
     assert overall[90].state == "ok" and overall[90].value_ms == pytest.approx(1089.0)
     assert overall[95].state == "not_reached" and overall[95].text() == "not reached (n=100)"
-    assert overall[99].state == "too_few"
+    assert overall[99].state == "not_reached"  # 100 values are enough; 99% never answered
     assert overall[50].value_ms > delivered[50].value_ms, "failures push every quantile out"
 
 
