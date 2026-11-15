@@ -4,9 +4,10 @@ name: Benchmark run
 # records on the `benchmark-data` branch, and publishes the summary of all records as one
 # file on the `benchmark-summary` branch.
 #
-# On a schedule it wakes up every hour; `serp-bench run --run auto` then decides whether one
-# of the day's runs is due in this hour (the hours move from day to day, see bench.yaml)
-# and does nothing otherwise. Started by hand, it does the next of today's runs that is
+# On a schedule it wakes up every hour; `serp-bench run --run auto` then does the run that
+# fell due recently and is not stored yet (the hours move from day to day, see
+# bench.yaml), and does nothing otherwise. GitHub starts a scheduled job tens of minutes
+# late, often in the next clock hour, so the run is found by what is owed, not by the hour. Started by hand, it does the next of today's runs that is
 # not stored yet, so nobody has to know which ones were done. A run is never done twice.
 #
 # A schedule fires only from the default branch.
@@ -87,13 +88,15 @@ jobs:
       - run: uv sync --locked
       - name: Providers and keys
         run: uv run serp-bench providers
-      - name: Runs stored today
+      - name: Runs stored today and yesterday
         # What `auto` and `next` look at, so that a run that is already on the data branch
-        # is not done again.
+        # is not done again. Yesterday too: the last run of a day can start after midnight.
         run: |
           mkdir -p stored
           if git fetch --quiet --depth 1 origin benchmark-data 2>/dev/null; then
-            git archive FETCH_HEAD "raw/$(date -u +%Y/%m/%d)" 2>/dev/null | tar -x -C stored || true
+            for day in "$(date -u -d yesterday +%Y/%m/%d)" "$(date -u +%Y/%m/%d)"; do
+              git archive FETCH_HEAD "raw/$day" 2>/dev/null | tar -x -C stored || true
+            done
           fi
           find stored -name 'run-*.jsonl.gz' | sort
       - name: Run

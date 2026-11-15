@@ -170,10 +170,11 @@ def test_auto_exits_cleanly_when_no_run_is_due(tmp_path, capsys, monkeypatch):
         def now(cls, tz=None):
             from serp_bench.config import load_config
 
+            # Well after the first run of the day stopped being owed, well before the next.
             schedule = load_config(ROOT / "bench.yaml").schedule
-            day = dt.date(2026, 11, 12)
-            hour = (schedule.due_hour(day, 0) + 1) % 24
-            return cls(2026, 11, 12, hour, 30, tzinfo=dt.UTC)
+            quiet = schedule.due_at(dt.date(2026, 11, 12), 0) + schedule.grace
+            quiet += dt.timedelta(minutes=30)
+            return cls(quiet.year, quiet.month, quiet.day, quiet.hour, quiet.minute, tzinfo=dt.UTC)
 
     monkeypatch.setattr(cli.dt, "datetime", Quiet)
     code = cli.main(["run", *CONFIG, "--providers", "mock", "--out", str(tmp_path)])

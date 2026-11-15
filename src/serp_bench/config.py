@@ -69,6 +69,19 @@ class Schedule(_Strict):
                 return run_index
         return None
 
+    def due_at(self, day: dt.date, run_index: int) -> dt.datetime:
+        """The UTC moment at which run `run_index` of `day` is due."""
+        hour = self.due_hour(day, run_index)
+        return dt.datetime.combine(day, dt.time(hour, self.minute), tzinfo=dt.UTC)
+
+    @property
+    def grace(self) -> dt.timedelta:
+        """How long after its due time a run is still done by the schedule: half the gap
+        between two runs. A job that starts late, or a failed one tried again an hour
+        later, still does its run; a run is never done so late that it sits next to the
+        following one."""
+        return dt.timedelta(hours=self.step_hours) / 2
+
 
 class Pool(_Strict):
     source: str | None = None  # a query file, relative to bench.yaml

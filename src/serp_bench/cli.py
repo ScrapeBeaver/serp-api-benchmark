@@ -54,7 +54,7 @@ from serp_bench.provider import (
     load_spec,
     parse_config,
 )
-from serp_bench.queries import per_run_counts, plan, resolve_run
+from serp_bench.queries import late_run, per_run_counts, plan, resolve_run
 from serp_bench.records import RecordError, RecordWriter, read_records
 from serp_bench.report import render, report_data
 from serp_bench.runner import RunContext, run_tasks
@@ -335,7 +335,23 @@ def cmd_run(args: argparse.Namespace) -> int:
     day = _day(args.date)
     now = dt.datetime.now(dt.UTC)
     stored = Path(args.stored) if args.stored else Path(args.out) / "raw"
-    run_index = resolve_run(config, args.run, now, day=day, stored=stored)
+    if args.run == "auto" and args.date is None:
+        # What the schedule asks for. The job may start well after the run fell due, in
+        # another hour or on the next day, so the run is found by what is owed, not by
+        # the hour on the clock.
+        owed = late_run(config, now, stored)
+        if owed is None:
+            grace = config.schedule.grace.total_seconds() / 3600
+            print(
+                f"Nothing due at {now:%H:%M} UTC: no run fell due in the last {grace:g} h "
+                "that is not stored already."
+            )
+            return 0
+        day, run_index = owed
+        late = (now - config.schedule.due_at(day, run_index)).total_seconds() / 60
+        log.info("schedule", f"run {run_index} of {day}, due {late:.0f} min ago")
+    else:
+        run_index = resolve_run(config, args.run, now, day=day, stored=stored)
     if run_index is None:
         times = ", ".join(
             config.schedule.due_time(day, k) for k in range(config.schedule.runs_per_day)
@@ -1133,8 +1149,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--run",
         default="auto",
-        help="auto (the run due this hour), next (the first of today's runs not stored yet), "
-        "or a run index",
+        help="auto (the run that fell due recently and is not stored yet: what the schedule "
+        "asks for), next (the first of today's runs not stored yet), or a run index",
     )
     p.add_argument(
         "--stored",

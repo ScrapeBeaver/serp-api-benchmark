@@ -13,6 +13,7 @@ from conftest import DAY, ROOT
 from serp_bench.config import ConfigError, load_config
 from serp_bench.models import Device
 from serp_bench.queries import (
+    late_run,
     load_query_set,
     per_run_counts,
     plan,
@@ -216,6 +217,41 @@ def test_next_is_the_first_run_of_the_day_that_is_not_stored(config, tmp_path):
     # Another day starts from its first run again.
     tomorrow = DAY + dt.timedelta(days=1)
     assert resolve_run(config, "next", now, day=tomorrow, stored=tmp_path) == 0
+
+
+def test_the_schedule_does_a_run_however_late_the_job_starts(config, tmp_path):
+    """GitHub starts a scheduled job tens of minutes late, often in the next clock hour.
+    The run that fell due is still the one to do; asking for "the run due in this hour"
+    would find nothing and lose it."""
+    schedule = config.schedule
+    due = schedule.due_at(DAY, 1)
+    assert late_run(config, due - dt.timedelta(minutes=1), tmp_path) is None  # not due yet
+    assert late_run(config, due, tmp_path) == (DAY, 1)
+    assert late_run(config, due + dt.timedelta(minutes=40), tmp_path) == (DAY, 1)
+    next_hour = due + dt.timedelta(minutes=55)
+    assert next_hour.hour != due.hour and late_run(config, next_hour, tmp_path) == (DAY, 1)
+    # A job that failed is tried again by the next hourly start, as long as the run is owed.
+    assert late_run(config, due + schedule.grace, tmp_path) == (DAY, 1)
+    # Later than that the run is let go: it must not land next to the following one.
+    assert late_run(config, due + schedule.grace + dt.timedelta(minutes=1), tmp_path) is None
+    assert schedule.grace < dt.timedelta(hours=schedule.step_hours)
+    # Once it is stored it is not owed any more, however early in its window.
+    _store(config, tmp_path, DAY, 1)
+    assert late_run(config, due + dt.timedelta(minutes=40), tmp_path) is None
+
+
+def test_the_last_run_of_a_day_can_be_done_after_midnight(config, tmp_path):
+    """The run keeps its own day: its file and its queries are yesterday's."""
+    last = config.schedule.runs_per_day - 1
+    day = next(  # a day whose last run falls due less than the grace before midnight
+        d
+        for d in (DAY + dt.timedelta(days=n) for n in range(30))
+        if (config.schedule.due_at(d, last) + config.schedule.grace).date() > d
+    )
+    after_midnight = dt.datetime.combine(day + dt.timedelta(days=1), dt.time(0, 5), tzinfo=dt.UTC)
+    assert late_run(config, after_midnight, tmp_path) == (day, last)
+    _store(config, tmp_path, day, last)
+    assert late_run(config, after_midnight, tmp_path) is None
 
 
 def test_auto_does_not_repeat_a_run_that_is_stored(config, tmp_path):

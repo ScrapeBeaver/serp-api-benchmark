@@ -120,6 +120,30 @@ def stored_runs(config: BenchConfig, day: dt.date, stored: Path | None) -> set[i
     }
 
 
+def late_run(
+    config: BenchConfig, now: dt.datetime, stored: Path | None
+) -> tuple[dt.date, int] | None:
+    """The run the schedule owes at `now`: the earliest run that fell due within the last
+    `schedule.grace` and is not stored yet, with its day. None when there is none.
+
+    A scheduled job does not start on the minute: GitHub starts it tens of minutes late,
+    often in the next clock hour, and after midnight for the last run of a day. Asking
+    "which run is due in this hour" would then find nothing and the run would be lost.
+    """
+    schedule = config.schedule
+    owed: list[tuple[dt.datetime, dt.date, int]] = []
+    for day in (now.date() - dt.timedelta(days=1), now.date()):
+        done = stored_runs(config, day, stored)
+        for index in range(schedule.runs_per_day):
+            due = schedule.due_at(day, index)
+            if index not in done and due <= now <= due + schedule.grace:
+                owed.append((due, day, index))
+    if not owed:
+        return None
+    _, day, index = min(owed)
+    return day, index
+
+
 def resolve_run(
     config: BenchConfig,
     run: str,
