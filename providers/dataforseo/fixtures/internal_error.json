@@ -1,0 +1,48 @@
+{
+ "description": "DataForSEO could not get the page: HTTP 200 and \"Ok.\" for the call, with the task's own status 40101, \"Internal SE Server Error\", after 13 seconds and at no cost. A failure of the service, counted as one.",
+ "source": "Recorded on 2026-11-15 from POST https://api.dataforseo.com/v3/serp/google/organic/live/regular: statuses, messages and cost are as returned; the task id was replaced and the version and time fields removed.",
+ "task": {
+  "query": "how to boil an egg",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "status_code": 20000,
+   "status_message": "Ok.",
+   "cost": 0,
+   "tasks_count": 1,
+   "tasks_error": 0,
+   "tasks": [
+    {
+     "id": "example-task-id",
+     "status_code": 40101,
+     "status_message": "Internal SE Server Error.",
+     "cost": 0,
+     "result_count": 0,
+     "data": {
+      "api": "serp",
+      "function": "live",
+      "se": "google",
+      "se_type": "organic",
+      "keyword": "how to boil an egg",
+      "language_code": "en",
+      "location_code": 2840,
+      "device": "desktop",
+      "os": "windows"
+     },
+     "result": null
+    }
+   ]
+  }
+ },
+ "expect": {
+  "outcome": "provider_error"
+ }
+}

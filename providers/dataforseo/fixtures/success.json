@@ -1,0 +1,148 @@
+{
+ "description": "A delivered search as the live API returned it with its default settings: 7 organic results, of which 7 are Google's own /goto redirect instead of the destination. The answer names each result's domain next to the wrapped link.",
+ "source": "Recorded on 2026-11-15 from POST https://api.dataforseo.com/v3/serp/google/organic/live/regular. Descriptions were emptied, the task id replaced and the version, time and check_url fields removed; ranks, titles, domains and links are as returned.",
+ "task": {
+  "query": "git rebase vs merge",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "status_code": 20000,
+   "status_message": "Ok.",
+   "cost": 0.002,
+   "tasks_count": 1,
+   "tasks_error": 0,
+   "tasks": [
+    {
+     "id": "example-task-id",
+     "status_code": 20000,
+     "status_message": "Ok.",
+     "cost": 0.002,
+     "result_count": 1,
+     "data": {
+      "api": "serp",
+      "function": "live",
+      "se": "google",
+      "se_type": "organic",
+      "keyword": "git rebase vs merge",
+      "language_code": "en",
+      "location_code": 2840,
+      "device": "desktop",
+      "os": "windows"
+     },
+     "result": [
+      {
+       "keyword": "git rebase vs merge",
+       "type": "organic",
+       "se_domain": "google.com",
+       "location_code": 2840,
+       "language_code": "en",
+       "spell": null,
+       "item_types": [
+        "ai_overview",
+        "organic",
+        "people_also_ask",
+        "perspectives",
+        "discussions_and_forums"
+       ],
+       "pages_count": 1,
+       "items_count": 7,
+       "items": [
+        {
+         "type": "organic",
+         "rank_group": 1,
+         "rank_absolute": 2,
+         "page": 1,
+         "domain": "google.com",
+         "title": "Understanding the Difference Between Git Merge and ...",
+         "description": "",
+         "url": "https://google.com/goto?url=CAESkwEBxCJF18_qnitYnt-yVbcH-28TBLPpU0xAfrtFDQNg7tVOV75-Pp9z4ljW3T06Ai8wFEsvi1l0oSZ4swioJ1W0a-ejS8DSpnEBiSgZoadMAWYql7fJcVRrWIbn6_6fmIpxOd4qsBhVCen2FFbBpyyv-DrriXeKne-53KpMfFjGxQatCMej8Xy5u4V1fgM_8Vif5E0&gsessionid=xUOIh7a9gjE8jZFsoZIucOCsSGSg1jJoBqrLdCHNQAIDooZiNdvBNw",
+         "breadcrumb": "https://algocademy.com › blog › understanding-the-diffe..."
+        },
+        {
+         "type": "organic",
+         "rank_group": 2,
+         "rank_absolute": 4,
+         "page": 1,
+         "domain": "google.com",
+         "title": "Git Merge vs Git Rebase: What's the Difference?",
+         "description": "",
+         "url": "https://google.com/goto?url=CAESZwHEIkXXxOOwmw7nQs0duIErF0aOazghK88d-Z7aO2OWnKyMposIQA-maIqAuuSI0M0ibNIdh6tbY2dCDpo8-16Sfpelmws6NS2mycHNxEDIataVisPQSd-HjgvLlV0tLv0hjE6f-EQ&gsessionid=xUOIh7a9gjE8jZFsoZIucOCsSGSg1jJoBqrLdCHNQAIDooZiNdvBNw",
+         "breadcrumb": "https://www.youtube.com · Sep 13, 2026"
+        },
+        {
+         "type": "organic",
+         "rank_group": 3,
+         "rank_absolute": 5,
+         "page": 1,
+         "domain": "google.com",
+         "title": "Git Rebase vs Merge Understanding The Differences",
+         "description": "",
+         "url": "https://google.com/goto?url=CAESeQHEIkXX3ctzJo1Q7qw2LUlRRJdsfk56hCf9DdynpVDld1FBGOQ235F3aLXwTQqTVwRNd5VuxBKJkK1yF1_3pC8dH4B1rBVQ4zM2aujlxiSoSp2S4bjMN_bd8pLDvYq7Ml2g9DpSjqiSwWxq1N95j2CZCXSuqQV7gQo&gsessionid=xUOIh7a9gjE8jZFsoZIucOCsSGSg1jJoBqrLdCHNQAIDooZiNdvBNw",
+         "breadcrumb": "https://www.astconsulting.in › Blog"
+        },
+        {
+         "type": "organic",
+         "rank_group": 4,
+         "rank_absolute": 6,
+         "page": 1,
+         "domain": "google.com",
+         "title": "Git Rebase vs Merge: What's the Difference? Explained Simply",
+         "description": "",
+         "url": "https://google.com/goto?url=CAESZwHEIkXXv4WZpRgA9Ca5pOszzzh9JUWJRZ7YMGOmFuQhx5k8_K2ZuSSdn7pNtA_Dq_7ErDNiUUcieNVVtvp8j0k5nwA89Sq5mlPnq-2YhRnyL23dXLQpUbaKLTUIqqIDuC9unkRBvPA&gsessionid=xUOIh7a9gjE8jZFsoZIucOCsSGSg1jJoBqrLdCHNQAIDooZiNdvBNw",
+         "breadcrumb": "https://www.youtube.com · Oct 20, 2026"
+        },
+        {
+         "type": "organic",
+         "rank_group": 5,
+         "rank_absolute": 7,
+         "page": 1,
+         "domain": "google.com",
+         "title": "git rebase vs. git merge",
+         "description": "",
+         "url": "https://google.com/goto?url=CAESnQEBxCJF1_muBsFKEvZClOwvNvt3pkMKyOwTPjuwSvPw4kW5WAlUoYruDbMxeADPJ23HI58Jikc7pMbGOVl_iDS-zbbWXd-DZd4d0a-s5g28eF152M8jq_q2k3NeTYt88nNUnuqMQ7N5XilAilVTBgmokMlq7FxW9ZQfUELSs13-5gLoDKiPHpbaUDxFehaxquE2m-lQeoOJ2SQFp3j8&gsessionid=xUOIh7a9gjE8jZFsoZIucOCsSGSg1jJoBqrLdCHNQAIDooZiNdvBNw",
+         "breadcrumb": "https://www.netresults.it › uploads › 2020/01 › N..."
+        },
+        {
+         "type": "organic",
+         "rank_group": 6,
+         "rank_absolute": 8,
+         "page": 1,
+         "domain": "google.com",
+         "title": "Git Merge vs. Rebase: Key Differences",
+         "description": "",
+         "url": "https://google.com/goto?url=CAEScAHEIkXXeEFVxMaGEes3waPo-8uPN8EGibxmRZAtEbq4XN9vCXCzH793e_IjOvw7WvNUooEj0uTZoQOB3AuXuD67_Iz_gon5AFobUU5rydyG9dhFJ3J7QrvkgfIqLiIx7gAQnSQwxtmgCxSqhoL3HRE&gsessionid=xUOIh7a9gjE8jZFsoZIucOCsSGSg1jJoBqrLdCHNQAIDooZiNdvBNw",
+         "breadcrumb": "https://harshalranjhani.in › blog › git-merge-vs-rebase"
+        },
+        {
+         "type": "organic",
+         "rank_group": 7,
+         "rank_absolute": 11,
+         "page": 1,
+         "domain": "google.com",
+         "title": "What is the difference between Git Merge and Git Rebase",
+         "description": "",
+         "url": "https://google.com/goto?url=CAESpQEBxCJF1zsKT1DqXC6ofGpKc_x671i7CExUnSuDblBWfBPAvQJegoMeCywhVTN4SeM3puTaqj1ZSQ69KaWQlG60w4muZmgEf6oWAaSp7WLs752x8Ghtdd2_7JK4ijhaO-XSsS2GoWAjIQe2xqZz98Zah6NWCpiPfaVRhNRoivzG8ZC_KSvVk16LO1rch6-nSuJPbLHOMZkrTiZkHwX8yWRbHn3HZOw&gsessionid=xUOIh7a9gjE8jZFsoZIucOCsSGSg1jJoBqrLdCHNQAIDooZiNdvBNw",
+         "breadcrumb": "50+ likes  ·  2 years ago"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "expect": {
+  "outcome": "delivered",
+  "organic_count": 7,
+  "provider_request_id": "example-task-id",
+  "billed_units": 0.002
+ }
+}

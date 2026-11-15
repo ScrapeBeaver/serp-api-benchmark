@@ -1,0 +1,88 @@
+{
+ "description": "HTTP 200 with the other sections of the page and no `organic_results` at all: a page without organic results. Counted as a failure (empty results), and charged.",
+ "source": "Recorded from the live API on 2026-11-15 (\"best running shoes\", US, desktop). Kept: `search_information`, the first three related searches and `pagination`; the AI box, shopping items and related questions are left out.",
+ "task": {
+  "query": "best running shoes",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json; charset=utf-8",
+   "sa-credit-cost": "25",
+   "sa-final-url": "https://www.google.com/search?q=best+running+shoes&hl=en&gl=us"
+  },
+  "body": {
+   "search_information": {
+    "query_displayed": "best running shoes"
+   },
+   "related_searches": [
+    {
+     "position": 13,
+     "query": "Best running shoes for men",
+     "link": "https://www.google.com/search?sca_esv=e6e4faa1f9fe3597&hl=en&gl=us&sxsrf=AKL5yDjz_04ThGOW8Yg1ZDftC8NBwNzdag:1794739251430&q=Best+running+shoes+for+men&sa=X&ved=2ahUKEwjiyq7c5ImYAxUKma8BHZHlCucQ1QJ6BAg3EAE"
+    },
+    {
+     "position": 14,
+     "query": "Best running shoes in the world",
+     "link": "https://www.google.com/search?sca_esv=e6e4faa1f9fe3597&hl=en&gl=us&sxsrf=AKL5yDjz_04ThGOW8Yg1ZDftC8NBwNzdag:1794739251430&q=Best+running+shoes+in+the+world&sa=X&ved=2ahUKEwjiyq7c5ImYAxUKma8BHZHlCucQ1QJ6BAhFEAE"
+    },
+    {
+     "position": 15,
+     "query": "Best running shoes women",
+     "link": "https://www.google.com/search?sca_esv=e6e4faa1f9fe3597&hl=en&gl=us&sxsrf=AKL5yDjz_04ThGOW8Yg1ZDftC8NBwNzdag:1794739251430&q=Best+running+shoes+women&sa=X&ved=2ahUKEwjiyq7c5ImYAxUKma8BHZHlCucQ1QJ6BAhBEAE"
+    }
+   ],
+   "pagination": {
+    "pages_count": 10,
+    "current_page": 1,
+    "next_page_url": "http://api.scraperapi.com/?url=https%3A%2F%2Fwww.google.com%2Fsearch%3Fq%3Dbest%2Brunning%2Bshoes%26sca_esv%3De6e4faa1f9fe3597%26hl%3Den%26gl%3Dus%26sxsrf%3DAKL5yDjz_04ThGOW8Yg1ZDftC8NBwNzdag%3A1794739251430%26ei%3DM4z5aqLlGYqyvr0PkcuruA4%26start%3D10%26sa%3DN%26sstk%3DAYl2yk8N9nu_LwiUSSqpP0JXwe61oMdPPiw9nqmAiQZDbFBhqHG-g6BnG0Zcerwh01bMXoEi7QO-X6a00gSbzSn-M6aE1R8h2R13gg%26ved%3D2ahUKEwjiyq7c5ImYAxUKma8BHZHlCucQ8tMDegQINBAE&autoparse=true&tld=com",
+    "pages": [
+     {
+      "page": 2,
+      "url": "http://api.scraperapi.com/?url=https%3A%2F%2Fwww.google.com%2Fsearch%3Fq%3Dbest%2Brunning%2Bshoes%26sca_esv%3De6e4faa1f9fe3597%26hl%3Den%26gl%3Dus%26sxsrf%3DAKL5yDjz_04ThGOW8Yg1ZDftC8NBwNzdag%3A1794739251430%26ei%3DM4z5aqLlGYqyvr0PkcuruA4%26start%3D10%26sa%3DN%26sstk%3DAYl2yk8N9nu_LwiUSSqpP0JXwe61oMdPPiw9nqmAiQZDbFBhqHG-g6BnG0Zcerwh01bMXoEi7QO-X6a00gSbzSn-M6aE1R8h2R13gg%26ved%3D2ahUKEwjiyq7c5ImYAxUKma8BHZHlCucQ8tMDegQINBAE&autoparse=true&tld=com"
+     },
+     {
+      "page": 3,
+      "url": "http://api.scraperapi.com/?url=https%3A%2F%2Fwww.google.com%2Fsearch%3Fq%3Dbest%2Brunning%2Bshoes%26sca_esv%3De6e4faa1f9fe3597%26hl%3Den%26gl%3Dus%26sxsrf%3DAKL5yDjz_04ThGOW8Yg1ZDftC8NBwNzdag%3A1794739251430%26ei%3DM4z5aqLlGYqyvr0PkcuruA4%26start%3D20%26sa%3DN%26sstk%3DAYl2yk8N9nu_LwiUSSqpP0JXwe61oMdPPiw9nqmAiQZDbFBhqHG-g6BnG0Zcerwh01bMXoEi7QO-X6a00gSbzSn-M6aE1R8h2R13gg%26ved%3D2ahUKEwjiyq7c5ImYAxUKma8BHZHlCucQ8tMDegQINBAG&autoparse=true&tld=com"
+     },
+     {
+      "page": 4,
+      "url": "http://api.scraperapi.com/?url=https%3A%2F%2Fwww.google.com%2Fsearch%3Fq%3Dbest%2Brunning%2Bshoes%26sca_esv%3De6e4faa1f9fe3597%26hl%3Den%26gl%3Dus%26sxsrf%3DAKL5yDjz_04ThGOW8Yg1ZDftC8NBwNzdag%3A1794739251430%26ei%3DM4z5aqLlGYqyvr0PkcuruA4%26start%3D30%26sa%3DN%26sstk%3DAYl2yk8N9nu_LwiUSSqpP0JXwe61oMdPPiw9nqmAiQZDbFBhqHG-g6BnG0Zcerwh01bMXoEi7QO-X6a00gSbzSn-M6aE1R8h2R13gg%26ved%3D2ahUKEwjiyq7c5ImYAxUKma8BHZHlCucQ8tMDegQINBAI&autoparse=true&tld=com"
+     },
+     {
+      "page": 5,
+      "url": "http://api.scraperapi.com/?url=https%3A%2F%2Fwww.google.com%2Fsearch%3Fq%3Dbest%2Brunning%2Bshoes%26sca_esv%3De6e4faa1f9fe3597%26hl%3Den%26gl%3Dus%26sxsrf%3DAKL5yDjz_04ThGOW8Yg1ZDftC8NBwNzdag%3A1794739251430%26ei%3DM4z5aqLlGYqyvr0PkcuruA4%26start%3D40%26sa%3DN%26sstk%3DAYl2yk8N9nu_LwiUSSqpP0JXwe61oMdPPiw9nqmAiQZDbFBhqHG-g6BnG0Zcerwh01bMXoEi7QO-X6a00gSbzSn-M6aE1R8h2R13gg%26ved%3D2ahUKEwjiyq7c5ImYAxUKma8BHZHlCucQ8tMDegQINBAK&autoparse=true&tld=com"
+     },
+     {
+      "page": 6,
+      "url": "http://api.scraperapi.com/?url=https%3A%2F%2Fwww.google.com%2Fsearch%3Fq%3Dbest%2Brunning%2Bshoes%26sca_esv%3De6e4faa1f9fe3597%26hl%3Den%26gl%3Dus%26sxsrf%3DAKL5yDjz_04ThGOW8Yg1ZDftC8NBwNzdag%3A1794739251430%26ei%3DM4z5aqLlGYqyvr0PkcuruA4%26start%3D50%26sa%3DN%26sstk%3DAYl2yk8N9nu_LwiUSSqpP0JXwe61oMdPPiw9nqmAiQZDbFBhqHG-g6BnG0Zcerwh01bMXoEi7QO-X6a00gSbzSn-M6aE1R8h2R13gg%26ved%3D2ahUKEwjiyq7c5ImYAxUKma8BHZHlCucQ8tMDegQINBAM&autoparse=true&tld=com"
+     },
+     {
+      "page": 7,
+      "url": "http://api.scraperapi.com/?url=https%3A%2F%2Fwww.google.com%2Fsearch%3Fq%3Dbest%2Brunning%2Bshoes%26sca_esv%3De6e4faa1f9fe3597%26hl%3Den%26gl%3Dus%26sxsrf%3DAKL5yDjz_04ThGOW8Yg1ZDftC8NBwNzdag%3A1794739251430%26ei%3DM4z5aqLlGYqyvr0PkcuruA4%26start%3D60%26sa%3DN%26sstk%3DAYl2yk8N9nu_LwiUSSqpP0JXwe61oMdPPiw9nqmAiQZDbFBhqHG-g6BnG0Zcerwh01bMXoEi7QO-X6a00gSbzSn-M6aE1R8h2R13gg%26ved%3D2ahUKEwjiyq7c5ImYAxUKma8BHZHlCucQ8tMDegQINBAO&autoparse=true&tld=com"
+     },
+     {
+      "page": 8,
+      "url": "http://api.scraperapi.com/?url=https%3A%2F%2Fwww.google.com%2Fsearch%3Fq%3Dbest%2Brunning%2Bshoes%26sca_esv%3De6e4faa1f9fe3597%26hl%3Den%26gl%3Dus%26sxsrf%3DAKL5yDjz_04ThGOW8Yg1ZDftC8NBwNzdag%3A1794739251430%26ei%3DM4z5aqLlGYqyvr0PkcuruA4%26start%3D70%26sa%3DN%26sstk%3DAYl2yk8N9nu_LwiUSSqpP0JXwe61oMdPPiw9nqmAiQZDbFBhqHG-g6BnG0Zcerwh01bMXoEi7QO-X6a00gSbzSn-M6aE1R8h2R13gg%26ved%3D2ahUKEwjiyq7c5ImYAxUKma8BHZHlCucQ8tMDegQINBAQ&autoparse=true&tld=com"
+     },
+     {
+      "page": 9,
+      "url": "http://api.scraperapi.com/?url=https%3A%2F%2Fwww.google.com%2Fsearch%3Fq%3Dbest%2Brunning%2Bshoes%26sca_esv%3De6e4faa1f9fe3597%26hl%3Den%26gl%3Dus%26sxsrf%3DAKL5yDjz_04ThGOW8Yg1ZDftC8NBwNzdag%3A1794739251430%26ei%3DM4z5aqLlGYqyvr0PkcuruA4%26start%3D80%26sa%3DN%26sstk%3DAYl2yk8N9nu_LwiUSSqpP0JXwe61oMdPPiw9nqmAiQZDbFBhqHG-g6BnG0Zcerwh01bMXoEi7QO-X6a00gSbzSn-M6aE1R8h2R13gg%26ved%3D2ahUKEwjiyq7c5ImYAxUKma8BHZHlCucQ8tMDegQINBAS&autoparse=true&tld=com"
+     },
+     {
+      "page": 10,
+      "url": "http://api.scraperapi.com/?url=https%3A%2F%2Fwww.google.com%2Fsearch%3Fq%3Dbest%2Brunning%2Bshoes%26sca_esv%3De6e4faa1f9fe3597%26hl%3Den%26gl%3Dus%26sxsrf%3DAKL5yDjz_04ThGOW8Yg1ZDftC8NBwNzdag%3A1794739251430%26ei%3DM4z5aqLlGYqyvr0PkcuruA4%26start%3D90%26sa%3DN%26sstk%3DAYl2yk8N9nu_LwiUSSqpP0JXwe61oMdPPiw9nqmAiQZDbFBhqHG-g6BnG0Zcerwh01bMXoEi7QO-X6a00gSbzSn-M6aE1R8h2R13gg%26ved%3D2ahUKEwjiyq7c5ImYAxUKma8BHZHlCucQ8tMDegQINBAU&autoparse=true&tld=com"
+     }
+    ]
+   }
+  }
+ },
+ "expect": {
+  "outcome": "empty_results",
+  "billed_units": 25.0
+ }
+}

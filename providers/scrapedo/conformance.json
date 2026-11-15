@@ -1,0 +1,490 @@
+{
+  "schema_version": 1,
+  "provider": "scrapedo",
+  "provider_status": "draft",
+  "adapter_version": "1",
+  "date": "2026-11-15T10:18:18Z",
+  "overall": "UNKNOWN",
+  "probes": [
+    {
+      "id": "desktop_page1",
+      "description": "An ordinary desktop search, first page",
+      "capability": null,
+      "declared": null,
+      "sent": true,
+      "outcome": "delivered",
+      "void_reason": null,
+      "http_status": 200,
+      "ttfb_ms": 3916.1,
+      "total_ms": 3918.2,
+      "organic_count": 7,
+      "checks": [
+        {
+          "check": "dispatched",
+          "passed": true,
+          "detail": "sent"
+        },
+        {
+          "check": "response_received",
+          "passed": true,
+          "detail": "complete response in 3.92 s"
+        },
+        {
+          "check": "account_ok",
+          "passed": true,
+          "detail": "not a key or credit problem"
+        },
+        {
+          "check": "http_2xx",
+          "passed": true,
+          "detail": "HTTP 200"
+        },
+        {
+          "check": "json_body",
+          "passed": true,
+          "detail": "valid JSON, 16970 bytes"
+        },
+        {
+          "check": "no_provider_error",
+          "passed": true,
+          "detail": "the body reports no failure"
+        },
+        {
+          "check": "parsed",
+          "passed": true,
+          "detail": "the body has the documented shape"
+        },
+        {
+          "check": "has_results",
+          "passed": true,
+          "detail": "7 organic results"
+        },
+        {
+          "check": "min_organic",
+          "passed": true,
+          "detail": "7 organic results, at least 3 needed"
+        },
+        {
+          "check": "well_formed_results",
+          "passed": true,
+          "detail": "7 of 7 results have a title and an absolute http(s) URL"
+        },
+        {
+          "check": "params_echo",
+          "passed": true,
+          "detail": "the provider confirms the query and country asked for"
+        }
+      ],
+      "response": {
+        "verdict": "PASS",
+        "detail": "delivered, 7 results"
+      },
+      "billing": {
+        "verdict": "PASS",
+        "units_measured": 10.0,
+        "units_declared": 10.0,
+        "detail": "declared 10 for a delivered request, the response says 10"
+      }
+    },
+    {
+      "id": "mobile",
+      "description": "The same search as a phone",
+      "capability": "mobile",
+      "declared": true,
+      "sent": true,
+      "outcome": "delivered",
+      "void_reason": null,
+      "http_status": 200,
+      "ttfb_ms": 4105.1,
+      "total_ms": 4106.5,
+      "organic_count": 9,
+      "checks": [
+        {
+          "check": "dispatched",
+          "passed": true,
+          "detail": "sent"
+        },
+        {
+          "check": "response_received",
+          "passed": true,
+          "detail": "complete response in 4.11 s"
+        },
+        {
+          "check": "account_ok",
+          "passed": true,
+          "detail": "not a key or credit problem"
+        },
+        {
+          "check": "http_2xx",
+          "passed": true,
+          "detail": "HTTP 200"
+        },
+        {
+          "check": "json_body",
+          "passed": true,
+          "detail": "valid JSON, 13827 bytes"
+        },
+        {
+          "check": "no_provider_error",
+          "passed": true,
+          "detail": "the body reports no failure"
+        },
+        {
+          "check": "parsed",
+          "passed": true,
+          "detail": "the body has the documented shape"
+        },
+        {
+          "check": "has_results",
+          "passed": true,
+          "detail": "9 organic results"
+        },
+        {
+          "check": "min_organic",
+          "passed": true,
+          "detail": "9 organic results, at least 3 needed"
+        },
+        {
+          "check": "well_formed_results",
+          "passed": true,
+          "detail": "9 of 9 results have a title and an absolute http(s) URL"
+        },
+        {
+          "check": "params_echo",
+          "passed": true,
+          "detail": "the provider confirms the query and country asked for"
+        }
+      ],
+      "response": {
+        "verdict": "PASS",
+        "detail": "delivered, 9 results"
+      },
+      "billing": {
+        "verdict": "PASS",
+        "units_measured": 10.0,
+        "units_declared": 10.0,
+        "detail": "declared 10 for a delivered request, the response says 10"
+      }
+    },
+    {
+      "id": "page2",
+      "description": "The second results page",
+      "capability": "pagination",
+      "declared": true,
+      "sent": true,
+      "outcome": "delivered",
+      "void_reason": null,
+      "http_status": 200,
+      "ttfb_ms": 2439.6,
+      "total_ms": 2441.3,
+      "organic_count": 8,
+      "checks": [
+        {
+          "check": "dispatched",
+          "passed": true,
+          "detail": "sent"
+        },
+        {
+          "check": "response_received",
+          "passed": true,
+          "detail": "complete response in 2.44 s"
+        },
+        {
+          "check": "account_ok",
+          "passed": true,
+          "detail": "not a key or credit problem"
+        },
+        {
+          "check": "http_2xx",
+          "passed": true,
+          "detail": "HTTP 200"
+        },
+        {
+          "check": "json_body",
+          "passed": true,
+          "detail": "valid JSON, 14908 bytes"
+        },
+        {
+          "check": "no_provider_error",
+          "passed": true,
+          "detail": "the body reports no failure"
+        },
+        {
+          "check": "parsed",
+          "passed": true,
+          "detail": "the body has the documented shape"
+        },
+        {
+          "check": "has_results",
+          "passed": true,
+          "detail": "8 organic results"
+        },
+        {
+          "check": "min_organic",
+          "passed": true,
+          "detail": "8 organic results, at least 3 needed"
+        },
+        {
+          "check": "well_formed_results",
+          "passed": true,
+          "detail": "8 of 8 results have a title and an absolute http(s) URL"
+        },
+        {
+          "check": "params_echo",
+          "passed": true,
+          "detail": "the provider confirms the query and country asked for"
+        }
+      ],
+      "response": {
+        "verdict": "PASS",
+        "detail": "delivered, 8 results"
+      },
+      "billing": {
+        "verdict": "PASS",
+        "units_measured": 10.0,
+        "units_declared": 10.0,
+        "detail": "declared 10 for a delivered request, the response says 10"
+      }
+    },
+    {
+      "id": "city_location",
+      "description": "A search from a place below country level",
+      "capability": "city_location",
+      "declared": true,
+      "sent": true,
+      "outcome": "delivered",
+      "void_reason": null,
+      "http_status": 200,
+      "ttfb_ms": 3452.7,
+      "total_ms": 3454.2,
+      "organic_count": 8,
+      "checks": [
+        {
+          "check": "dispatched",
+          "passed": true,
+          "detail": "sent"
+        },
+        {
+          "check": "response_received",
+          "passed": true,
+          "detail": "complete response in 3.45 s"
+        },
+        {
+          "check": "account_ok",
+          "passed": true,
+          "detail": "not a key or credit problem"
+        },
+        {
+          "check": "http_2xx",
+          "passed": true,
+          "detail": "HTTP 200"
+        },
+        {
+          "check": "json_body",
+          "passed": true,
+          "detail": "valid JSON, 14603 bytes"
+        },
+        {
+          "check": "no_provider_error",
+          "passed": true,
+          "detail": "the body reports no failure"
+        },
+        {
+          "check": "parsed",
+          "passed": true,
+          "detail": "the body has the documented shape"
+        },
+        {
+          "check": "has_results",
+          "passed": true,
+          "detail": "8 organic results"
+        },
+        {
+          "check": "min_organic",
+          "passed": true,
+          "detail": "8 organic results, at least 3 needed"
+        },
+        {
+          "check": "well_formed_results",
+          "passed": true,
+          "detail": "8 of 8 results have a title and an absolute http(s) URL"
+        },
+        {
+          "check": "params_echo",
+          "passed": true,
+          "detail": "the provider confirms the query and country asked for"
+        }
+      ],
+      "response": {
+        "verdict": "PASS",
+        "detail": "delivered, 8 results"
+      },
+      "billing": {
+        "verdict": "PASS",
+        "units_measured": 10.0,
+        "units_declared": 10.0,
+        "detail": "declared 10 for a delivered request, the response says 10"
+      }
+    },
+    {
+      "id": "search_operators",
+      "description": "A query with a search operator",
+      "capability": null,
+      "declared": null,
+      "sent": true,
+      "outcome": "delivered",
+      "void_reason": null,
+      "http_status": 200,
+      "ttfb_ms": 4612.5,
+      "total_ms": 4614.5,
+      "organic_count": 3,
+      "checks": [
+        {
+          "check": "dispatched",
+          "passed": true,
+          "detail": "sent"
+        },
+        {
+          "check": "response_received",
+          "passed": true,
+          "detail": "complete response in 4.61 s"
+        },
+        {
+          "check": "account_ok",
+          "passed": true,
+          "detail": "not a key or credit problem"
+        },
+        {
+          "check": "http_2xx",
+          "passed": true,
+          "detail": "HTTP 200"
+        },
+        {
+          "check": "json_body",
+          "passed": true,
+          "detail": "valid JSON, 10374 bytes"
+        },
+        {
+          "check": "no_provider_error",
+          "passed": true,
+          "detail": "the body reports no failure"
+        },
+        {
+          "check": "parsed",
+          "passed": true,
+          "detail": "the body has the documented shape"
+        },
+        {
+          "check": "has_results",
+          "passed": true,
+          "detail": "3 organic results"
+        },
+        {
+          "check": "min_organic",
+          "passed": true,
+          "detail": "3 organic results, at least 3 needed"
+        },
+        {
+          "check": "well_formed_results",
+          "passed": true,
+          "detail": "3 of 3 results have a title and an absolute http(s) URL"
+        },
+        {
+          "check": "params_echo",
+          "passed": true,
+          "detail": "the provider confirms the query and country asked for"
+        }
+      ],
+      "response": {
+        "verdict": "PASS",
+        "detail": "delivered, 3 results"
+      },
+      "billing": {
+        "verdict": "UNKNOWN",
+        "units_measured": 10.0,
+        "units_declared": null,
+        "detail": "the documentation does not price: query_operators; the response says 10"
+      }
+    },
+    {
+      "id": "no_results",
+      "description": "A quoted nonsense phrase: nothing matches it, so the page is empty or substituted",
+      "capability": null,
+      "declared": null,
+      "sent": true,
+      "outcome": "delivered",
+      "void_reason": null,
+      "http_status": 200,
+      "ttfb_ms": 4977.9,
+      "total_ms": 4979.0,
+      "organic_count": 8,
+      "checks": [
+        {
+          "check": "dispatched",
+          "passed": true,
+          "detail": "sent"
+        },
+        {
+          "check": "response_received",
+          "passed": true,
+          "detail": "complete response in 4.98 s"
+        },
+        {
+          "check": "account_ok",
+          "passed": true,
+          "detail": "not a key or credit problem"
+        },
+        {
+          "check": "http_2xx",
+          "passed": true,
+          "detail": "HTTP 200"
+        },
+        {
+          "check": "json_body",
+          "passed": true,
+          "detail": "valid JSON, 10782 bytes"
+        },
+        {
+          "check": "no_provider_error",
+          "passed": true,
+          "detail": "the body reports no failure"
+        },
+        {
+          "check": "parsed",
+          "passed": true,
+          "detail": "the body has the documented shape"
+        },
+        {
+          "check": "has_results",
+          "passed": true,
+          "detail": "8 organic results"
+        },
+        {
+          "check": "min_organic",
+          "passed": true,
+          "detail": "8 organic results, at least 3 needed"
+        },
+        {
+          "check": "well_formed_results",
+          "passed": true,
+          "detail": "8 of 8 results have a title and an absolute http(s) URL"
+        },
+        {
+          "check": "params_echo",
+          "passed": true,
+          "detail": "the provider confirms the query and country asked for"
+        }
+      ],
+      "response": {
+        "verdict": "UNKNOWN",
+        "detail": "returned 8 results for a phrase with no matches: these are Google's substitutes for the words without quotes, and the response does not say so; a finding"
+      },
+      "billing": {
+        "verdict": "PASS",
+        "units_measured": 10.0,
+        "units_declared": 10.0,
+        "detail": "declared 10 for a delivered request, the response says 10"
+      }
+    }
+  ]
+}

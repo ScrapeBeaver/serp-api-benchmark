@@ -1,0 +1,7 @@
+{
+ "description": "The credits of the plan ran out: HTTP 403. Our own account, so the request is set aside, not counted as a failure.",
+ "source": "Built from the status-codes page (https://docs.scraperapi.com/responses-and-formats/api-status-codes.md): 403 means the credits are exhausted. Illustrative; the text of the body is not documented.",
+ "task": {"query": "pizza new york", "country": "US", "locale": "en", "device": "desktop", "page": 1},
+ "response": {"status": 403, "headers": {"content-type": "text/plain"}, "text": "You have exhausted the API Credits available in this monthly cycle."},
+ "expect": {"outcome": "void", "void_reason": "auth_or_credits"}
+}

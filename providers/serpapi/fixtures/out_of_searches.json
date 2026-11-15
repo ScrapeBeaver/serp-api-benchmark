@@ -1,0 +1,24 @@
+{
+ "description": "The plan has no searches left: HTTP 429, the status of a rate limit, told apart by its text. Our own account, so the request is set aside.",
+ "source": "Built from the page of status and error codes (https://serpapi.com/api-status-and-error-codes). Illustrative.",
+ "task": {
+  "query": "pizza new york",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 429,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "error": "Your account has run out of searches."
+  }
+ },
+ "expect": {
+  "outcome": "void",
+  "void_reason": "auth_or_credits"
+ }
+}

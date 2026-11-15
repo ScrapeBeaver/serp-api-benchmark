@@ -3,6 +3,7 @@ adding a folder adds its tests."""
 
 from __future__ import annotations
 
+import base64
 import json
 import shutil
 
@@ -119,6 +120,13 @@ def test_no_secret_survives_into_the_loggable_request(spec):
     sent = json.dumps(request.model_dump(), default=str)
     shown = json.dumps(provider.loggable(request), default=str)
     assert DUMMY_SECRET not in shown
+    # A secret can travel encoded: HTTP Basic is base64 of login:password. Neither the
+    # secret nor its encoded form may be shown.
+    authorization = request.headers.get("Authorization", "")
+    if authorization.startswith("Basic "):
+        encoded = authorization.removeprefix("Basic ")
+        sent += " " + base64.b64decode(encoded).decode()
+        assert encoded not in shown
     if spec.config.auth.env:
         assert DUMMY_SECRET in sent, "the test must be able to see the secret it guards"
         assert "***" in shown
@@ -400,4 +408,119 @@ def test_oxylabs_builds_the_documented_request(specs):
     assert provider.build_request(make_task(page=3)).json_body["start_page"] == 3
     # The endpoint takes a country only: a search for a city is not sent to it at all.
     assert not provider.supports(make_task(location="Austin,Texas,United States"))
+    assert "secret-value" not in str(provider.loggable(request))
+
+
+def test_dataforseo_builds_the_documented_request(specs):
+    env = {"DATAFORSEO_LOGIN": "login-value", "DATAFORSEO_PASSWORD": "secret-value"}
+    provider = specs["dataforseo"].create(env)
+    request = provider.build_request(make_task(country="GB", locale="en-GB"))
+    assert (request.method, request.url) == (
+        "POST",
+        "https://api.dataforseo.com/v3/serp/google/organic/live/regular",
+    )
+    # HTTP Basic of login:password; one task in the array.
+    assert request.headers["Authorization"] == "Basic bG9naW4tdmFsdWU6c2VjcmV0LXZhbHVl"
+    assert request.json_body == [
+        {"keyword": "coffee shops london", "language_code": "en", "location_code": 2826}
+    ]
+    phone = provider.build_request(make_task(device=Device.mobile)).json_body[0]
+    assert phone["device"] == "mobile"
+    # A later page is asked for through the depth: the first three pages for page 3.
+    assert provider.build_request(make_task(page=3)).json_body[0]["depth"] == 30
+    placed = provider.build_request(make_task(location="Austin,Texas,United States"))
+    assert placed.json_body[0]["location_name"] == "Austin,Texas,United States"
+    assert "location_code" not in placed.json_body[0]
+    logged = str(provider.loggable(request))
+    assert "secret-value" not in logged and "bG9naW4tdmFsdWU6c2VjcmV0LXZhbHVl" not in logged
+
+
+def test_dataforseo_keeps_only_the_page_that_was_asked_for(specs):
+    """Depth 20 returns pages 1 and 2 together; a task for page 2 is its second page."""
+    env = {"DATAFORSEO_LOGIN": "l", "DATAFORSEO_PASSWORD": "p"}
+    provider = specs["dataforseo"].create(env)
+    items = [
+        {
+            "type": "organic",
+            "rank_group": n,
+            "page": 1 if n <= 10 else 2,
+            "url": f"https://site{n}.example/",
+            "title": f"Result {n}",
+        }
+        for n in range(1, 21)
+    ] + [{"type": "paid", "rank_group": 1, "page": 2, "url": "https://ad.example/", "title": "Ad"}]
+    body = {
+        "status_code": 20000,
+        "tasks": [{
+            "id": "t", "status_code": 20000, "cost": 0.004, "data": {"depth": 20},
+            "result": [{"keyword": "q", "location_code": 2840, "language_code": "en",
+                        "spell": {"keyword": "other", "type": "showing_results_for"},
+                        "items": items}],
+        }],
+    }  # fmt: skip
+    answer = RawResponse(
+        status=200, headers={}, body=json.dumps(body).encode(), ttfb_ms=1.0, total_ms=1.0
+    )
+    serp = provider.parse(answer)
+    assert [r.position for r in serp.organic] == list(range(11, 21))
+    assert serp.substituted is True and serp.echo.country == "US"
+    assert provider.billed_units(answer) == 0.004
+
+
+def test_scrapedo_builds_the_documented_request(specs):
+    provider = specs["scrapedo"].create({"SCRAPEDO_TOKEN": "secret-value"})
+    request = provider.build_request(make_task(country="GB", locale="en-GB"))
+    assert (request.method, request.url) == ("GET", "https://api.scrape.do/plugin/google/search")
+    assert request.params == {
+        "token": "secret-value",
+        "q": "coffee shops london",
+        "gl": "gb",
+        "hl": "en",
+        "cache": "false",  # a fresh search, not a remembered one
+    }
+    paged = provider.build_request(make_task(page=3, device=Device.mobile)).params
+    assert (paged["start"], paged["device"]) == ("20", "mobile")
+    placed = provider.build_request(make_task(location="Austin,Texas,United States")).params
+    assert placed["location"] == "Austin,Texas,United States"
+    # The token is in the address, so the address is never logged as it is.
+    assert "secret-value" not in str(provider.loggable(request))
+
+
+def test_scraperapi_builds_the_documented_request(specs):
+    provider = specs["scraperapi"].create({"SCRAPERAPI_API_KEY": "secret-value"})
+    request = provider.build_request(make_task(country="GB", locale="en-GB"))
+    assert (request.method, request.url) == (
+        "GET",
+        "https://api.scraperapi.com/structured/google/search",
+    )
+    assert request.params == {
+        "api_key": "secret-value",
+        "query": "coffee shops london",
+        "gl": "gb",  # Google's own country; `country_code` is left unset
+        "hl": "en",
+    }
+    assert provider.build_request(make_task(page=3)).params["start"] == "20"
+    placed = provider.build_request(make_task(location="Austin,Texas,United States")).params
+    assert placed["uule"].startswith("w+CAIQICI")
+    # No device parameter is documented, so a mobile search is not asked of it at all.
+    assert not provider.supports(make_task(device=Device.mobile))
+    assert "secret-value" not in str(provider.loggable(request))
+
+
+def test_serpapi_builds_the_documented_request(specs):
+    provider = specs["serpapi"].create({"SERPAPI_API_KEY": "secret-value"})
+    request = provider.build_request(make_task(country="GB", locale="en-GB"))
+    assert (request.method, request.url) == ("GET", "https://serpapi.com/search")
+    assert request.params == {
+        "api_key": "secret-value",
+        "engine": "google",
+        "q": "coffee shops london",
+        "gl": "gb",
+        "hl": "en",
+        "no_cache": "true",  # a fresh search, not a remembered one
+    }
+    paged = provider.build_request(make_task(page=2, device=Device.mobile)).params
+    assert (paged["start"], paged["device"]) == ("10", "mobile")
+    placed = provider.build_request(make_task(location="Austin,Texas,United States")).params
+    assert placed["location"] == "Austin,Texas,United States"
     assert "secret-value" not in str(provider.loggable(request))

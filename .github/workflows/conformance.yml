@@ -34,6 +34,11 @@ jobs:
       BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
       SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
       OXYLABS_API_KEY: ${{ secrets.OXYLABS_API_KEY }}
+      DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
+      DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
+      SCRAPEDO_TOKEN: ${{ secrets.SCRAPEDO_TOKEN }}
+      SCRAPERAPI_API_KEY: ${{ secrets.SCRAPERAPI_API_KEY }}
+      SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
       INPUT_PROVIDER: ${{ inputs.provider }}
     steps:
       - uses: actions/checkout@v4

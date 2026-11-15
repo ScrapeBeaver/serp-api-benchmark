@@ -1,0 +1,12 @@
+{
+ "description": "The balance is spent: DataForSEO's status 40210 inside an HTTP 200 answer. Our own account, so the request is set aside.",
+ "source": "Built from the errors appendix (https://docs.dataforseo.com/v3/appendix/errors/): 40210 \"Insufficient funds\". Illustrative; whether it comes as HTTP 200 or 402 is to be seen on a live call.",
+ "task": {"query": "albert einstein", "country": "US", "locale": "en", "device": "desktop", "page": 1},
+ "response": {
+  "status": 200,
+  "headers": {"content-type": "application/json"},
+  "body": {"version": "0.1", "status_code": 20000, "status_message": "Ok.", "cost": 0, "tasks_count": 1, "tasks_error": 1,
+           "tasks": [{"id": "example-task-id", "status_code": 40210, "status_message": "Insufficient funds.", "cost": 0, "result_count": 0, "data": {"keyword": "albert einstein"}, "result": null}]}
+ },
+ "expect": {"outcome": "void", "void_reason": "auth_or_credits"}
+}

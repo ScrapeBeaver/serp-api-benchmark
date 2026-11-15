@@ -7,7 +7,8 @@
 methodology_version: "0.1"
 
 # Providers measured by default. `--providers mock` runs the offline mock instead.
-providers: [scrapebeaver, decodo, scrapingbee, scrapingdog, brightdata, serper, oxylabs]
+providers: [scrapebeaver, decodo, scrapingbee, scrapingdog, brightdata, serper, oxylabs,
+            dataforseo, scrapedo, scraperapi, serpapi]
 
 schedule:
   runs_per_day: 4         # evenly spaced; must divide 24

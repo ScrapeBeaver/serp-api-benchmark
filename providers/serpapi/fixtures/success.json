@@ -1,0 +1,107 @@
+{
+ "description": "A delivered search: 8 organic results, every `link` a Google redirect link instead of the destination, and Google's note about the result set.",
+ "source": "Recorded from the live API on 2026-11-15 (\"クレジットカード おすすめ\", JP, desktop). Kept: the id and status of `search_metadata`, `search_parameters`, `search_information` and the main fields of `organic_results`; the other sections of the answer are left out.",
+ "task": {
+  "query": "クレジットカード おすすめ",
+  "country": "JP",
+  "locale": "ja",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json; charset=utf-8"
+  },
+  "body": {
+   "search_metadata": {
+    "id": "6af98e316a1f11dd31fe51db",
+    "status": "Success"
+   },
+   "search_parameters": {
+    "engine": "google",
+    "q": "クレジットカード おすすめ",
+    "google_domain": "google.com",
+    "hl": "ja",
+    "gl": "jp",
+    "device": "desktop"
+   },
+   "search_information": {
+    "query_displayed": "クレジットカード おすすめ",
+    "total_results": 89,
+    "time_taken_displayed": 0.13,
+    "organic_results_state": "Results for exact spelling"
+   },
+   "organic_results": [
+    {
+     "position": 1,
+     "title": "https://item.fril.jp/71b3bf626a6a46ebb932562bb3f5f...",
+     "link": "https://www.google.com/goto?url=CAESkwEBxCJF1zL89n5OcQQBOI6wjHswvkSmpuRh6kkBrQ4cUwVOi8Z4fN_5z-nAHVoHwQHkqqOg3qAWFG2dAdMWQXeWiv9c24lcr8FgbAPy1-ZTb0jnW10D9OyTzgQ_htynqSJVljWRsFP7YReYs8zH9PtnKi9CAZyxFxSnIKO9GoK3jSAxaUtniDa0FUKSy7LQs0_EzMo",
+     "displayed_link": "https://item.fril.jp › ...",
+     "snippet": "このページの情報はありません。",
+     "source": "楽天ラクマ"
+    },
+    {
+     "position": 2,
+     "title": "【2026年版】ポイントが貯まる神クレカ5選｜還元率で選ぶ ...",
+     "link": "https://www.google.com/goto?url=CAES4wEBxCJF1zCGLwv6pAQzJNHhv7X5EF4fNS2Pgz2L1aPqEBmm7tO7RYavxHqzt1XLsauOnqwbe80bEX84lJJRplQcpLcjMUeYp_DC6zrBHQRl7ig5GOQDvLWJ6fmtebjRtLtf-xcaxsZrWPmj-ZJkcQnUh5rmN3Vm2jt77UjjNmUJi2faigaFmuN7eE6Mv9yqKOxPFkXVdPfncewytaPTqivYZEtr2alMMX3LzHb5a8ugESqil8Z8QNuLZ1Q8CZ4_Fz-_bHjmRsCHXysYSmK4cRtqLVfKaeQ5Of8hGK-khLcUdJPIHQ",
+     "displayed_link": "https://www.lemon8-app.com › experience › くれじっと...",
+     "snippet": "推し活におすすめのクレジットカード5枚（エポスカード、楽天カード、JCBカード ...",
+     "source": "Lemon8"
+    },
+    {
+     "position": 3,
+     "title": "クレジットカードおすすめ比較【2026年9月】12枚を無料診断 ...",
+     "link": "https://www.google.com/goto?url=CAESUQHEIkXXXw9T9fsP1MzTbJCAKl9gGwVLtI7WNpPg0Z5U9mgf2ZFhOTI4OczwzPD3MWiDNZjXLbpzmF-90qMYyTKFZYcQdlbfzdDJWfNl-VVtcQ",
+     "displayed_link": "https://crecamap.jp",
+     "snippet": "目的から選ぶ、代表的な6枚。 · リクルートカード · 三井住友カード（NL） · 楽天カード · イオンカード（WAON一体型） · 三井住友カード ゴールド（NL） · JCB カード S.",
+     "source": "crecamap.jp"
+    },
+    {
+     "position": 4,
+     "title": "クレジットカードおすすめランキング【1位 三井住友カード ...",
+     "link": "https://www.google.com/goto?url=CAESbAHEIkXXrrqJ_abHcHi7dTaCXcbe07JT5iMtPkaJZKfxmubM0oc8SEAagRTzzkevPpyx_5RhZ9XsbSyDhedqBEUE0fArstBT76JG6uJZYcjPpZ9OYfe4VmVRhzkvM6NgvMIBmnvyNM0spUhCSQ",
+     "displayed_link": "https://money.airank.jp › ... › クレジットカード・決済",
+     "snippet": "1位三井住友カード、2位楽天カード、3位イオンカード セレクト、4位JCB CARD W、5位dカード。AIが選ぶクレジットカード 2026年10月版、ChatGPT・Gemini・Claude独立 ...",
+     "source": "airank.jp"
+    },
+    {
+     "position": 5,
+     "title": "賢く選ぶ！目的別おすすめクレジットカード完全ガイド",
+     "link": "https://www.google.com/goto?url=CAESyAEBxCJF10GI_Nqek2NZNJisEsAWfD5Rg7h41ZlGZ0eelJWVOPYFx-WxhlUc5tKDCMe-uiL4g24F_gzFQYVPr2hv0IevFW89xZMktnIhf0RxXQJNcHukWuz3buA9hbc1dQkuO2z40bT73JWUcIAenTIqKkIBpcEwWmE0QUzR5Jg7opw-8WOrJboVPS1qvexEvNYhupRfhwVBHwoJ-MIpt_XsimMRFaCzYKgQlLnLcT6QFalM4vgrXylXNIGrfsOTy9yP6iGI62yYrg",
+     "displayed_link": "https://www.lemon8-app.com › くれじっとかーど種類",
+     "snippet": "例えば、Oliveフレキシブルペイは年会費が永年無料で、最大20%のポイント還元が魅力です。一方、Mastercardプラチナデビットカードは年会費が発生しますが ...",
+     "source": "Lemon8"
+    },
+    {
+     "position": 6,
+     "title": "人気の「クレジットカード」ランキング。PayPayカードや三井住友 ...",
+     "link": "https://www.google.com/goto?url=CAESggEBxCJF14hcN0V_YdQrmzhV6TCQ7_REjNQOHHq0kdLfJP8oblSXXESNVhzw6F837ctBLGvnKLJK2qIRRodFkmEAPM5KXZ3yoxk-PwhRDdYEHbcNZVzQwxd9YbFiX0LfiVe65WUthghlXBfgSAzRr0igRaA6cqOa26ehNH4TUjuVrKsU",
+     "displayed_link": "https://www.huffingtonpost.jp › LIFE",
+     "snippet": "「イオンカード」「楽天カード」「JCBカード」「三井住友カード」「PayPayカード」がランクインしました！人気の「クレジットカード」ランキングを紹介し ...",
+     "source": "ハフポスト"
+    },
+    {
+     "position": 7,
+     "title": "ポイント還元率の高いクレジットカード22選【最強ランキング】2％ ...",
+     "link": "https://www.google.com/goto?url=CAESbgHEIkXXWrIzVCPmmiq984Cdku2CO0UNSII2C4XnKWnho2iztgjSjBOmKQCaBu38PWXE6ukU3nacXGDd9A9omr9z1GlJ5i4INqm3sftuAKb7iAsuZgwEsWLlLJO6Q0CnYuTq_6sGGy7LqHAeOoR7",
+     "displayed_link": "https://choice.ameba.jp › クレジットカード おすすめ",
+     "snippet": "年会費無料でお得にポイントを貯めたい人におすすめなのが、「ライフカード」です。お誕生月の利用でポイントが通常の3倍になるなど、業界トップクラスの ...",
+     "source": "Amebaチョイス"
+    },
+    {
+     "position": 8,
+     "title": "クレジットカード比較ランキング - 年会費・ポイント・使い道で選ぶ",
+     "link": "https://www.google.com/goto?url=CAEScAHEIkXXki2_6_Pr9sn-83dm0iTay0qdRnUUnZU5VON1k00IhVLEQKB4EpW_sSnj89OxyD3FkTApmNFj8H090UkxReSxOLwv1yNefMt5fB6cIcGGaVLJi3cc7K-5HlD0rdxFUV8E2B2HMwLolPdmxe8",
+     "displayed_link": "https://www.money-navi.net › 比較ランキング",
+     "snippet": "クレジットカードを年会費、ポイント還元、使いやすさ、スマホ決済、普段使うサービスとの相性で比較。三井住友カード（NL）、楽天カード、JCB CARD ...",
+     "source": "マネーナビ"
+    }
+   ]
+  }
+ },
+ "expect": {
+  "outcome": "delivered",
+  "organic_count": 8
+ }
+}

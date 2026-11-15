@@ -1,0 +1,28 @@
+{
+ "description": "HTTP 200 and DataForSEO's status 20000 \"Ok.\", but with no task in the answer. A failure of the service: there is nothing to read.",
+ "source": "Built from an answer seen on a live call on 2026-11-15, in the minute after the account was verified: 142 bytes, status 20000, tasks_count 1 and no task. The exact body was not kept; the fields are the ones it had.",
+ "task": {
+  "query": "best running shoes",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "status_code": 20000,
+   "status_message": "Ok.",
+   "cost": 0,
+   "tasks_count": 1,
+   "tasks_error": 0,
+   "tasks": []
+  }
+ },
+ "expect": {
+  "outcome": "provider_error"
+ }
+}

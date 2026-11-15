@@ -1,0 +1,36 @@
+{
+ "description": "A search that worked and found nothing: HTTP 200, status \"Success\" and an `error` text. Counted as a failure: empty results.",
+ "source": "Built from the page of status and error codes (https://serpapi.com/api-status-and-error-codes). Illustrative.",
+ "task": {
+  "query": "pizza new york",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "search_metadata": {
+    "id": "0000000000000000000000ab",
+    "status": "Success"
+   },
+   "search_parameters": {
+    "engine": "google",
+    "q": "pizza new york",
+    "gl": "us",
+    "hl": "en"
+   },
+   "search_information": {
+    "organic_results_state": "Fully empty"
+   },
+   "error": "Google hasn't returned any results for this query."
+  }
+ },
+ "expect": {
+  "outcome": "empty_results"
+ }
+}

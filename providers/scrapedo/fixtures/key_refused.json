@@ -1,0 +1,7 @@
+{
+ "description": "The token was refused: HTTP 401. Our own token or credits, so the request is set aside, not counted as a failure.",
+ "source": "Built from the status-codes page (https://scrape.do/documentation/api-response/status-codes.md): 401 means the token is wrong, no credits remain or the subscription is suspended. Illustrative; to be replaced by a recorded response after the first live call.",
+ "task": {"query": "pizza new york", "country": "US", "locale": "en", "device": "desktop", "page": 1},
+ "response": {"status": 401, "headers": {"content-type": "application/json"}, "body": {"Message": ["Unauthorized"], "StatusCode": 401}},
+ "expect": {"outcome": "void", "void_reason": "auth_or_credits"}
+}

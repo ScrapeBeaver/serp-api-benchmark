@@ -1,15 +1,15 @@
-# Worked example: a monthly subscription that buys a number of searches, on a long plan
-# ladder (62 published plans). It also shows a speed tier sold as a multiplier on the plan
-# price (`addons`), an hourly cap tied to the plan, a one-hour cache that has to be switched
-# off, and a plan that is bought again early when it runs out (`on_limit: auto_renew`).
-#
-# Every fact was read on 2026-11-12 from the pages listed under `sources`.
-# Not checked against the live service.
+# SerpApi. Facts as declared in its documentation and on its pricing page.
+# A monthly subscription that buys a number of searches, on a long plan ladder (62
+# published plans), with a speed tier sold as a multiplier on the plan price (`addons`),
+# an hourly cap tied to the plan, and a one-hour cache that the benchmark switches off.
+# Prices and billing rules: read on 2026-11-12 from the pages listed under `sources`.
+# Request and response: the documentation page under `docs_url` and the page of status
+# and error codes, read on 2026-11-15.
 
 schema_version: 1
 id: serpapi
 name: SerpApi
-status: draft
+status: conformance
 homepage: https://serpapi.com
 docs_url: https://serpapi.com/search-api
 
@@ -39,7 +39,7 @@ terms:
   benchmarking: unknown             # a clause about benchmarking has not been looked for
 
 auth:
-  env: []
+  env: [SERPAPI_API_KEY]         # sent as the `api_key` query parameter
 
 capabilities:
   mobile: true                      # `device`
@@ -319,7 +319,7 @@ billing:
           `zero_trace`.
 
     benchmark_account:
-      plan: unknown
+      plan: free                    # 250 searches a month, 50 an hour
     notes: >
       Not expressed by a field. (1) With Ludicrous Speed the enterprise plan includes
       50,000 complimentary searches and costs $15.00 on demand or $5.50 reserved per 1,000;
@@ -337,3 +337,5 @@ billing:
 
 adapter:
   version: "1"
+  base_url: https://serpapi.com
+  base_url_env: SERPAPI_BASE_URL

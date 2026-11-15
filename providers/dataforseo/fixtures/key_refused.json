@@ -1,0 +1,29 @@
+{
+ "description": "The login was refused: HTTP 401 with DataForSEO's status 40100. Our own credentials, so the request is set aside, not counted as a failure.",
+ "source": "Recorded on 2026-11-15 from POST https://api.dataforseo.com/v3/serp/google/organic/live/regular with a login that does not exist: status and DataForSEO's own code are as returned; the version and time fields were removed.",
+ "task": {
+  "query": "albert einstein",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 401,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "status_code": 40100,
+   "status_message": "You are not authorized to access this resource. See your login details here: https://app.dataforseo.com/api-access .",
+   "cost": 0,
+   "tasks_count": 0,
+   "tasks_error": 0,
+   "tasks": null
+  }
+ },
+ "expect": {
+  "outcome": "void",
+  "void_reason": "auth_or_credits"
+ }
+}

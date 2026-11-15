@@ -1,0 +1,94 @@
+{
+ "description": "A delivered search: 9 organic results, 7 of them Google redirect links instead of the destination, the cost and the final Google address in headers.",
+ "source": "Recorded from the live API on 2026-11-15 (\"beste laufschuhe\", DE, desktop, no `country_code`). Kept: `search_information` and `organic_results`; the other sections of the answer and the highlighted words are left out.",
+ "task": {
+  "query": "beste laufschuhe",
+  "country": "DE",
+  "locale": "de",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json; charset=utf-8",
+   "sa-credit-cost": "25",
+   "sa-final-url": "https://www.google.com/search?q=beste+laufschuhe&hl=de&gl=de"
+  },
+  "body": {
+   "search_information": {
+    "query_displayed": "beste laufschuhe"
+   },
+   "organic_results": [
+    {
+     "position": 1,
+     "title": "Die besten Schuhe für den Laufeinstieg",
+     "snippet": "17.09.2025 — Schuhe für den Laufeinstieg unterstützen die Abrollbewegung und sind komfortabel. » Hier sind die besten Modelle für Anfänger.",
+     "link": "https://www.google.com/goto?url=CAESjAEBxCJF17NtGyVOfZ3WuAETxIOcUV7Q1_QGQyAMYepZ6K3PR9wu9ruhYmjDNfHLP9pwn1t07dLCT0IqMTP6-kDKmFHJZznLxs9e3yJvprfb-a6hcq6Bo90BzLz29ZtmwEVuR0FzOZRWxsVOF3joYk6xCCR_gV_cjtVz8hjRmatVIuu4nRduE9ERqLmnQA&gsessionid=4ELb7UjHRUGLWN7ZoVx4yHoL3Xt2XhF4-2Tu9v5zwIRZo3a0huV_Mw",
+     "displayed_link": "https://www.runnersworld.de › ... › Laufschuhe"
+    },
+    {
+     "position": 6,
+     "title": "Die Wahl der richtigen Laufschuhe – Laufschuhtypen erklärt",
+     "snippet": "13.10.2021 — Neutral dämpfende Schuhe wie der ASICS GEL-NIMBUS ™ sind die beste Wahl für diese Art von Laufstil. Unterpronation (Supination). Die ...",
+     "link": "https://www.google.com/goto?url=CAESqwEBxCJF14jyNj4uEfnqaifk7mkGGekFc16F7hagAtOJwF6ghAiAgQGCyCHXgcnhdbmVgtifcoZo4c393a-nkGt_sn38sKSzUbWsWEg2bdDWsHYf7k1VgFEGqxf3ZzRZdHYuNSZNKDSyXR0XYuf0SZQUdRwIIQ5Goy6Mz9a4LvmtYQytIF2BMIjhw74-KeWPhjIai-ktSX8i4GMDPCLum-RFXtkCjcZkdimU6Hw&gsessionid=4ELb7UjHRUGLWN7ZoVx4yHoL3Xt2XhF4-2Tu9v5zwIRZo3a0huV_Mw",
+     "displayed_link": "https://www.asics.com › de-de › asics-advice › choosing-..."
+    },
+    {
+     "position": 7,
+     "title": "Die richtigen Laufschuhe finden - so klappt's ganz einfach",
+     "snippet": "Laufschuhe müssen bestimmte Anforderungen erfüllen. SportScheck berät dich, welche Modelle es gibt und worauf du beim Kauf achten solltest.",
+     "link": "https://www.google.com/goto?url=CAESfQHEIkXXyWrTwmnlmyuAVBGrhlqOCM1YQ1Ei4FxEm8JAClUHwXYHTxuXeIOVAdeFo6-mkgO_DntgQnswWHPQmGrXd_A3QGECtjLY1E0FQsyyU0FnN-mFQllFUC6zETaSiEYmd9fPQ3w86SQ4f2tH2UoMkBpYvKYrejv2j4I0&gsessionid=4ELb7UjHRUGLWN7ZoVx4yHoL3Xt2XhF4-2Tu9v5zwIRZo3a0huV_Mw",
+     "displayed_link": "https://www.sportscheck.com › laufen › die-richtigen-la..."
+    },
+    {
+     "position": 8,
+     "title": "Die besten Laufschuhe",
+     "snippet": "Die besten stabilen Laufschuhe Frühjahr/Sommer 2020 · ASICS GT-4000 · BROOKS Adrenaline GTS 20 · BROOKS Ravenna 11 · BROOKS Beast 20 · HOKA ONE ONE Arahi 4.",
+     "link": "https://www.google.com/goto?url=CAESbQHEIkXXxrB3gnDPXnUw1ESxlVgbY15jRZIrmyIuyLn9BI804wXOVsPbPU-VEEng5dUVTXcut8JZHkzbkj_EOlne_V6yL9e7dfjU-QwNG91Qp4VOvw-PGsif3H6-r4d-Eq63fLEsuPqMIpHzaC0&gsessionid=4ELb7UjHRUGLWN7ZoVx4yHoL3Xt2XhF4-2Tu9v5zwIRZo3a0huV_Mw",
+     "displayed_link": "https://www.bunert.de › blog › die-besten-laufschuhe"
+    },
+    {
+     "position": 9,
+     "title": "Was sind die besten Laufschuhe oder -marken, die ihr ...",
+     "snippet": "Dieses Thema scheint oft diskutiert zu werden, besonders von rrunners, die täglich viele Meilen laufen und etwas Bequemes und Zuverlässiges wollen. ...",
+     "link": "https://www.google.com/goto?url=CAESrAEBxCJF1zbZyxdd8QmBFAy9apcuXSk41XvPZRyj3kfE4OPRGCKGKU37jZpA04Na12RQwuFr98aurbit4giJpGjpMemgFmZ2iNOciEZmxz8Mvu74yJNPwCq3-jNEumI0cgnZ7aexzmVgQ3v6HAO994zPqAQRn85x7dlc7RfSnpL0awSWtmfGAPU0TSVVC9UDr4cfnFh9dmdCYRjyCzhIRn1ats7-Gcu7EKXOEfV-&gsessionid=4ELb7UjHRUGLWN7ZoVx4yHoL3Xt2XhF4-2Tu9v5zwIRZo3a0huV_Mw",
+     "displayed_link": "Ca. 50 Kommentare  ·  vor 9 Monaten"
+    },
+    {
+     "position": 10,
+     "title": "Die besten Laufschuhe | Test 09/2026",
+     "snippet": "Inzwischen bieten auch andere Top-Marken wie Asics mit dem Metaracer, On mit dem Cloudboom, Brooks mit dem Hyperion Elite 2, Saucony mit dem Endorphin Pro, Hoka ...",
+     "link": "https://www.google.com/goto?url=CAESlAEBxCJF12cgG2kPXvN-jH94CqrP0IxH3hFcnrvDsashhfkg54cf5l4bQz4oWM6G4-1lcyozEkhnAc8P5u0lHpVu3uEk6IdHQPSIvoAYT4W_VloigbH3z232IVSdoliWToWQ93ls5je53J4tqUDY2qiwQLed9UlVPND5adtFPvl_8BWqKCaiEdo406mpU5jOWqF0ti6d&gsessionid=4ELb7UjHRUGLWN7ZoVx4yHoL3Xt2XhF4-2Tu9v5zwIRZo3a0huV_Mw",
+     "displayed_link": "https://www.testberichte.de › ... › Schuhe"
+    },
+    {
+     "position": 11,
+     "title": "Laufschuhe: Running Schuhe von Asics, Nike & mehr.",
+     "snippet": "Der Laufschuh ist der wichtigste Begleiter auf der Strecke. Entdecke online unser Sortiment an Running Schuhen von Asics, Nike & unserer Eigenmarken.",
+     "link": "https://www.decathlon.de/alle-sportarten-a-z/laufen/laufschuhe",
+     "displayed_link": "https://www.decathlon.de › Alle Sportarten › Laufen"
+    },
+    {
+     "position": 12,
+     "title": "Laufschuhe: die Top-5-Trainings-Allrounder",
+     "snippet": "16.07.2022 — Laufschuhe: die Top-5-Trainings-Allrounder · Saucony RIDE · Brooks GHOST · Asics GEL PURSUE · Mizuno WAVE RIDER · On CLOUD.",
+     "link": "https://www.google.com/goto?url=CAESxwEBxCJF10cfnxkkxsWGG-Dtvuj3B6BxSSsWaKqjzR9JGSEJ_aHg3lz9tN8EoYR3UzN-XkCEPuBvzYaeUdv8Bz5GX30NtQxUKt_i47Gv64mDz69nf09Lp1NkGPWhIbklHaTiI3EyWxoXdTnl4Si0uOsPJRxGWoG72eyzNQxQoBxL6zHNGurpw7ydbKLnGM3hV-fK-dlF2VX6EmwfEByfZ257BJMc5iCw5Rn0j97iaoWaY13b_4t09zVUvCugfIjcLC2UcqTkbNfa&gsessionid=4ELb7UjHRUGLWN7ZoVx4yHoL3Xt2XhF4-2Tu9v5zwIRZo3a0huV_Mw",
+     "displayed_link": "https://triathlon.de › Journal"
+    },
+    {
+     "position": 13,
+     "title": "Laufschuhe für lange Strecken – finde einen Schuh, der ...",
+     "snippet": "13.04.2026 — Hier findest du die besten Laufschuhe für lange Läufe. Egal, ob du Komfort, Stabilität oder etwas mehr Geschwindigkeit suchst.",
+     "link": "https://www.runningxpert.com/de/inspiration/best-running-shoes-for-long-runs",
+     "displayed_link": "https://www.runningxpert.com › inspiration › best-runn..."
+    }
+   ]
+  }
+ },
+ "expect": {
+  "outcome": "delivered",
+  "organic_count": 9,
+  "billed_units": 25.0
+ }
+}

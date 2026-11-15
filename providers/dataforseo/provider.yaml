@@ -1,24 +1,37 @@
-# Worked example: a prepaid balance in dollars with one flat price per request and no plans
-# (`meter.unit: usd`, `pricing: pay_as_you_go`). It also shows billing per page of ten
-# results, a x5 multiplier for search operators, surcharges that are credited back when the
-# feature is not delivered, and cheaper queued modes that are not the benchmarked product.
+# DataForSEO: a prepaid balance in dollars with one flat price per request and no plans
+# (`meter.unit: usd`, `pricing: pay_as_you_go`). Billing is per page of ten results, with a
+# x5 multiplier for search operators, surcharges that are credited back when the feature is
+# not delivered, and cheaper queued modes that are not the benchmarked product.
 #
-# Every fact was read on 2026-11-12 from the pages listed under `sources`.
-# Not checked against the live service.
+# Prices and billing rules: read on 2026-11-12 from the pages listed under `sources`.
+# Request and response: the documentation page under `docs_url`, read on 2026-11-15.
 
 schema_version: 1
 id: dataforseo
 name: DataForSEO
-status: draft
+status: conformance   # called with a live key on 2026-11-15: see conformance.json
 homepage: https://dataforseo.com
-docs_url: https://docs.dataforseo.com/v3/serp/google/organic/live/advanced/
+docs_url: https://docs.dataforseo.com/v3/serp/google/organic/live/regular/
 
 product:
   name: Google Organic SERP API, Live mode
-  endpoint: "POST /v3/serp/google/organic/live/advanced"
+  endpoint: "POST https://api.dataforseo.com/v3/serp/google/organic/live/regular"
   mode: light                       # the benchmarked mode: the cheapest synchronous one
   settings: {}                      # defaults: depth 10, one page of up to 10 organic results
   alternatives:
+    - name: "The same request with `resolve_goto_urls: true`"
+      why_not: >
+        An option that is off by default: it resolves Google's /goto redirect links in the
+        results and "adds up to 40 seconds to the turnaround time, with a maximum turnaround
+        time of 260 seconds". No extra charge is stated. The benchmark uses each endpoint
+        with its default settings.
+      source: https://docs.dataforseo.com/v3/serp/google/organic/live/regular/
+    - name: Live mode, advanced result type
+      endpoint: "POST https://api.dataforseo.com/v3/serp/google/organic/live/advanced"
+      why_not: >
+        The same price. It returns every block of the page; the regular type returns the
+        organic and paid results and the featured snippet, which is what is measured here.
+      source: https://docs.dataforseo.com/v3/serp/google/organic/live/advanced/
     - name: Standard queue (priority 1)
       endpoint: "POST + GET, see https://docs.dataforseo.com/v3/serp/google/organic/task_post/"
       why_not: >
@@ -43,7 +56,9 @@ terms:
   benchmarking: unknown             # a clause about benchmarking has not been looked for
 
 auth:
-  env: []
+  # HTTP Basic: the API login and the API password of the account (API Access in the
+  # dashboard), not the password of the dashboard itself.
+  env: [DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD]
 
 capabilities:
   mobile: true                      # `device`, included in the base price
@@ -222,7 +237,7 @@ billing:
           measured.
 
     benchmark_account:
-      plan: n/a                     # there are no plans
+      plan: n/a                     # there are no plans; the account runs on its prepaid balance
     notes: >
       Not expressed by a field. (1) At a zero balance requests are refused: errors 40200
       "Payment required" and 40210 "Insufficient funds" (HTTP 402). There is no overage and
@@ -234,5 +249,20 @@ billing:
       Image. (6) The surcharge for People Also Ask clicks is per click, so the rule above
       is the price of one click.
 
+# Seen on live calls, 2026-11-15:
+# * With the default settings the organic links are Google's own redirects
+#   (`https://google.com/goto?url=...`), and the `domain` field says google.com too.
+# * Every declared price was confirmed by the `cost` of the answers: 0.002 for a first
+#   page, a mobile page and a page with a city; 0.004 for depth 20; 0.01 with an operator.
+# * A failed search is HTTP 200 and "Ok." for the call, with the task's own status 40101
+#   ("Internal SE Server Error"), after 13 to 19 seconds and at no cost.
+# * A phrase with no matches comes back as nine results and `spell: null`: substitutes that
+#   are not marked as such.
+# * A new account is refused with HTTP 403 and status 40104 until it is verified in the
+#   dashboard, and for some minutes after that now and then.
+# * `x-ratelimit-limit: 10000` in the response headers.
+
 adapter:
   version: "1"
+  base_url: https://api.dataforseo.com
+  base_url_env: DATAFORSEO_BASE_URL

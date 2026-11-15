@@ -1,0 +1,29 @@
+{
+ "description": "The account exists but has not been verified in the dashboard: HTTP 403 with DataForSEO's status 40104. Our own account, so the request is set aside, not counted as a failure.",
+ "source": "Recorded on 2026-11-15 from POST https://api.dataforseo.com/v3/serp/google/organic/live/regular on a new account: status, code and message are as returned.",
+ "task": {
+  "query": "best running shoes",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 403,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "status_code": 40104,
+   "status_message": "Please verify your account before using the API. You can complete verification in the user panel: https://app.dataforseo.com/ .",
+   "cost": 0,
+   "tasks_count": 0,
+   "tasks_error": 0,
+   "tasks": null
+  }
+ },
+ "expect": {
+  "outcome": "void",
+  "void_reason": "auth_or_credits"
+ }
+}

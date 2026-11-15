@@ -1,0 +1,168 @@
+# ScraperAPI. Facts as declared in its documentation and on its pricing page.
+# Monthly plans of API credits shared by every ScraperAPI product. The price of a request
+# is set by the target domain: Google is 25 credits, so "100,000 credits for $49" is
+# 4,000 Google searches.
+# Prices and billing rules: read on 2026-11-12 from the pages listed under `sources`.
+# Request and response: the documentation page under `docs_url`, read on 2026-11-15.
+
+schema_version: 1
+id: scraperapi
+name: ScraperAPI
+status: conformance
+homepage: https://www.scraperapi.com
+docs_url: https://docs.scraperapi.com/structured-data-endpoints/search-and-insights/google/google-serp-api
+
+product:
+  name: Structured Data Endpoint, Google Search (parsed JSON)
+  endpoint: "GET https://api.scraperapi.com/structured/google/search"
+  mode: light
+  alternatives:
+    - name: "The asynchronous twin of the same endpoint"
+      why_not: >
+        `https://async.scraperapi.com/structured/google/search` takes a job and is polled
+        for the result. The benchmark measures one synchronous request, as for every
+        other provider.
+      source: https://docs.scraperapi.com/structured-data-endpoints/search-and-insights/google/google-serp-api-async.md
+    - name: "The general scraping API on a google.com address with `autoparse=true`"
+      why_not: "The same 25 credits by the domain rule; the structured endpoint is the product sold for Google search."
+      source: https://docs.scraperapi.com/getting-started/quick-start/credits-and-requests-costs.md
+  notes: >
+    A synchronous GET that returns parsed results. A failed request is retried on their
+    side for up to 70 seconds before a 500 is returned, which is longer than the 60 seconds
+    the benchmark waits. The country of a search is asked through Google's own `gl` and
+    `hl`. `country_code`, where the request is sent from, is optional and left unset:
+    Hobby and Startup "support only US and EU regional-based geotargeting", single
+    countries need Business ($299 a month) or higher. Seen on 2026-11-15: with
+    `country_code` set the service adds a `uule` for a city of its own choosing and
+    switches to the country's Google domain; without it the address is google.com with
+    `gl` and `hl`.
+
+terms:
+  url: https://www.scraperapi.com/terms/    # read for billing clauses only
+  benchmarking: unknown           # a clause about benchmarking has not been looked for
+
+auth:
+  env: [SCRAPERAPI_API_KEY]       # sent as the `api_key` query parameter: the endpoint documents no header for it
+
+capabilities:
+  mobile: false                   # the endpoint page documents no device parameter
+  city_location: true             # `uule`
+  pagination: true                # `start`, an offset
+  raw_html: unknown
+  ai_overview: unknown
+
+billing:
+  - effective_from: 2026-11-12
+    checked_at: 2026-11-12
+    currency: USD
+    sources:
+      - https://www.scraperapi.com/pricing/
+      - https://www.scraperapi.com/solutions/structured-data/google-search-scraper/
+      - https://docs.scraperapi.com/structured-data-endpoints/search-and-insights/google/google-serp-api.md
+      - https://docs.scraperapi.com/getting-started/quick-start/credits-and-requests-costs.md
+      - https://docs.scraperapi.com/responses-and-formats/api-status-codes.md
+      - https://docs.scraperapi.com/resources/faq/plans-and-billing.md
+      - https://docs.scraperapi.com/control-and-optimization/geotargeting/standard-geo.md
+      - https://docs.scraperapi.com/account-management/credit-usage.md
+      - https://www.scraperapi.com/terms/
+    prices_exclude_tax: unknown
+
+    meter:
+      unit: credit
+      unit_label: API credit
+      shared_across_products: true
+
+    request_cost:
+      base: 25                    # "SERP - Google and Bing, including all subdomains - 25"
+      rules: []
+      stacking: multiply_then_add
+      per_page: separate_request  # each page (`start`) is a request of its own
+      results_per_charge: unknown
+      free_parameters: [country_code, tld, gl, hl, uule]   # all four probes of 2026-11-15 cost 25
+      undocumented: [query_operators, ai_overview]
+      # The endpoint page states no credit cost; the figure is the domain rule of the
+      # credits page, and the `sa-credit-cost` header of each answer confirms or corrects it.
+
+    charges:
+      failed_request:
+        charged: false
+        how: "\"You are charged only for 200 and 404 responses.\" A request that fails after 70 seconds of retries returns 500 and is not charged."
+        source: https://docs.scraperapi.com/responses-and-formats/api-status-codes.md
+      timeout: {charged: false, how: "As above: a 500 after their own 70 seconds.", source: "https://docs.scraperapi.com/responses-and-formats/api-status-codes.md"}
+      client_timeout:
+        charged: true
+        how: "A request the client cancels before ScraperAPI has had 70 seconds is charged."
+        source: https://docs.scraperapi.com/getting-started/quick-start/credits-and-requests-costs.md
+      empty_serp:
+        charged: true
+        how: >
+          A 200 is charged whatever is in it. Seen on 2026-11-15: answers with HTTP 200 and
+          no `organic_results` section each cost 25 credits by the `sa-credit-cost` header.
+        source: https://docs.scraperapi.com/responses-and-formats/api-status-codes.md
+      client_error: {charged: unknown}
+      cached_response: {charged: unknown}
+      billed_statuses: [200, 404]
+      notes: >
+        403 means the credits are exhausted (or the request would cost more than
+        `max_cost`); 429 means the concurrency of the plan is exceeded, at no charge.
+
+    usage_reporting:
+      response_header: sa-credit-cost
+      account_endpoint: "GET https://api.scraperapi.com/account"
+      notes: "The account endpoint returns `requestCount`, `failedRequestCount` and `concurrentRequests`."
+
+    purchase:
+      model: subscription
+      pricing: plan_units
+      plans:
+        - id: free
+          name: Free
+          price: 0
+          period: month
+          units: 1000             # 40 Google searches
+          limits: {concurrency: 5}
+          unused_units: expire
+          notes: "After a 7-day trial with 5,000 credits (200 Google searches), no card."
+        - {id: hobby, name: Hobby, price: 49, annual_price_per_month: 44.1, period: month,
+           units: 100000, limits: {concurrency: 20}, unused_units: expire,
+           notes: "4,000 Google searches. US and EU geotargeting only."}
+        - {id: startup, name: Startup, price: 149, annual_price_per_month: 134.1, period: month,
+           units: 1000000, limits: {concurrency: 50}, unused_units: expire,
+           notes: "US and EU geotargeting only."}
+        - {id: business, name: Business, price: 299, annual_price_per_month: 269.1, period: month,
+           units: 3000000, limits: {concurrency: 100}, unused_units: expire,
+           notes: "The first plan with single-country geotargeting."}
+        - {id: scaling, name: Scaling, price: 475, annual_price_per_month: 427.5, period: month,
+           units: 5000000, limits: {concurrency: 200}, unused_units: expire}
+        - {id: professional, name: Professional, price: 975, annual_price_per_month: 877.5, period: month,
+           units: 10500000, limits: {concurrency: 300}, unused_units: expire,
+           notes: "A \"limited offer\" bonus of 250,000 credits is not counted."}
+        - {id: advanced, name: Advanced, price: 1975, annual_price_per_month: 1777.5, period: month,
+           units: 21500000, limits: {concurrency: 500}, unused_units: expire,
+           notes: "A \"limited offer\" bonus of 500,000 credits is not counted."}
+      on_limit: block             # "scraping pauses until your credits renew" (HTTP 403)
+      overage: null               # pay-as-you-go from Scaling up, opt-in, at an in-app rate that is not published
+      free:
+        units: 1000
+        period: month
+        notes: "1,000 credits a month after the trial: 40 Google searches."
+      beyond_published: >
+        Above Advanced (21.5 million credits, 860,000 searches): Enterprise through sales.
+        Pay-as-you-go overage exists from Scaling up, but its per-credit rate is shown only
+        inside the account.
+      refunds: "7 days after the first purchase."
+
+    conflicts:
+      - topic: Which plans have pay-as-you-go
+        statements:
+          - {text: "The comparison table marks pay-as-you-go on every plan.", source: "https://www.scraperapi.com/pricing/"}
+          - {text: "The FAQ limits it to Scaling and above.", source: "https://www.scraperapi.com/pricing/"}
+        used: "Neither changes a price here: the overage rate is not published, so no overage is entered."
+
+    benchmark_account:
+      plan: free                  # the 7-day trial with 5,000 credits first
+
+adapter:
+  version: "1"
+  base_url: https://api.scraperapi.com
+  base_url_env: SCRAPERAPI_BASE_URL

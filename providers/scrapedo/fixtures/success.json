@@ -1,0 +1,118 @@
+{
+ "description": "A delivered search: nine organic results with direct links, Google's note that the results are for the exact spelling, and the cost in a header.",
+ "source": "Recorded from the live API on 2026-11-15 (\"best running shoes\", US, desktop). Kept: `search_parameters`, `search_information` and `organic_results`; the other sections of the answer and the highlighted words are left out.",
+ "task": {
+  "query": "best running shoes",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json; charset=utf-8",
+   "Scrape.do-Request-Cost": "10",
+   "Scrape.do-Remaining-Credits": "990"
+  },
+  "body": {
+   "search_parameters": {
+    "q": "best running shoes",
+    "hl": "en",
+    "gl": "us",
+    "device": "desktop",
+    "start": 0,
+    "google_domain": "google.com"
+   },
+   "search_information": {
+    "page_title": "best running shoes - Google Search",
+    "query_displayed": "best running shoes",
+    "total_results": 69,
+    "time_taken_displayed": 0.46,
+    "organic_results_state": "Results for exact spelling",
+    "results_for": "",
+    "country": "",
+    "city": "New York NY, New York"
+   },
+   "organic_results": [
+    {
+     "position": 1,
+     "title": "The Most Popular Running Shoe Brands in the US 2024",
+     "link": "https://bennysjolind.com/the-most-popular-running-shoes-in-us/",
+     "displayed_link": "https://bennysjolind.com › Arkiv-alla inlägg",
+     "snippet": "The Brooks Ghost is a renowned running shoe model known for its comfort, versatility, and durability. Designed by Brooks Running, it's lauded for its balanced ...Read more",
+     "source": "bennysjolind.com"
+    },
+    {
+     "position": 2,
+     "title": "In your opinion what is the best running shoes?",
+     "link": "https://www.letsrun.com/forum/flat_read.php?thread=8528045&page=1",
+     "source": "google.com"
+    },
+    {
+     "position": 3,
+     "title": "Best Running Shoes",
+     "link": "https://www.letsrun.com/forum/flat_read.php?thread=8371844",
+     "source": "google.com"
+    },
+    {
+     "position": 4,
+     "title": "Best Running Shoes: Top Picks for Men in 2024",
+     "link": "https://usahomeserve.com/best-running-shoe/",
+     "displayed_link": "https://usahomeserve.com › best-running-shoe",
+     "snippet": "A: The best running shoes for men include Under Armour Men's Charged Assert 10, New Balance Men's Fresh Foam Arishi V4, and ASICS Men's Gel-Contend 7. These ...Read more",
+     "source": "usahomeserve.com"
+    },
+    {
+     "position": 5,
+     "title": "What's the best running shoe?",
+     "link": "https://www.hornfans.com/threads/whats-the-best-running-shoe.8132/",
+     "displayed_link": "https://www.hornfans.com › OTHER › Horn Depot",
+     "snippet": "Aug 24, 2006 — The shoe that works the best for me is the Brooks Radius. I ran in NB, then Mizuno. I like my mizunos but they stopped making model, so i ...Read more",
+     "date": "Aug 24, 2006",
+     "source": "Hornfans"
+    },
+    {
+     "position": 6,
+     "title": "Best Running Shoes (Tried & Reviewed): Brooks, Hoka, On ...",
+     "link": "https://www.lemon8-app.com/experience/best-brands-for-running-shoes?region=us",
+     "displayed_link": "https://www.lemon8-app.com › experience › best-brands...",
+     "snippet": "May 11, 2026 — I tried and compared a bunch of popular running shoes and shared what actually felt best on my feet—from Brooks Ghost/Glycerin to Hoka ...",
+     "date": "May 11, 2026",
+     "source": "Lemon8"
+    },
+    {
+     "position": 7,
+     "title": "Top Running Shoes: Best Picks for Every Runner",
+     "link": "https://us.headtopics.com/news/top-running-shoes-best-picks-for-every-runner-55417089",
+     "displayed_link": "https://us.headtopics.com › news › top-running-shoes-b...",
+     "snippet": "Jul 6, 2024 — Discover some of the top running shoes of 2024, including stability, lightweight and daily trainers. Find your perfect pair.",
+     "date": "Jul 6, 2024",
+     "source": "Head Topics"
+    },
+    {
+     "position": 8,
+     "title": "Men's Performance Running Shoes",
+     "link": "https://www.famousfootwear.com/browse/shoes/mens/sneakers-and-athletic-shoes/running-shoes/performance-running",
+     "displayed_link": "https://www.famousfootwear.com › browse › shoes › mens",
+     "snippet": "Trust ASICS, adidas, Nike, and other renowned brands to provide the cutting-edge technology and innovation required for optimal performance ...Read more",
+     "source": "Famous Footwear"
+    },
+    {
+     "position": 9,
+     "title": "The Best Running Shoes for Men: On the Word of Experts",
+     "link": "https://www.dapperconfidential.com/best-running-shoes-for-men/",
+     "displayed_link": "https://www.dapperconfidential.com › Style",
+     "snippet": "Jul 10, 2026 — The best running shoe on the market is the Brooks Ghost Neutral Running Shoe. I love that this style gives you a lot of cushioning for a better ...Read more",
+     "date": "Jul 10, 2026",
+     "source": "Dapper Confidential"
+    }
+   ]
+  }
+ },
+ "expect": {
+  "outcome": "delivered",
+  "organic_count": 9,
+  "billed_units": 10.0
+ }
+}

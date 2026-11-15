@@ -9,6 +9,7 @@ from __future__ import annotations
 import importlib.util
 import inspect
 import os
+import re
 import sys
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
@@ -115,14 +116,30 @@ class Provider(ABC):
         return text
 
     def loggable(self, request: HttpRequest) -> dict[str, Any]:
-        """A request in a form that is safe to print or store."""
+        """A request in a form that is safe to print or store.
+
+        A header that carries credentials is masked whole, whatever is in it: a secret can
+        travel encoded (HTTP Basic is base64 of login:password), and an encoded secret is
+        not found by looking for the secret itself.
+        """
         return {
             "method": request.method,
             "url": self.redact(request.url),
-            "headers": {k: self.redact(v) for k, v in request.headers.items()},
+            "headers": {k: _mask_header(k, self.redact(v)) for k, v in request.headers.items()},
             "params": {k: self.redact(v) for k, v in request.params.items()},
             "json": _redact_deep(request.json_body, self.redact),
         }
+
+
+_CREDENTIAL_HEADER = re.compile(r"auth|key|token|secret|cookie", re.IGNORECASE)
+
+
+def _mask_header(name: str, value: str) -> str:
+    """The value of a credential header with everything but its scheme word masked."""
+    if not _CREDENTIAL_HEADER.search(name):
+        return value
+    scheme, _, rest = value.partition(" ")
+    return f"{scheme} {REDACTED}" if rest else REDACTED
 
 
 def _redact_deep(value: Any, redact: Any) -> Any:

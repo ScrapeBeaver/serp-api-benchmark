@@ -1,0 +1,181 @@
+# Scrape.do. Facts as declared in its documentation and on its pricing page.
+# Monthly plans of API credits shared by every Scrape.do product; a Google search through
+# the ready-made Google API costs 10 credits, so the "$ per 1,000 credits" of the pricing
+# page is a tenth of the price of 1,000 searches.
+# Prices and billing rules: read on 2026-11-12 from the pages listed under `sources`.
+# Request and response: the documentation page under `docs_url`, read on 2026-11-15.
+
+schema_version: 1
+id: scrapedo
+name: Scrape.do
+status: conformance
+homepage: https://scrape.do
+docs_url: https://scrape.do/documentation/google-scraper-api/search/search/
+
+product:
+  name: Google Search API (ready-made, structured JSON)
+  endpoint: "GET https://api.scrape.do/plugin/google/search"
+  mode: light
+  settings:
+    cache: false        # the cache is on by default; the benchmark measures a fresh search
+  alternatives:
+    - name: "The same request with `resolveGoto=true`"
+      why_not: >
+        An option that is off by default: Google redirect links "are replaced with the
+        destination URL each one points to, at no extra cost", and "resolving adds to the
+        response time. Allow several extra seconds". The benchmark uses each endpoint with
+        its default settings.
+      source: https://scrape.do/documentation/google-scraper-api/search/search/
+    - name: "The same request with the cache left on"
+      why_not: >
+        The default: "reuses a successful identical search for up to 6 hours", at the same
+        credits as a fresh one. A cached answer is not a search, so the cache is switched
+        off (`cache=false`), as for every provider that has one.
+      source: https://scrape.do/documentation/google-scraper-api/search/search/
+    - name: The general scraping API on a google.com address
+      why_not: "The same 10 credits, and raw HTML instead of parsed results."
+      source: https://scrape.do/documentation/request-costs/
+  notes: >
+    A synchronous GET that returns parsed results. The documentation asks to "allow at
+    least 60 seconds per request". Pages of the same search must be asked for one at a
+    time: a second page requested while the first is in progress is refused with 429.
+
+terms:
+  url: https://scrape.do/terms-of-use/      # read for the purchase model and refunds only
+  benchmarking: unknown           # a clause about benchmarking has not been looked for
+
+auth:
+  env: [SCRAPEDO_TOKEN]           # sent as the `token` query parameter: the API documents no header for it
+
+capabilities:
+  mobile: true                    # `device=mobile`
+  city_location: true             # `location`, a Google canonical name, or `uule`
+  pagination: true                # `start`, in steps of 10, up to 100
+  raw_html: true                  # `include_html=true`
+  ai_overview: true               # in the answer when Google renders it; otherwise a second, charged call
+
+billing:
+  - effective_from: 2026-11-12
+    checked_at: 2026-11-12
+    currency: USD
+    sources:
+      - https://scrape.do/pricing/
+      - https://scrape.do/products/ready-api/google-search-scraper/
+      - https://scrape.do/documentation/google-scraper-api/
+      - https://scrape.do/documentation/google-scraper-api/search/search/
+      - https://scrape.do/documentation/request-costs/
+      - https://scrape.do/documentation/api-response/status-codes.md
+      - https://scrape.do/documentation/api-response/usage-stats.md
+      - https://scrape.do/terms-of-use/
+    prices_exclude_tax: unknown
+
+    meter:
+      unit: credit
+      unit_label: credit
+      shared_across_products: true    # one balance for the scraping API and the ready-made APIs
+
+    request_cost:
+      base: 10                    # "10 credits per request" on /plugin/google/search
+      rules:
+        - when: {ai_overview: true}
+          add: 5
+          applies: if_returned
+          source: https://scrape.do/documentation/google-scraper-api/search.md
+          notes: >
+            When Google defers the AI Overview, it is fetched with a second call to
+            /plugin/google/search/ai-overview at 5 credits; a query with no AI Overview
+            fails and is not charged.
+      stacking: multiply_then_add
+      per_page: separate_request  # each page (`start`) is a request of its own
+      results_per_charge: unknown
+      free_parameters: [device, location, uule, gl, hl, include_html, resolveGoto]
+      undocumented: [query_operators]
+
+    charges:
+      failed_request:
+        charged: false
+        how: "Credits are deducted only for successful requests; none are lost on \"timeouts, blocks, or errors\"."
+        source: https://scrape.do/pricing/
+      timeout: {charged: false, how: "As above.", source: "https://scrape.do/pricing/"}
+      empty_serp:
+        charged: unknown
+        how: "A search with no results is a 502; 502 is listed as not charged on the general status-codes page."
+        source: https://scrape.do/documentation/api-response/status-codes.md
+      client_timeout: {charged: unknown}
+      client_error:
+        charged: unknown
+        how: "The pages disagree: see `conflicts`."
+      cached_response:
+        charged: true
+        how: "\"Cached responses cost the same credits as fresh responses.\""
+        source: https://scrape.do/documentation/google-scraper-api/search/search/
+      billed_statuses: unknown    # see `conflicts`
+      notes: >
+        A 200 with invalid content can be claimed back through support. 401 means no
+        credits remain or the subscription is suspended; 429 means the concurrency of the
+        plan is exceeded, or a page of the same search is still in progress. Neither is
+        charged.
+
+    cache:
+      on_by_default: true         # `cache` defaults to true
+      ttl_seconds: 21600          # "for up to 6 hours"
+      bypass: "cache=false"
+      source: https://scrape.do/documentation/google-scraper-api/search/search/
+
+    usage_reporting:
+      response_header: Scrape.do-Request-Cost
+      account_endpoint: "GET https://api.scrape.do/info"
+      notes: >
+        Every answer carries `Scrape.do-Request-Cost` (credits charged) and
+        `Scrape.do-Remaining-Credits`. The account endpoint returns `IsActive`,
+        `ConcurrentRequest`, `MaxMonthlyRequest`, `RemainingConcurrentRequest` and
+        `RemainingMonthlyRequest`, and takes 10 calls a minute.
+
+    purchase:
+      model: subscription
+      pricing: plan_units
+      plans:
+        - id: free
+          name: Free
+          price: 0
+          period: month
+          units: 1000             # 100 Google searches
+          limits: {concurrency: 5}
+          unused_units: unknown
+          notes: "Recurring every month, no card."
+        - {id: hobby, name: Hobby, price: 29, annual_price_per_month: 24.17, period: month,
+           units: 250000, limits: {concurrency: 10}, unused_units: unknown,
+           notes: "25,000 Google searches. Annual: $290 a year, \"pay for 10 months and get 12\"."}
+        - {id: pro, name: Pro, price: 99, annual_price_per_month: 82.5, period: month,
+           units: 1250000, limits: {concurrency: 50}, unused_units: unknown}
+        - {id: business, name: Business, price: 249, annual_price_per_month: 207.5, period: month,
+           units: 3500000, limits: {concurrency: 100}, unused_units: unknown}
+        - {id: advanced, name: Advanced, price: 699, annual_price_per_month: 582.5, period: month,
+           units: 10000000, limits: {concurrency: 200}, unused_units: unknown}
+      on_limit: block             # "requests will stop unless you upgrade your plan or purchase additional credits"
+      overage: null               # additional credits can be bought; their price is not published
+      free:
+        units: 1000
+        period: month
+        notes: "1,000 credits every month, 5 concurrent requests, no card: 100 Google searches."
+      beyond_published: >
+        Above Advanced (10 million credits, one million searches): Custom / Enterprise
+        through sales. The price of additional credits within a month is not published.
+      refunds: >
+        Within 3 days of the first subscription purchase, for unused credits only; 50% within
+        15 days in later cycles for someone who forgot to cancel.
+
+    conflicts:
+      - topic: Which answers are charged
+        statements:
+          - {text: "Status codes counted as successful and charged: 2xx, 400, 404, 410.", source: "https://scrape.do/documentation/request-costs/"}
+          - {text: "A 400 raised by Scrape.do itself is not charged, a 400 from the target is; 401, 429, 502 and 510 are not charged.", source: "https://scrape.do/documentation/api-response/status-codes.md"}
+        used: "Neither is entered: `billed_statuses` stays unknown until the cost header of live answers shows it."
+
+    benchmark_account:
+      plan: free                  # 1,000 credits a month, no card
+
+adapter:
+  version: "1"
+  base_url: https://api.scrape.do
+  base_url_env: SCRAPEDO_BASE_URL
