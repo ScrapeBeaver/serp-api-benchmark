@@ -7,7 +7,7 @@
 methodology_version: "0.1"
 
 # Providers measured by default. `--providers mock` runs the offline mock instead.
-providers: [scrapebeaver, decodo, scrapingbee, scrapingdog]
+providers: [scrapebeaver, decodo, scrapingbee, scrapingdog, brightdata, serper, oxylabs]
 
 schedule:
   runs_per_day: 4         # evenly spaced; must divide 24
@@ -16,7 +16,12 @@ schedule:
                           # of the day is sampled within 24 / runs_per_day days
 
 # The starting volume: every query of the list once a day on desktop, plus a fifth of that
-# on mobile and on the second page. 28 tasks per run, 112 a day per provider.
+# on the second page. 24 tasks per run, 96 a day per provider.
+#
+# Mobile searches are not measured. Not every provider offers them, so the providers would
+# not be compared on the same searches, and the step-3 check would have too few pages of
+# the same search to compare. Whether a provider offers them, and at what price, is still
+# stated in its provider.yaml and shown on the pricing page.
 # The volume planned next is 200 / 40 / 30 a day over a list of 400 query pairs (every pair
 # sent every second day); it is switched on here, in this file, when that list is ready.
 pools:
@@ -27,13 +32,8 @@ pools:
     device: desktop
     page: 1
     headline: true                # counts towards the main table
-  mobile:
-    from: core                    # the same queries as `core`
-    per_day: 16
-    device: mobile
-    headline: false
   page2:
-    from: core
+    from: core                    # the same queries as `core`
     per_day: 16
     page: 2
     headline: false

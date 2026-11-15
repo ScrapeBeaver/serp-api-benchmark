@@ -1,0 +1,25 @@
+{
+ "description": "The key was refused: HTTP 403. Our own key, so the request is set aside, not counted as a failure.",
+ "source": "Recorded on 2026-11-13 from POST https://google.serper.dev/search with a key that does not exist: status and body are as returned.",
+ "task": {
+  "query": "coffee",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 403,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "message": "Unauthorized.",
+   "statusCode": 403
+  }
+ },
+ "expect": {
+  "outcome": "void",
+  "void_reason": "auth_or_credits"
+ }
+}

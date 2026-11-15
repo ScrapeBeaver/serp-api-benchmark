@@ -1,7 +1,7 @@
 # Scrapeless: a balance in dollars, drawn down per request. A subscription is not an
 # allowance of searches: it is a monthly prepaid commitment that expires with the month
 # and buys a discount on every unit price. Top-ups without a subscription never expire.
-# Facts from research/pricing/group-c.md, section 4, read on 2026-11-12.
+# Facts read on 2026-11-12 from the pages listed under `sources`.
 schema_version: 1
 id: scrapeless
 name: Scrapeless

@@ -1,0 +1,22 @@
+{
+ "description": "The key was refused: HTTP 401. Our own key, so the request is set aside, not counted as a failure.",
+ "source": "Built from the documented responses of POST /request (https://docs.brightdata.com/api-reference/rest-api/serp/serp-api). Illustrative; to be replaced by a recorded response after the first live call.",
+ "task": {
+  "query": "pizza",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 401,
+  "headers": {
+   "content-type": "text/plain"
+  },
+  "text": "User authentication is required"
+ },
+ "expect": {
+  "outcome": "void",
+  "void_reason": "auth_or_credits"
+ }
+}

@@ -2,7 +2,7 @@
 # A credit subscription with a long ladder. A plan buys credits, a search costs 5 of them,
 # and mobile or "advanced" results double that. Unused credits roll over from one plan
 # upward, there is no overage and no top-up, and annual prices sit behind a toggle.
-# Prices: research/pricing/group-b.md, read on 2026-11-12. Request and response:
+# Prices: read on 2026-11-12 from the pages listed under `sources`. Request and response:
 # https://www.scrapingdog.com/documentation/google-search-api/, read on 2026-11-12.
 
 schema_version: 1

@@ -1,0 +1,88 @@
+{
+ "description": "A delivered search as the live API returned it: 9 organic results, every link pointing at its destination, and `credits: 1`.",
+ "source": "Recorded on 2026-11-13 from POST https://google.serper.dev/search. Snippets and the blocks other than `searchParameters`, `organic` and `credits` were removed; positions, titles and links are as returned.",
+ "task": {
+  "query": "best running shoes",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json; charset=utf-8"
+  },
+  "body": {
+   "searchParameters": {
+    "q": "best running shoes",
+    "gl": "us",
+    "hl": "en",
+    "type": "search",
+    "engine": "google"
+   },
+   "organic": [
+    {
+     "title": "7 Best Running Shoes in 2026",
+     "link": "https://runrepeat.com/guides/best-running-shoes",
+     "snippet": "",
+     "position": 1
+    },
+    {
+     "title": "The 15 Best Running Shoes of 2026",
+     "link": "https://www.runnersworld.com/gear/a19663621/best-running-shoes/",
+     "snippet": "",
+     "position": 2
+    },
+    {
+     "title": "What are the best running shoes that you'd actually buy ...",
+     "link": "https://www.reddit.com/r/runninglifestyle/comments/1u5x7mx/what_are_the_best_running_shoes_that_youd/",
+     "snippet": "",
+     "position": 3
+    },
+    {
+     "title": "Best Running Shoes of the Year: 6 Top-Shelf Models",
+     "link": "https://sixminutemile.com/post/six-of-the-best-running-shoes-of-the-year/",
+     "snippet": "",
+     "position": 4
+    },
+    {
+     "title": "Men's Best Sellers Running Shoes",
+     "link": "https://www.nike.com/w/mens-best-running-shoes-37v7jz76m50znik1zy7ok",
+     "snippet": "",
+     "position": 5
+    },
+    {
+     "title": "The Best Running Shoe From Every Brand in 2026!",
+     "link": "https://www.youtube.com/watch?v=9qv6rh34rXU",
+     "snippet": "",
+     "position": 6
+    },
+    {
+     "title": "Best Men's Road Running Shoes",
+     "link": "https://www.amazon.com/Best-Sellers-Men%27s-Road-Running-Shoes/zgbs/fashion/14210389011",
+     "snippet": "",
+     "position": 7
+    },
+    {
+     "title": "17 best walking shoes of 2026, per podiatrists",
+     "link": "https://www.cnn.com/cnn-underscored/health-fitness/the-best-walking-shoes",
+     "snippet": "",
+     "position": 8
+    },
+    {
+     "title": "Men's Running Shoes",
+     "link": "https://www.adidas.com/us/men-running-shoes",
+     "snippet": "",
+     "position": 9
+    }
+   ],
+   "credits": 1
+  }
+ },
+ "expect": {
+  "outcome": "delivered",
+  "organic_count": 9,
+  "billed_units": 1.0
+ }
+}

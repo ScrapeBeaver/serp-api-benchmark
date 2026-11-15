@@ -19,7 +19,11 @@ def write(tmp_path, data: dict):
 
 
 def base() -> dict:
-    return yaml.safe_load((ROOT / "bench.yaml").read_text(encoding="utf-8"))
+    """The shipped configuration, with a mobile pool added: the tests below need a second
+    pool that borrows its queries, whatever pools the shipped file has today."""
+    data = yaml.safe_load((ROOT / "bench.yaml").read_text(encoding="utf-8"))
+    data["pools"]["mobile"] = {"from": "core", "per_day": 8, "device": "mobile", "headline": False}
+    return data
 
 
 def error(tmp_path, data: dict) -> str:
@@ -30,9 +34,9 @@ def error(tmp_path, data: dict) -> str:
 
 def test_the_shipped_configuration_loads():
     config = load_config(ROOT / "bench.yaml")
-    assert set(config.pools) == {"core", "mobile", "page2"}
-    assert config.pools["core"].headline and not config.pools["mobile"].headline
-    assert config.source_of("mobile") == "queries/smoke.yaml"
+    assert set(config.pools) == {"core", "page2"}
+    assert config.pools["core"].headline and not config.pools["page2"].headline
+    assert config.source_of("page2") == "queries/smoke.yaml"
     assert config.pool_runs("core") == [0, 1, 2, 3]
 
 

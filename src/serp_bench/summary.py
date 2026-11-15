@@ -44,6 +44,13 @@ NOT_MEASURED_YET: tuple[str, ...] = ("usable",)
 # a history to be judged on. Until then the page calls the figure a mismatch with the other
 # providers, not poisoning.
 HISTORY_READY_SHARE = 0.9
+# Response times are given to the page as they are, so that it can count the share of all
+# searches answered within any number of seconds. Above this many they are given as evenly
+# spaced quantiles instead, and the page is told so (`exact: false`).
+LATENCY_EXACT_MAX = 2000
+LATENCY_POINTS = 201
+# The figures of one run that the page draws over time.
+RUN_FIGURES: tuple[str, ...] = ("tasks", "success", "resolved", "poisoned", "p50", "p95")
 
 # The request shapes whose cost is shown next to a plain desktop search.
 COMPARED_SHAPES: dict[str, dict[str, object]] = {
@@ -135,6 +142,59 @@ def measure(records: Iterable[Record], verdicts: Verdicts | None = None) -> dict
     return figures
 
 
+def moment_of(record: Record) -> dt.datetime | None:
+    """When a request was due, or when it was sent, in UTC."""
+    stamp = record.scheduled_at or record.started_at
+    if stamp is None:
+        return None
+    return dt.datetime.fromisoformat(stamp.replace("Z", "+00:00")).astimezone(dt.UTC)
+
+
+def _stamp(moment: dt.datetime) -> str:
+    return moment.astimezone(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def run_list(records: Iterable[Record]) -> list[dict[str, str]]:
+    """The runs behind the figures, oldest first: each with the moment its first task was
+    due and the moment its last one was."""
+    spans: dict[str, list[dt.datetime]] = {}
+    for record in records:
+        moment = moment_of(record)
+        if moment is None:
+            continue
+        span = spans.setdefault(record.run_id, [moment, moment])
+        span[0], span[1] = min(span[0], moment), max(span[1], moment)
+    ordered = sorted(spans.items(), key=lambda item: item[1][0])
+    return [
+        {"id": run_id, "start_at": _stamp(first), "end_at": _stamp(last)}
+        for run_id, (first, last) in ordered
+    ]
+
+
+def latency(records: Iterable[Record]) -> dict[str, Any]:
+    """The response times of the delivered answers, in seconds and in order, with the
+    number of searches they are out of. A search that was not delivered has no time, which
+    is how a share "answered within T seconds" comes to count failures against it."""
+    counted = [r for r in records if r.outcome != OUTCOME_VOID]
+    seconds = sorted(
+        round(r.total_ms / 1000, 3)
+        for r in counted
+        if r.outcome == OUTCOME_DELIVERED and r.total_ms is not None
+    )
+    delivered = len(seconds)
+    exact = delivered <= LATENCY_EXACT_MAX
+    if not exact:
+        last = delivered - 1
+        picked = []
+        for step in range(LATENCY_POINTS):
+            at = last * step / (LATENCY_POINTS - 1)
+            low = int(at)
+            high = min(low + 1, last)
+            picked.append(round(seconds[low] + (seconds[high] - seconds[low]) * (at - low), 3))
+        seconds = picked
+    return {"seconds": seconds, "exact": exact, "delivered": delivered, "tasks": len(counted)}
+
+
 def _outcomes(records: list[Record], verdicts: Verdicts) -> dict[str, Any]:
     """Every request in exactly one outcome, the first step it did not pass: not delivered,
     links not resolved, poisoned, could not be judged; otherwise clean."""
@@ -185,8 +245,10 @@ def _provider(
     days: list[dt.date],
     operator: str | None,
     verdicts: Verdicts,
+    runs: list[dict[str, str]],
 ) -> dict[str, Any]:
-    """One provider's entry: its figures for each window, day by day, and by outcome."""
+    """One provider's entry: its figures for each window, day by day, run by run, and by
+    outcome."""
     by_day: dict[dt.date, list[Record]] = {}
     for record in records:
         day = day_of(record)
@@ -207,6 +269,18 @@ def _provider(
             value = figures[key]
             series.append(None if value is None else value[0])
 
+    by_run: dict[str, list[Record]] = {}
+    for record in records:
+        by_run.setdefault(record.run_id, []).append(record)
+
+    def of_run(run_id: str) -> dict[str, Any] | None:
+        """This provider's figures in one run; None when it took no part in it."""
+        rows = by_run.get(run_id)
+        if not rows:
+            return None
+        figures = measure(rows, verdicts)
+        return {key: figures[key] for key in RUN_FIGURES}
+
     account = config.current_billing.benchmark_account
     return {
         "id": config.id,
@@ -219,6 +293,8 @@ def _provider(
         "windows": {str(n): measure(within(n), verdicts) for n in WINDOWS},
         "daily": daily,
         "outcomes": _outcomes(within(30), verdicts),
+        "runs": [of_run(run["id"]) for run in runs],
+        "latency": {str(n): latency(within(n)) for n in WINDOWS},
     }
 
 
@@ -334,10 +410,15 @@ def build_summary(
         for config in configs
         if by_provider.get(config.id) and (preview or config.status == "published")
     ]
+    # A run is placed in time by the searches that are counted: from the first of its
+    # headline tasks to the last.
+    runs = run_list(counted)
     providers = [
-        _provider(config, by_provider[config.id], days, operator, verdicts) for config in shown
+        _provider(config, by_provider[config.id], days, operator, verdicts, runs)
+        for config in shown
     ]
     on_page = [record for config in shown for record in by_provider[config.id]]
+    run_days = {run["start_at"][:10] for run in runs}
     return {
         "schema": SUMMARY_SCHEMA,
         "generated_at": now.astimezone(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -350,6 +431,14 @@ def build_summary(
         "preview": preview,
         "not_measured_yet": list(NOT_MEASURED_YET),
         "poison": poison_stage(on_page, verdicts, last),
+        "runs": runs,
+        "coverage": {
+            "first_at": runs[0]["start_at"] if runs else None,
+            "last_at": runs[-1]["end_at"] if runs else None,
+            "run_count": len(runs),
+            "day_count": len(run_days),
+            "timezone": "UTC",
+        },
         "events": [],
         "providers": providers,
         "pricing": pricing(shown, now.date()),

@@ -3,7 +3,7 @@
 # results, a x5 multiplier for search operators, surcharges that are credited back when the
 # feature is not delivered, and cheaper queued modes that are not the benchmarked product.
 #
-# Every fact comes from research/pricing/group-a.md (section 2), read on 2026-11-12.
+# Every fact was read on 2026-11-12 from the pages listed under `sources`.
 # Not checked against the live service.
 
 schema_version: 1

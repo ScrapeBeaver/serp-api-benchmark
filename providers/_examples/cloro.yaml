@@ -3,7 +3,7 @@
 # even when Google shows none. The response reports its own charge in a header. The Terms
 # of Service forbid benchmarking, so this file cannot leave `status: draft`.
 #
-# Written from research/pricing/group-e.md (read 2026-11-12). Not called with a live key.
+# Written from the pages listed under `sources` (read 2026-11-12). Not called with a live key.
 
 schema_version: 1
 id: cloro

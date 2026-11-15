@@ -3,7 +3,7 @@
 # if_returned`), an opt-in cache answers for free, a client that hangs up is still billed,
 # and the account is blocked at the limit: nothing is published above the largest plan.
 #
-# Written from research/pricing/group-d.md (read 2026-11-12). Not called with a live key.
+# Written from the pages listed under `sources` (read 2026-11-12). Not called with a live key.
 
 schema_version: 1
 id: zenserp

@@ -59,8 +59,19 @@ def test_a_run_has_each_pools_share(config):
     assert Counter(t.pool for t in tasks) == expected
     assert len({t.task_id for t in tasks}) == len(tasks)
     assert all(t.headline == (t.pool == "core") for t in tasks)
-    assert {t.device for t in tasks if t.pool == "mobile"} == {Device.mobile}
     assert {t.page for t in tasks if t.pool == "page2"} == {2}
+    # Mobile searches are not measured: no pool of the shipped configuration asks for them.
+    assert {t.device for t in tasks} == {Device.desktop}
+
+
+def test_a_pool_can_ask_for_mobile_searches(tmp_path):
+    """The planner still knows how: a provider's capability is checked in conformance."""
+    pools = {
+        "core": {"source": "queries/smoke.yaml", "per_day": 8},
+        "phone": {"from": "core", "per_day": 4, "device": "mobile"},
+    }
+    tasks = plan(custom(tmp_path, pools), tmp_path, DAY, 0)
+    assert {t.device for t in tasks if t.pool == "phone"} == {Device.mobile}
 
 
 def test_a_day_adds_up_to_per_day(config):

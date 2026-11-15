@@ -332,3 +332,72 @@ def test_a_recorded_scrapingdog_page_has_one_unresolved_link(specs):
     refs = result_refs(provider.parse(fixture.raw))
     assert len(refs) == 9
     assert [ref.pos for ref in refs if ref.wrapper] == [2]
+
+
+def test_brightdata_builds_the_documented_request(specs):
+    env = {"BRIGHTDATA_API_KEY": "secret-value", "BRIGHTDATA_ZONE": "zone-name"}
+    provider = specs["brightdata"].create(env)
+    request = provider.build_request(make_task(country="GB", locale="en-GB"))
+    assert (request.method, request.url) == ("POST", "https://api.brightdata.com/request")
+    assert request.headers["Authorization"] == "Bearer secret-value"
+    # The search itself is a Google address, with the query first and parsed JSON asked for.
+    assert request.json_body == {
+        "zone": "zone-name",
+        "url": "https://www.google.com/search?q=coffee+shops+london&gl=gb&hl=en&brd_json=1",
+        "format": "raw",
+    }
+    phone = provider.build_request(make_task(device=Device.mobile)).json_body["url"]
+    assert phone.endswith("&brd_json=1&brd_mobile=1")
+    third = provider.build_request(make_task(page=3)).json_body["url"]
+    assert third.endswith("&start=20")
+    placed = provider.build_request(make_task(location="Austin,Texas,United States"))
+    assert placed.json_body["url"].endswith("&uule=Austin%2CTexas%2CUnited+States")
+    # Neither the key nor the zone of the account can end up in a log.
+    logged = str(provider.loggable(request))
+    assert "secret-value" not in logged and "zone-name" not in logged
+
+
+def test_brightdata_reads_what_was_billed_from_the_debug_header(specs):
+    env = {"BRIGHTDATA_API_KEY": "k", "BRIGHTDATA_ZONE": "z"}
+    provider = specs["brightdata"].create(env)
+
+    def answer(**headers):
+        return RawResponse(status=200, headers=headers, body=b"{}", ttfb_ms=1.0, total_ms=1.0)
+
+    assert provider.billed_units(answer(**{"X-Brd-Debug": "req_id=1; billed=true"})) == 1.0
+    assert provider.billed_units(answer(**{"x-brd-debug": "billed=false"})) == 0.0
+    assert provider.billed_units(answer()) is None
+
+
+def test_serper_builds_its_request(specs):
+    provider = specs["serper"].create({"SERPER_API_KEY": "secret-value"})
+    request = provider.build_request(make_task(country="GB", locale="en-GB"))
+    assert (request.method, request.url) == ("POST", "https://google.serper.dev/search")
+    # The key travels in a header, never in the address or the body.
+    assert request.headers["X-API-KEY"] == "secret-value"
+    assert request.json_body == {"q": "coffee shops london", "gl": "gb", "hl": "en"}
+    assert provider.build_request(make_task(page=3)).json_body["page"] == 3
+    placed = provider.build_request(make_task(location="Austin,Texas,United States")).json_body
+    assert placed["location"] == "Austin,Texas,United States"
+    assert "secret-value" not in str(provider.loggable(request))
+
+
+def test_oxylabs_builds_the_documented_request(specs):
+    provider = specs["oxylabs"].create({"OXYLABS_API_KEY": "secret-value"})
+    request = provider.build_request(make_task(country="GB", locale="en-GB"))
+    assert (request.method, request.url) == (
+        "POST",
+        "https://webapi.oxylabs.io/v1/scrape/google/search",
+    )
+    assert request.headers["Authorization"] == "Bearer secret-value"
+    assert request.json_body == {
+        "query": "coffee shops london",
+        "location": "GB",
+        "locale": "en_GB",
+        "output": ["json"],
+    }
+    assert provider.build_request(make_task(device=Device.mobile)).json_body["device"] == "mobile"
+    assert provider.build_request(make_task(page=3)).json_body["start_page"] == 3
+    # The endpoint takes a country only: a search for a city is not sent to it at all.
+    assert not provider.supports(make_task(location="Austin,Texas,United States"))
+    assert "secret-value" not in str(provider.loggable(request))

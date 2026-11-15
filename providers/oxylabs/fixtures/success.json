@@ -1,0 +1,138 @@
+{
+ "description": "A delivered search as the live API returned it: 8 organic results, every link pointing at its destination, fetched without JavaScript rendering.",
+ "source": "Recorded on 2026-11-13 from POST https://webapi.oxylabs.io/v1/scrape/google/search with output json. Descriptions, images and the blocks other than `organic` and `search_information` were removed, and the request id replaced; positions, titles and links are as returned.",
+ "task": {
+  "query": "best running shoes",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "content-type": "application/json"
+  },
+  "body": {
+   "state": "done",
+   "results": [
+    {
+     "json": {
+      "page": 1,
+      "results": {
+       "organic": [
+        {
+         "pos": 1,
+         "pos_overall": 2,
+         "url": "https://runrepeat.com/guides/best-running-shoes",
+         "url_shown": "https://runrepeat.com› guides › best-running-shoes",
+         "title": "7 Best Running Shoes in 2026",
+         "desc": ""
+        },
+        {
+         "pos": 2,
+         "pos_overall": 3,
+         "url": "https://www.runnersworld.com/gear/a19663621/best-running-shoes/",
+         "url_shown": "https://www.runnersworld.com› ... › Running Shoes",
+         "title": "The 15 Best Running Shoes of 2026",
+         "desc": ""
+        },
+        {
+         "pos": 3,
+         "pos_overall": 6,
+         "url": "https://www.reddit.com/r/runninglifestyle/comments/1u5x7mx/what_are_the_best_running_shoes_that_youd/",
+         "url_shown": "230+ comments  ·  5 months ago",
+         "title": "What are the best running shoes that you'd actually buy ...",
+         "desc": ""
+        },
+        {
+         "pos": 4,
+         "pos_overall": 9,
+         "url": "https://sixminutemile.com/post/six-of-the-best-running-shoes-of-the-year/",
+         "url_shown": "https://sixminutemile.com› post › six-of-the-best-runni...",
+         "title": "Best Running Shoes of the Year: 6 Top-Shelf Models",
+         "desc": ""
+        },
+        {
+         "pos": 5,
+         "pos_overall": 10,
+         "url": "https://www.nike.com/w/mens-best-running-shoes-37v7jz76m50znik1zy7ok",
+         "url_shown": "https://www.nike.com› Running › Shoes",
+         "title": "Men's Best Sellers Running Shoes",
+         "desc": ""
+        },
+        {
+         "pos": 6,
+         "pos_overall": 11,
+         "url": "https://www.adidas.com/us/best_sellers-running-shoes",
+         "url_shown": "https://www.adidas.com› Home › Best Sellers › Running",
+         "title": "Best Selling Running Shoes",
+         "desc": ""
+        },
+        {
+         "pos": 7,
+         "pos_overall": 12,
+         "url": "https://us.cnn.com/cnn-underscored/reviews/best-running-shoes-for-men",
+         "url_shown": "https://us.cnn.com› cnn-underscored › reviews › best-r...",
+         "title": "Best running shoes for men of 2026, tried and tested",
+         "desc": ""
+        },
+        {
+         "pos": 8,
+         "pos_overall": 13,
+         "url": "https://www.letsrun.com/forum/flat_read.php?thread=8528045&page=1",
+         "url_shown": "https://www.letsrun.com› forum › flat_read",
+         "title": "In your opinion what is the best running shoes?",
+         "desc": ""
+        }
+       ],
+       "search_information": {
+        "no_results_for_original_query_found": false,
+        "query": "best running shoes",
+        "showing_results_for": "best running shoes",
+        "time_taken_displayed": null,
+        "total_results_count": 198
+       }
+      }
+     },
+     "metadata": {
+      "page": 1,
+      "run_js": false,
+      "statuses": {
+       "http_request": {
+        "code": 200,
+        "tag": "HTTP_OK"
+       },
+       "json_parse": {
+        "code": 12000,
+        "tag": "PARSE_SUCCESS"
+       }
+      }
+     }
+    }
+   ],
+   "params": {
+    "query": "best running shoes",
+    "output": [
+     "json"
+    ],
+    "location": "US",
+    "device": "desktop",
+    "run_js": null,
+    "start_page": 1,
+    "pages": 1,
+    "domain": "com",
+    "locale": "en_US"
+   },
+   "metadata": {
+    "timestamp": 1794593880,
+    "request_id": "example-request-id"
+   }
+  }
+ },
+ "expect": {
+  "outcome": "delivered",
+  "organic_count": 8,
+  "provider_request_id": "example-request-id"
+ }
+}

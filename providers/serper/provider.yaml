@@ -1,22 +1,22 @@
-# Worked example: prepaid credit packs bought once, with an expiry (`period: one_time` and
+# Serper: prepaid credit packs bought once, with an expiry (`period: one_time` and
 # `unused_units: {expire_after_days: N}`). The price of 1,000 searches then depends on how
-# fast a pack is used. It also shows a provider whose per-request rules are not public:
-# every request shape other than the base one is `undocumented`.
+# fast a pack is used. Its per-request rules are not public: every request shape other than
+# the base one is `undocumented` until a live call shows what it costs.
 #
-# Every fact comes from research/pricing/group-a.md (section 3), read on 2026-11-12.
+# Every fact was read on 2026-11-12 from the pages listed under `sources`.
 # Only the homepage and the terms page are public; the API documentation is behind a login
 # and was not read. Not checked against the live service.
 
 schema_version: 1
 id: serper
 name: Serper
-status: draft
+status: conformance
 homepage: https://serper.dev/
 docs_url: null                      # no public documentation page could be opened
 
 product:
   name: Google Search
-  endpoint: "not shown on the public pages"
+  endpoint: "POST https://google.serper.dev/search"
   mode: light                       # the only mode: every query is real-time
   settings: {}
   notes: >
@@ -28,12 +28,12 @@ terms:
   benchmarking: unknown             # a clause about benchmarking has not been looked for
 
 auth:
-  env: []
+  env: [SERPER_API_KEY]             # sent in the `X-API-KEY` header
 
-capabilities:                       # none of these is stated on the public pages
-  mobile: unknown
-  city_location: unknown            # the FAQ says location is set "by specifying the country and language"
-  pagination: unknown
+capabilities:                       # none is stated on the public pages; from live calls, 2026-11-13
+  mobile: false                     # the request has no device parameter
+  city_location: true               # `location` is accepted; how precisely it is honoured was not measured
+  pagination: true                  # `page`
   raw_html: unknown
   ai_overview: unknown
 
@@ -83,11 +83,11 @@ billing:
 
     usage_reporting:
       response_header: null
-      response_field: null
+      response_field: credits       # in every answer (live calls, 2026-11-13)
       account_endpoint: null
       notes: >
-        Not stated on the public pages. The sample responses on the homepage show no
-        credits field.
+        Not stated on the public pages, and the sample responses on the homepage show no
+        credits field; the live answers carry it.
 
     purchase:
       model: prepaid_packs          # "top-up model. No monthly subscriptions"
@@ -150,5 +150,15 @@ billing:
       stated. (3) Whether a pack may be bought again before the previous one is used up is
       implied by "top-up model" and not stated.
 
+# Seen on live calls, 2026-11-13:
+# * The answer carries `credits`, the number charged: 1 for a first page, a second page, a
+#   search with a location, a search with operators, and also for a page with no results.
+# * A phrase with no matches comes back as an empty page, not as substitutes.
+# * `searchParameters` names the query, `gl` and `hl` that were used.
+# * A key that does not exist is answered with HTTP 403.
+# * `x-ratelimit-limit: 25` on the free credits.
+
 adapter:
   version: "1"
+  base_url: https://google.serper.dev
+  base_url_env: SERPER_BASE_URL

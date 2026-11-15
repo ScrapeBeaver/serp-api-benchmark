@@ -2,7 +2,7 @@
 # Its prices are a rate card: a plan is a monthly budget in dollars, every kind of request
 # has its own price per 1,000, and that price falls as the plan grows. Two endpoints return
 # Google results at different rates; the cheaper one that is documented to work is measured.
-# Prices: research/pricing/group-b.md, read on 2026-11-12. Request and response: the
+# Prices: read on 2026-11-12 from the pages listed under `sources`. Request and response: the
 # documentation pages under `docs_url`, read on 2026-11-12.
 
 schema_version: 1

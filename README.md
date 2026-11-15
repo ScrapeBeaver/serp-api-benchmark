@@ -252,12 +252,8 @@ pools:
     device: desktop
     page: 1
     headline: true        # counts towards the main table
-  mobile:
-    from: core            # the same queries as `core`
-    per_day: 16
-    device: mobile
   page2:
-    from: core
+    from: core            # the same queries as `core`
     per_day: 16
     page: 2
 

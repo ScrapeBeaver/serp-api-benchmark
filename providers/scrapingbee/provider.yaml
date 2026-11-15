@@ -3,7 +3,7 @@
 # defined by HTTP status, and a plan can renew early when it is nearly used up instead of
 # charging overage. The ladder is not monotonic: the 1M-credit and the 14M-credit plans cost
 # almost the same per search.
-# Prices: research/pricing/group-c.md, section 2, read on 2026-11-12. Request and response:
+# Prices: read on 2026-11-12 from the pages listed under `sources`. Request and response:
 # the documentation page under `docs_url`, read on 2026-11-12.
 schema_version: 1
 id: scrapingbee

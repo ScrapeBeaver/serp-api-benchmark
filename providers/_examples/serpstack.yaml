@@ -3,7 +3,7 @@
 # is short, so above the largest plan the declared price is that plan plus overage. The
 # vendor's own Terms describe a hard stop instead: both statements are under `conflicts`.
 #
-# Written from research/pricing/group-e.md (read 2026-11-12). Not called with a live key.
+# Written from the pages listed under `sources` (read 2026-11-12). Not called with a live key.
 
 schema_version: 1
 id: serpstack

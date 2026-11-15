@@ -3,7 +3,7 @@
 # price (`addons`), an hourly cap tied to the plan, a one-hour cache that has to be switched
 # off, and a plan that is bought again early when it runs out (`on_limit: auto_renew`).
 #
-# Every fact comes from research/pricing/group-a.md (section 1), read on 2026-11-12.
+# Every fact was read on 2026-11-12 from the pages listed under `sources`.
 # Not checked against the live service.
 
 schema_version: 1

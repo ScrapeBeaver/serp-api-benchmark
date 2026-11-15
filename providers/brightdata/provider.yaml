@@ -1,13 +1,12 @@
 # Bright Data: pay as you go from a prepaid wallet, next to monthly plans that include
-# requests and bill further ones at a rate of their own. A contract has one `purchase`, so
-# the pay-as-you-go rate is written as a block of 1,000 requests beside the three plans, and
-# the engine picks whichever is cheaper at each volume.
-# Source of every figure: research/pricing/group-b.md, read on 2026-11-12.
+# requests and bill further ones at a rate of their own, and a free tier of 5,000 requests
+# a month. The cheapest of them is quoted at each volume.
+# Every figure was read on 2026-11-12 from the pages listed under `sources`.
 
 schema_version: 1
 id: brightdata
 name: Bright Data
-status: draft
+status: conformance
 homepage: https://brightdata.com
 docs_url: https://docs.brightdata.com/api-reference/rest-api/serp/serp-api
 
@@ -23,6 +22,13 @@ product:
     - name: Fast SERP
       why_not: "Access and its request rate are arranged through an account manager, and no price is published."
       source: https://docs.brightdata.com/products/serp-api/fast-serp/quickstart
+    - name: "Light JSON (`x-unblock-data-format: parsed_light`)"
+      why_not: >
+        An opt-in header for the same request at the same price: parsed JSON limited to the
+        first ten organic results, documented as about half the latency of full parsing.
+        The benchmark uses each endpoint as documented by default, which here is
+        `brd_json=1`.
+      source: https://docs.brightdata.com/scraping-automation/serp-api/query-parameters/google
     - name: Google SERP - 100 Results (Scrapers endpoint, `start_page` / `end_page`)
       why_not: >
         A different product: one call returns up to 10 pages and is one billable request. The
@@ -39,7 +45,10 @@ terms:
   benchmarking: unknown           # the terms of service were not read
 
 auth:
-  env: []
+  # The API key is sent as `Authorization: Bearer <key>`. The zone is the name of the SERP
+  # API created in the account; every request names it. It is no secret, but it belongs to
+  # the account, so it is configured the same way and never written here.
+  env: [BRIGHTDATA_API_KEY, BRIGHTDATA_ZONE]
 
 capabilities:
   mobile: true                    # desktop and mobile user agents are included in the price
@@ -117,7 +126,7 @@ billing:
       on_by_default: unknown      # not stated
 
     usage_reporting:
-      response_header: x-brd-debug    # contains `billed=true|false`
+      response_header: x-brd-debug    # documented to contain `billed=true|false`; not sent by default (live calls, 2026-11-13)
       account_endpoint: "GET https://api.brightdata.com/customer/balance"
       notes: >
         The balance endpoint returns `balance`, `credit`, `prepayment` and `pending_costs`.
@@ -203,7 +212,7 @@ billing:
           control panel and is not published.
 
     benchmark_account:
-      plan: unknown
+      plan: free                  # the free tier of 5,000 requests a month, no funds in the wallet
     notes: >
       A Scale plan is a minimum monthly commitment charged on the 1st of each month, with the
       first month prorated by active days; "Cancel anytime". No annual price is published on
@@ -212,5 +221,15 @@ billing:
       which is the rate of the largest Scale plan, not the pay-as-you-go rate. The pricing
       page speaks of "requests" and of "records", and the free tier of "credits".
 
+# Seen on live calls, 2026-11-13:
+# * A failed search comes back as HTTP 200 with an empty body; the real outcome is in the
+#   headers `x-brd-status-code` (502), `x-brd-error` and `x-brd-error-code` (captcha). The
+#   shared checks record it as a failure (the body is not JSON).
+# * The answer names what the page was for in `general`: `query`, `gl`, `language`.
+# * The account endpoints (`/customer/balance`, `/trials/free_tier`) need a key with more
+#   permissions than the one used for searching, so charges were not read from the account.
+
 adapter:
   version: "1"
+  base_url: https://api.brightdata.com
+  base_url_env: BRIGHTDATA_BASE_URL

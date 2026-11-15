@@ -1,0 +1,20 @@
+{
+ "description": "The key was refused: HTTP 401 with no body. Our own key, so the request is set aside, not counted as a failure.",
+ "source": "Recorded on 2026-11-13 from POST https://webapi.oxylabs.io/v1/scrape/google/search with a key that does not exist: HTTP 401 and an empty body, as returned.",
+ "task": {
+  "query": "pizza",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 401,
+  "headers": {},
+  "text": ""
+ },
+ "expect": {
+  "outcome": "void",
+  "void_reason": "auth_or_credits"
+ }
+}

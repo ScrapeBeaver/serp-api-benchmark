@@ -1,0 +1,200 @@
+# Oxylabs. Facts as declared in its documentation and on its pricing pages.
+# Its prices are a rate card: a plan is a monthly budget in dollars shared by every Oxylabs
+# product, each kind of result has its own price per 1,000, and that price falls as the plan
+# grows. The dedicated Google scraper of the Web API is measured, at its rate for a page
+# fetched without JavaScript rendering.
+# Prices and billing rules: read on 2026-11-12 from the pages listed under `sources`.
+# Request and response: the documentation pages under `docs_url`, read on 2026-11-13.
+
+schema_version: 1
+id: oxylabs
+name: Oxylabs
+status: conformance   # called with a live key on 2026-11-13: see conformance.json
+homepage: https://oxylabs.io
+docs_url: https://developers.oxylabs.io/api-reference/dedicated-scrapers/search-engine-scrapers
+
+product:
+  name: Web API, Google search scraper
+  endpoint: "POST https://webapi.oxylabs.io/v1/scrape/google/search"
+  mode: light
+  settings:
+    output: [json]        # the built-in parser; the default output is raw HTML
+  alternatives:
+    - name: "Web API /v1/search"
+      endpoint: "POST https://webapi.oxylabs.io/v1/search"
+      why_not: >
+        "Performs live web searches and returns ranked organic results", at $1 per 1,000 on
+        every plan, up to 20 results, country-level location only. The documentation does
+        not name the search engine behind it, and this benchmark measures Google results.
+      source: https://developers.oxylabs.io/products/web-api/search
+    - name: "The same scraper with JavaScript rendering (`run_js`)"
+      why_not: >
+        Dearer on every plan: the "Google JS" rate, $1.35 to $1.15 per 1,000, against $1.00
+        to $0.70 without rendering.
+      source: https://oxylabs.io/products/web-api/scrape/pricing
+    - name: "Web Scraper API (legacy, `realtime.oxylabs.io`, `source: google_search`)"
+      why_not: >
+        The earlier generation of the same product; its plan names are no longer on the
+        pricing page. The documentation is still served.
+      source: https://developers.oxylabs.io/products/web-scraper-api/usage-and-billing/billing-information
+  notes: >
+    A dedicated scraper for Google: "organic results, ads, and the SERP features". It runs
+    synchronously, asynchronously or in batches; the benchmark uses the synchronous mode.
+    One page of results is one result, the unit of the price.
+
+terms:
+  benchmarking: unknown           # the terms of service were not read
+
+auth:
+  env: [OXYLABS_API_KEY]          # the key of a Web API instance, sent as `Authorization: Bearer <key>`
+
+capabilities:
+  mobile: true                    # `device: mobile`
+  city_location: false            # `location` is a two-letter country code on this endpoint
+  pagination: true                # `start_page`; "each page is a separate fetch and charge"
+  raw_html: true                  # `output: ["html"]`, the default
+  ai_overview: true               # returned inside the page; `expand_aio` expands it
+
+billing:
+  - effective_from: 2026-11-12
+    checked_at: 2026-11-12
+    currency: USD
+    sources:
+      - https://oxylabs.io/products/web-api/scrape/pricing
+      - https://oxylabs.io/products/web-api/search/pricing
+      - https://oxylabs.io/products/web-api/scrape/serp/google
+      - https://developers.oxylabs.io/dashboard/credit-based-billing
+      - https://developers.oxylabs.io/dashboard/upgrading-downgrading-top-ups
+      - https://developers.oxylabs.io/api-reference/dedicated-scrapers/search-engine-scrapers
+      - https://developers.oxylabs.io/products/web-api/troubleshooting
+      - https://developers.oxylabs.io/api-reference/errors-and-status-codes
+      - https://developers.oxylabs.io/products/web-api/authentication
+      - https://developers.oxylabs.io/help-center/billing-and-payments/are-there-any-additional-fees-i-should-be-aware-of
+    prices_exclude_tax: true      # "VAT may apply"
+
+    meter:
+      unit: request               # rates are quoted per 1,000 results; one page of results is one result
+      unit_label: result
+      shared_across_products: true    # one credit balance for proxies, Web API, Web Unblocker and the rest
+
+    request_cost:
+      base: 1                     # one page of results is one result, priced by the plan's rate below
+      rules: []
+      per_page: separate_request  # "Each page is a separate fetch and charge"
+      results_per_charge: unknown # `limit_per_page` can ask for more results; its effect on the charge is not stated
+      free_parameters: [device, location, locale, output]   # "All Web API features are included ... without hidden fees"
+      # Which rate applies when `run_js` is left out is not stated in so many words: the
+      # request "defaults to the optimal execution path". The page is priced here at the
+      # rate for a fetch without rendering, which is what the benchmark asks for.
+      undocumented: [query_operators, ai_overview]
+
+    charges:
+      failed_request:
+        charged: false
+        how: "\"Pay only for successful results\"; \"Faulted scrapes are not charged\"."
+        source: https://developers.oxylabs.io/api-reference/errors-and-status-codes
+      timeout: {charged: unknown}
+      empty_serp: {charged: unknown}
+      client_timeout:
+        charged: true
+        how: "\"a 10-second timeout fails work that would have succeeded and you still pay for it\"."
+        source: https://developers.oxylabs.io/products/web-api/for-agents
+      client_error: {charged: unknown}
+      cached_response: {charged: unknown}
+      billed_statuses: unknown
+      notes: >
+        The legacy Web Scraper API documentation, still served, bills results whose target
+        status is 2xx or 4xx and does not bill 5xx, 6xx and 429. Whether that applies to the
+        Web API is not stated.
+
+    cache:
+      on_by_default: unknown      # not stated
+
+    usage_reporting:
+      notes: >
+        No balance or usage endpoint and no response field is documented for the Web API.
+        The dashboard shows the spend.
+
+    purchase:
+      model: subscription
+      pricing: rate_card
+      shapes:                     # the rows of the published rate card that can return Google results
+        google:
+          when: {option: google_non_js}
+          notes: "\"Google non-JS\": a page fetched without JavaScript rendering."
+        google_page_2:            # the same rate, written out so that a later page can be quoted
+          when: {option: google_non_js, page: "2+"}
+          notes: "A later page (`start_page`): a separate fetch at the same rate."
+        google_mobile:
+          when: {option: google_non_js, device: mobile}
+          notes: "`device: mobile`: no surcharge is stated."
+        google_js:
+          when: {option: google_js}
+          notes: "\"Google JS\": the same page with `run_js`."
+      benchmarked_shape: google
+      plans:
+        - id: welcome
+          name: Welcome credits
+          price: 0
+          period: month
+          rates_per_1k: {google: 1.00, google_page_2: 1.00, google_mobile: 1.00, google_js: 1.35}
+          notes: >
+            "$5 toward any product", given once per team at registration, "valid
+            indefinitely as long as you stay on the free plan". A plan's budget is its
+            `price` in this contract, so this plan never covers a volume in a quote.
+        - id: starter
+          name: Starter
+          price: 15
+          period: month
+          rates_per_1k: {google: 1.00, google_page_2: 1.00, google_mobile: 1.00, google_js: 1.35}
+          notes: "Up to 15K results."
+        - id: basic
+          name: Basic
+          price: 100
+          period: month
+          rates_per_1k: {google: 0.90, google_page_2: 0.90, google_mobile: 0.90, google_js: 1.30}
+          notes: "Up to 111K results."
+        - id: flexible
+          name: Flexible
+          price: 500
+          period: month
+          rates_per_1k: {google: 0.70, google_page_2: 0.70, google_mobile: 0.70, google_js: 1.15}
+          notes: "Up to 714K results. \"Most popular\"."
+      on_limit: block             # "When your credit balance is fully used, the service pauses, there's no overusage allowance in the self-service flow."
+      overage: null
+      free:
+        units: 5000
+        period: once
+        notes: >
+          A one-time Welcome Credit of $5 per team, no payment information, usable on any
+          product: 5,000 results at $1.00 per 1,000.
+      beyond_published: >
+        Above Flexible ($500 a month): Enterprise "for plans starting at $2,500/month", by
+        quote; its column lists $0.50 per 1,000 for 5M+ results. Nothing is published between
+        $500 and $2,500. A top-up of any amount can be added during a billing cycle; it
+        expires at the end of the cycle and does not change the plan.
+      refunds: "\"All purchases made through self-service are non-refundable\"."
+
+    benchmark_account:
+      plan: welcome               # the one-time Welcome Credit, no paid plan
+    notes: >
+      The balance is not a wallet: "You can't hold a balance without an active
+      subscription", and "any unused credit balance from the prior cycle expires" on each
+      billing date. HTTP 429 is used both for a rate limit and for a spent balance.
+
+# Seen on live calls, 2026-11-13:
+# * `location` must be an upper-case country code: `us` is refused with HTTP 400.
+# * The answer says how it went: `state: done`, and per result the status of the fetch
+#   (`HTTP_OK`) and of the parser (`PARSE_SUCCESS`, 12000), and `run_js: false`.
+# * Parsed results are under `results[].json.results`; `organic` items carry `pos`, `url`,
+#   `title`, `desc`, `url_shown`. Videos are a separate block, not part of `organic`.
+# * `search_information.no_results_for_original_query_found` says when Google shows
+#   substitutes for a query that matched nothing.
+# * `params` echoes the request; `metadata.request_id` identifies it.
+# * A key that does not exist is answered with HTTP 401 and an empty body.
+# * Nothing in the answer says what was charged.
+
+adapter:
+  version: "1"
+  base_url: https://webapi.oxylabs.io
+  base_url_env: OXYLABS_BASE_URL

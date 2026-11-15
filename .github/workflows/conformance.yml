@@ -30,6 +30,10 @@ jobs:
       DECODO_API_KEY: ${{ secrets.DECODO_API_KEY }}
       SCRAPINGBEE_API_KEY: ${{ secrets.SCRAPINGBEE_API_KEY }}
       SCRAPINGDOG_API_KEY: ${{ secrets.SCRAPINGDOG_API_KEY }}
+      BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+      BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+      SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
+      OXYLABS_API_KEY: ${{ secrets.OXYLABS_API_KEY }}
       INPUT_PROVIDER: ${{ inputs.provider }}
     steps:
       - uses: actions/checkout@v4

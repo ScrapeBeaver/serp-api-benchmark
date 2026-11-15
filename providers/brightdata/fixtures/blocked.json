@@ -1,0 +1,23 @@
+{
+ "description": "Bright Data could not get the page: HTTP 200 with an empty body, and the real outcome in headers (`x-brd-status-code: 502`, `x-brd-error-code: captcha`). A failure of the service, counted as one.",
+ "source": "Recorded on 2026-11-13 from POST https://api.brightdata.com/request: status, headers and the empty body are as returned.",
+ "task": {
+  "query": "\"zxqv kplw 4471 brnt\" \"mnqz 9920 wplk\"",
+  "country": "US",
+  "locale": "en",
+  "device": "desktop",
+  "page": 1
+ },
+ "response": {
+  "status": 200,
+  "headers": {
+   "x-brd-error": "redirect location was rejected",
+   "x-brd-error-code": "captcha",
+   "x-brd-status-code": "502"
+  },
+  "text": ""
+ },
+ "expect": {
+  "outcome": "invalid_json"
+ }
+}

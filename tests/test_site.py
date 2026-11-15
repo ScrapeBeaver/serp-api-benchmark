@@ -16,6 +16,7 @@ from serp_bench.summary import (
     NOT_MEASURED_YET,
     WINDOWS,
     build_summary,
+    latency,
     load_records,
     measure,
     resolved,
@@ -231,3 +232,56 @@ def test_the_site_command_builds_pages_even_before_any_results(tmp_path, capsys)
     assert '"providers":[]' in (out / "index.html").read_text()
     # The methodology reads even when there is nothing to show yet.
     assert "Step 2 · Are the URLs resolved?" in (out / "methodology" / "index.html").read_text()
+
+
+# --- what the results page on the main site reads --------------------------------------------
+
+
+def test_the_summary_lists_its_runs_and_what_they_cover(summary, records):
+    counted = [r for r in records if r.headline and r.counts]
+    assert [run["id"] for run in summary["runs"]] == [counted[0].run_id]
+    run = summary["runs"][0]
+    assert run["start_at"] <= run["end_at"] and run["start_at"].endswith("Z")
+    assert summary["coverage"] == {
+        "first_at": run["start_at"],
+        "last_at": run["end_at"],
+        "run_count": 1,
+        "day_count": 1,
+        "timezone": "UTC",
+    }
+
+
+def test_each_provider_has_its_figures_run_by_run(summary):
+    provider = summary["providers"][0]
+    assert len(provider["runs"]) == len(summary["runs"])
+    one = provider["runs"][0]
+    assert set(one) == {"tasks", "success", "resolved", "poisoned", "p50", "p95"}
+    # One run in the window: the run's figures are the window's.
+    window = provider["windows"]["30"]
+    assert all(one[key] == window[key] for key in one)
+
+
+def test_response_times_are_given_so_that_failures_count_against_a_deadline(records):
+    counted = [r for r in records if r.headline and r.counts]
+    times = latency(counted)
+    valid = [r for r in counted if r.outcome != OUTCOME_VOID]
+    delivered = [r for r in valid if r.outcome == OUTCOME_DELIVERED]
+    assert (times["tasks"], times["delivered"], times["exact"]) == (
+        len(valid),
+        len(delivered),
+        True,
+    )
+    assert times["seconds"] == sorted(times["seconds"]) and len(times["seconds"]) == len(delivered)
+    # The share of all searches answered within T: the times under T, out of every search.
+    assert len(delivered) < len(valid), "the mock fails some searches"
+    assert sum(s <= 60 for s in times["seconds"]) / times["tasks"] < 1
+
+
+def test_a_long_history_gives_quantiles_instead_of_every_time(records, monkeypatch):
+    monkeypatch.setattr("serp_bench.summary.LATENCY_EXACT_MAX", 5)
+    counted = [r for r in records if r.headline and r.counts]
+    times = latency(counted)
+    exact = sorted(r.total_ms / 1000 for r in counted if r.outcome == OUTCOME_DELIVERED)
+    assert times["exact"] is False and len(times["seconds"]) == 201
+    assert times["seconds"][0] == round(exact[0], 3) and times["seconds"][-1] == round(exact[-1], 3)
+    assert times["seconds"] == sorted(times["seconds"]) and times["delivered"] == len(exact)
