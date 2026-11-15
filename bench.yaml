@@ -11,33 +11,45 @@ providers: [scrapebeaver, decodo, scrapingbee, scrapingdog, brightdata, serper, 
             dataforseo, scrapedo, scraperapi, serpapi]
 
 schedule:
-  runs_per_day: 8         # evenly spaced, every three hours; must divide 24
+  runs_per_day: 4         # evenly spaced, every six hours; must divide 24
   minute: 17              # past the hour
   rotate_hours: true      # the timetable moves one hour later each day, so every hour
                           # of the day is sampled within 24 / runs_per_day days
 
-# The volume: every query of the list twice a day on desktop, at two different times of
-# the day, plus a fifth of that on the second page. 24 tasks per run, eight runs:
-# 192 a day per provider. With runs every three hours a failure that lasts a few hours is
-# seen, and the hours of the runs move by one each day, so every hour is sampled in three.
+# The volume: 96 searches a day per provider, in four runs of 24.
+#
+# * `core`: forty searches, every one of them every day. The same searches every day are
+#   what makes one day comparable with the next, and they give step 3 its history.
+# * `wide`: forty a day out of a list of 160, so every search of it comes back exactly
+#   every four days. It keeps the figures from being about forty searches only, and four
+#   days is the longest gap at which step 3 still has a history for a search.
+# * `page2`: the second page of sixteen of the core searches a day.
+#
+# Which searches of the wide list go on which day, and in what order, follows from the
+# date alone, so anyone can recompute what was sent. The hours of the runs move by one
+# each day, so every hour of the day is sampled within six days.
+# (Until 2026-11-15 there was one list of eighty, all sent every day; on 2026-11-15 the
+# day had eight runs.)
 #
 # Mobile searches are not measured. Not every provider offers them, so the providers would
 # not be compared on the same searches, and the step-3 check would have too few pages of
 # the same search to compare. Whether a provider offers them, and at what price, is still
 # stated in its provider.yaml and shown on the pricing page.
-# The volume planned next is 200 / 40 / 30 a day over a list of 400 query pairs (every pair
-# sent every second day); it is switched on here, in this file, when that list is ready.
 pools:
   core:
-    source: queries/smoke.yaml    # the starter set; the full query set replaces it later
-    per_day: 160                  # the whole list twice a day, spread evenly over the pool's runs
+    source: queries/core.yaml
+    per_day: 40                   # the whole list every day, spread evenly over the pool's runs
     runs: all                     # or run indexes, e.g. [0, 2]
     device: desktop
     page: 1
     headline: true                # counts towards the main table
+  wide:
+    source: queries/wide.yaml
+    per_day: 40                   # a quarter of the list a day: every search every four days
+    headline: true
   page2:
     from: core                    # the same queries as `core`
-    per_day: 32
+    per_day: 16
     page: 2
     headline: false
 

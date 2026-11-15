@@ -1,0 +1,184 @@
+# The wide list: the searches that rotate.
+#
+# A quarter of this list goes out each day, so every search comes back exactly every four
+# days. That is as wide as the list can be while the history check of step 3 still works:
+# it needs a search on three earlier days within fourteen. Which searches go on which
+# day, and in what order, follows from the date alone (see `plan` in
+# src/serp_bench/queries.py), so anyone can recompute what was sent on a given day.
+#
+# Forty of these come from the eighty the benchmark started with on 2026-11-12, with their
+# ids; the other 120 were added on 2026-11-15. Half are commercial.
+#
+# The list is public. A provider that wanted to treat exactly these searches differently
+# could; rotation makes that 200 searches to prepare for instead of 80, not impossible.
+version: 1
+description: The wide list. A quarter of it is sent each day, so every search is sent every four days.
+queries:
+  # --- United States (56) ---
+  - {id: us-001, query: "best running shoes for flat feet", country: US, locale: en, category: commercial}
+  - {id: us-005, query: "python asyncio gather vs wait", country: US, locale: en, category: technical}
+  - {id: us-006, query: "what is the difference between baking soda and baking powder", country: US, locale: en, category: question}
+  - {id: us-008, query: "weather forecast chicago", country: US, locale: en, category: local}
+  - {id: us-009, query: "eiffel tower", country: US, locale: en, category: entity}
+  - {id: us-011, query: "cheap car rental las vegas", country: US, locale: en, category: commercial}
+  - {id: us-012, query: "how to change a flat tire", country: US, locale: en, category: informational}
+  - {id: us-013, query: "docker compose healthcheck example", country: US, locale: en, category: technical}
+  - {id: us-015, query: "pizza near times square", country: US, locale: en, category: local}
+  - {id: us-016, query: "golden gate bridge", country: US, locale: en, category: entity}
+  - {id: us-018, query: "standing desk reviews", country: US, locale: en, category: commercial}
+  - {id: us-019, query: "how long to boil an egg", country: US, locale: en, category: question}
+  - {id: us-024, query: "how to write a cover letter", country: US, locale: en, category: informational}
+  - {id: us-028, query: "what time zone is arizona in", country: US, locale: en, category: question}
+  - {id: us-029, query: "rust borrow checker explained", country: US, locale: en, category: technical}
+  - {id: us-030, query: "best vpn service", country: US, locale: en, category: commercial}
+  - {id: us-031, query: "cheap web hosting", country: US, locale: en, category: commercial}
+  - {id: us-032, query: "best crm for small business", country: US, locale: en, category: commercial}
+  - {id: us-033, query: "debt consolidation loans", country: US, locale: en, category: commercial}
+  - {id: us-034, query: "life insurance quotes online", country: US, locale: en, category: commercial}
+  - {id: us-035, query: "best high yield savings account", country: US, locale: en, category: commercial}
+  - {id: us-036, query: "student loan refinancing", country: US, locale: en, category: commercial}
+  - {id: us-037, query: "home insurance quotes", country: US, locale: en, category: commercial}
+  - {id: us-038, query: "best robot vacuum", country: US, locale: en, category: commercial}
+  - {id: us-039, query: "best mattress for back pain", country: US, locale: en, category: commercial}
+  - {id: us-040, query: "laptop deals", country: US, locale: en, category: commercial}
+  - {id: us-041, query: "cheap flights to new york", country: US, locale: en, category: commercial}
+  - {id: us-042, query: "hotels in miami beach", country: US, locale: en, category: commercial}
+  - {id: us-043, query: "best email marketing software", country: US, locale: en, category: commercial}
+  - {id: us-044, query: "payroll software for small business", country: US, locale: en, category: commercial}
+  - {id: us-045, query: "business checking account", country: US, locale: en, category: commercial}
+  - {id: us-046, query: "best online brokerage", country: US, locale: en, category: commercial}
+  - {id: us-047, query: "used cars for sale", country: US, locale: en, category: commercial}
+  - {id: us-048, query: "solar panel installation cost", country: US, locale: en, category: commercial}
+  - {id: us-049, query: "best air fryer", country: US, locale: en, category: commercial}
+  - {id: us-050, query: "wireless earbuds under 100", country: US, locale: en, category: commercial}
+  - {id: us-051, query: "best antivirus software", country: US, locale: en, category: commercial}
+  - {id: us-052, query: "website builder for small business", country: US, locale: en, category: commercial}
+  - {id: us-053, query: "cheap cell phone plans", country: US, locale: en, category: commercial}
+  - {id: us-054, query: "best running watch", country: US, locale: en, category: commercial}
+  - {id: us-055, query: "how to start a vegetable garden", country: US, locale: en, category: informational}
+  - {id: us-056, query: "how to lower blood pressure naturally", country: US, locale: en, category: informational}
+  - {id: us-057, query: "how to train for a marathon", country: US, locale: en, category: informational}
+  - {id: us-058, query: "how to clean a cast iron skillet", country: US, locale: en, category: informational}
+  - {id: us-059, query: "how to file taxes online", country: US, locale: en, category: informational}
+  - {id: us-060, query: "benefits of intermittent fasting", country: US, locale: en, category: informational}
+  - {id: us-061, query: "coffee shops seattle", country: US, locale: en, category: local}
+  - {id: us-062, query: "plumber houston", country: US, locale: en, category: local}
+  - {id: us-063, query: "things to do in denver", country: US, locale: en, category: local}
+  - {id: us-064, query: "best tacos los angeles", country: US, locale: en, category: local}
+  - {id: us-065, query: "how many ounces in a cup", country: US, locale: en, category: question}
+  - {id: us-066, query: "when does daylight saving time end", country: US, locale: en, category: question}
+  - {id: us-067, query: "what is a good credit score", country: US, locale: en, category: question}
+  - {id: us-068, query: "grand canyon", country: US, locale: en, category: entity}
+  - {id: us-069, query: "kubernetes ingress vs load balancer", country: US, locale: en, category: technical}
+  - {id: us-070, query: "javascript promise all vs allsettled", country: US, locale: en, category: technical}
+  # --- United Kingdom (22) ---
+  - {id: gb-002, query: "coffee shops london", country: GB, locale: en, category: local}
+  - {id: gb-005, query: "train times london to manchester", country: GB, locale: en, category: informational}
+  - {id: gb-006, query: "how to make yorkshire pudding", country: GB, locale: en, category: informational}
+  - {id: gb-007, query: "energy price cap explained", country: GB, locale: en, category: informational}
+  - {id: gb-010, query: "stonehenge", country: GB, locale: en, category: entity}
+  - {id: gb-012, query: "best mortgage rates uk", country: GB, locale: en, category: commercial}
+  - {id: gb-013, query: "cheap holidays to spain", country: GB, locale: en, category: commercial}
+  - {id: gb-014, query: "best sim only deals", country: GB, locale: en, category: commercial}
+  - {id: gb-015, query: "compare energy suppliers", country: GB, locale: en, category: commercial}
+  - {id: gb-016, query: "car finance deals", country: GB, locale: en, category: commercial}
+  - {id: gb-017, query: "best savings accounts uk", country: GB, locale: en, category: commercial}
+  - {id: gb-018, query: "pet insurance comparison", country: GB, locale: en, category: commercial}
+  - {id: gb-019, query: "cheap train tickets", country: GB, locale: en, category: commercial}
+  - {id: gb-020, query: "best mobile phone contracts", country: GB, locale: en, category: commercial}
+  - {id: gb-021, query: "home insurance comparison", country: GB, locale: en, category: commercial}
+  - {id: gb-022, query: "how to register to vote", country: GB, locale: en, category: informational}
+  - {id: gb-023, query: "how to bleed a radiator", country: GB, locale: en, category: informational}
+  - {id: gb-024, query: "restaurants manchester city centre", country: GB, locale: en, category: local}
+  - {id: gb-025, query: "dentist leeds", country: GB, locale: en, category: local}
+  - {id: gb-026, query: "what is the minimum wage uk", country: GB, locale: en, category: question}
+  - {id: gb-027, query: "when do the clocks change", country: GB, locale: en, category: question}
+  - {id: gb-028, query: "tower of london", country: GB, locale: en, category: entity}
+  # --- Germany (19) ---
+  - {id: de-001, query: "wetter morgen berlin", country: DE, locale: de, category: local}
+  - {id: de-007, query: "rezept kartoffelsalat", country: DE, locale: de, category: informational}
+  - {id: de-008, query: "brandenburger tor", country: DE, locale: de, category: entity}
+  - {id: de-009, query: "was ist die mehrwertsteuer", country: DE, locale: de, category: question}
+  - {id: de-010, query: "kfz versicherung vergleich", country: DE, locale: de, category: commercial}
+  - {id: de-011, query: "günstige handytarife", country: DE, locale: de, category: commercial}
+  - {id: de-012, query: "girokonto vergleich", country: DE, locale: de, category: commercial}
+  - {id: de-013, query: "hausratversicherung vergleich", country: DE, locale: de, category: commercial}
+  - {id: de-014, query: "bester saugroboter", country: DE, locale: de, category: commercial}
+  - {id: de-015, query: "günstige flüge nach mallorca", country: DE, locale: de, category: commercial}
+  - {id: de-016, query: "e-bike kaufen", country: DE, locale: de, category: commercial}
+  - {id: de-017, query: "dsl anbieter vergleich", country: DE, locale: de, category: commercial}
+  - {id: de-018, query: "private krankenversicherung vergleich", country: DE, locale: de, category: commercial}
+  - {id: de-019, query: "steuererklärung selber machen", country: DE, locale: de, category: informational}
+  - {id: de-020, query: "rezept apfelkuchen", country: DE, locale: de, category: informational}
+  - {id: de-021, query: "restaurant hamburg", country: DE, locale: de, category: local}
+  - {id: de-022, query: "wie hoch ist der mindestlohn", country: DE, locale: de, category: question}
+  - {id: de-023, query: "schloss neuschwanstein", country: DE, locale: de, category: entity}
+  - {id: de-024, query: "python liste sortieren", country: DE, locale: de, category: technical}
+  # --- France (16) ---
+  - {id: fr-004, query: "meilleur forfait mobile", country: FR, locale: fr, category: commercial}
+  - {id: fr-005, query: "restaurant lyon", country: FR, locale: fr, category: local}
+  - {id: fr-006, query: "comment faire une pâte brisée", country: FR, locale: fr, category: informational}
+  - {id: fr-007, query: "tour eiffel horaires", country: FR, locale: fr, category: entity}
+  - {id: fr-009, query: "comparateur mutuelle santé", country: FR, locale: fr, category: commercial}
+  - {id: fr-010, query: "crédit immobilier taux", country: FR, locale: fr, category: commercial}
+  - {id: fr-011, query: "meilleur vpn", country: FR, locale: fr, category: commercial}
+  - {id: fr-012, query: "vol pas cher lisbonne", country: FR, locale: fr, category: commercial}
+  - {id: fr-013, query: "meilleure banque en ligne", country: FR, locale: fr, category: commercial}
+  - {id: fr-014, query: "comparateur électricité", country: FR, locale: fr, category: commercial}
+  - {id: fr-015, query: "assurance voyage", country: FR, locale: fr, category: commercial}
+  - {id: fr-016, query: "comment faire sa déclaration d'impôts", country: FR, locale: fr, category: informational}
+  - {id: fr-017, query: "recette quiche lorraine", country: FR, locale: fr, category: informational}
+  - {id: fr-018, query: "dentiste paris 11", country: FR, locale: fr, category: local}
+  - {id: fr-019, query: "quel est le montant du smic", country: FR, locale: fr, category: question}
+  - {id: fr-020, query: "château de versailles", country: FR, locale: fr, category: entity}
+  # --- Brazil (13) ---
+  - {id: br-002, query: "passagens aéreas baratas", country: BR, locale: pt, category: commercial}
+  - {id: br-003, query: "receita de bolo de cenoura", country: BR, locale: pt, category: informational}
+  - {id: br-005, query: "previsão do tempo são paulo", country: BR, locale: pt, category: local}
+  - {id: br-007, query: "seguro auto cotação", country: BR, locale: pt, category: commercial}
+  - {id: br-008, query: "empréstimo pessoal online", country: BR, locale: pt, category: commercial}
+  - {id: br-009, query: "melhor notebook custo benefício", country: BR, locale: pt, category: commercial}
+  - {id: br-010, query: "plano de saúde preço", country: BR, locale: pt, category: commercial}
+  - {id: br-011, query: "melhor conta digital", country: BR, locale: pt, category: commercial}
+  - {id: br-012, query: "hotéis em florianópolis", country: BR, locale: pt, category: commercial}
+  - {id: br-013, query: "como tirar passaporte", country: BR, locale: pt, category: informational}
+  - {id: br-014, query: "restaurantes rio de janeiro zona sul", country: BR, locale: pt, category: local}
+  - {id: br-015, query: "qual é o valor do salário mínimo", country: BR, locale: pt, category: question}
+  - {id: br-016, query: "cristo redentor", country: BR, locale: pt, category: entity}
+  # --- Japan (13) ---
+  - {id: jp-001, query: "東京 ラーメン おすすめ", country: JP, locale: ja, category: local}
+  - {id: jp-003, query: "カレー レシピ", country: JP, locale: ja, category: informational}
+  - {id: jp-004, query: "大阪 ホテル おすすめ", country: JP, locale: ja, category: local}
+  - {id: jp-007, query: "自動車保険 比較", country: JP, locale: ja, category: commercial}
+  - {id: jp-008, query: "転職サイト おすすめ", country: JP, locale: ja, category: commercial}
+  - {id: jp-009, query: "光回線 比較", country: JP, locale: ja, category: commercial}
+  - {id: jp-010, query: "ノートパソコン おすすめ", country: JP, locale: ja, category: commercial}
+  - {id: jp-011, query: "格安航空券 沖縄", country: JP, locale: ja, category: commercial}
+  - {id: jp-012, query: "住宅ローン 金利 比較", country: JP, locale: ja, category: commercial}
+  - {id: jp-013, query: "確定申告 やり方", country: JP, locale: ja, category: informational}
+  - {id: jp-014, query: "京都 観光 おすすめ", country: JP, locale: ja, category: local}
+  - {id: jp-015, query: "消費税 何パーセント", country: JP, locale: ja, category: question}
+  - {id: jp-016, query: "東京スカイツリー", country: JP, locale: ja, category: entity}
+  # --- India (11) ---
+  - {id: in-002, query: "best smartphone under 20000", country: IN, locale: en, category: commercial}
+  - {id: in-003, query: "how to apply for pan card", country: IN, locale: en, category: informational}
+  - {id: in-006, query: "taj mahal", country: IN, locale: en, category: entity}
+  - {id: in-007, query: "best term insurance plan", country: IN, locale: en, category: commercial}
+  - {id: in-008, query: "personal loan interest rates", country: IN, locale: en, category: commercial}
+  - {id: in-009, query: "best laptop under 50000", country: IN, locale: en, category: commercial}
+  - {id: in-010, query: "cheap flights delhi to mumbai", country: IN, locale: en, category: commercial}
+  - {id: in-011, query: "best credit card in india", country: IN, locale: en, category: commercial}
+  - {id: in-012, query: "hotels in jaipur", country: IN, locale: en, category: local}
+  - {id: in-013, query: "what is gst", country: IN, locale: en, category: question}
+  - {id: in-014, query: "india gate", country: IN, locale: en, category: entity}
+  # --- Spain (10) ---
+  - {id: es-002, query: "seguro de coche barato", country: ES, locale: es, category: commercial}
+  - {id: es-003, query: "receta de paella valenciana", country: ES, locale: es, category: informational}
+  - {id: es-005, query: "mejor tarifa de luz", country: ES, locale: es, category: commercial}
+  - {id: es-006, query: "mejor tarifa móvil", country: ES, locale: es, category: commercial}
+  - {id: es-007, query: "préstamos personales online", country: ES, locale: es, category: commercial}
+  - {id: es-008, query: "vuelos baratos a londres", country: ES, locale: es, category: commercial}
+  - {id: es-009, query: "comparador seguro de hogar", country: ES, locale: es, category: commercial}
+  - {id: es-010, query: "cómo hacer la declaración de la renta", country: ES, locale: es, category: informational}
+  - {id: es-011, query: "dentista barcelona", country: ES, locale: es, category: local}
+  - {id: es-012, query: "cuál es el salario mínimo", country: ES, locale: es, category: question}

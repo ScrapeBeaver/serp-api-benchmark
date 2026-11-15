@@ -251,6 +251,21 @@ def test_the_site_command_builds_pages_even_before_any_results(tmp_path, capsys)
     assert '"providers":[]' in (out / "index.html").read_text()
     # The methodology reads even when there is nothing to show yet.
     assert "Step 2 · Are the URLs resolved?" in (out / "methodology" / "index.html").read_text()
+    # Every part of the methodology is on the page: an edit of one paragraph must not take
+    # its neighbours with it.
+    method = (out / "methodology" / "index.html").read_text()
+    for part in (
+        "What we send",
+        "The searches.",
+        "The timing.",
+        "Same second, same question.",
+        "One attempt.",
+        "The product.",
+        "Step 1 · Did it succeed?",
+        "Step 3 · Is the page poisoned?",
+        "How each number is calculated",
+    ):
+        assert part in method, part
 
 
 # --- what the results page on the main site reads --------------------------------------------

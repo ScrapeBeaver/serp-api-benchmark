@@ -1,0 +1,61 @@
+# The core: the searches sent every day.
+#
+# The same searches every day are what makes one day comparable with the next, and what
+# the history check of step 3 needs: a search has a history only if it keeps coming back.
+# These forty were taken from the eighty the benchmark started with on 2026-11-12, with
+# their ids, so their records go on without a break. A little over half are commercial
+# (loans, insurance, software, shopping), because that is where poisoning concentrates.
+#
+# The list is public and fixed. Changing it is a change to the benchmark: add a dated
+# line under "Changes to how numbers are computed" in the README when you do.
+version: 1
+description: The core list. Every search is sent every day.
+queries:
+  # --- United States (14) ---
+  - {id: us-002, query: "personal loans online", country: US, locale: en, category: commercial}
+  - {id: us-003, query: "project management software for small teams", country: US, locale: en, category: commercial}
+  - {id: us-004, query: "how to remove a stripped screw", country: US, locale: en, category: informational}
+  - {id: us-007, query: "car insurance quotes", country: US, locale: en, category: commercial}
+  - {id: us-010, query: "best noise cancelling headphones", country: US, locale: en, category: commercial}
+  - {id: us-014, query: "why is the sky blue", country: US, locale: en, category: question}
+  - {id: us-017, query: "mortgage refinance rates", country: US, locale: en, category: commercial}
+  - {id: us-020, query: "postgres jsonb index performance", country: US, locale: en, category: technical}
+  - {id: us-021, query: "symptoms of vitamin d deficiency", country: US, locale: en, category: informational}
+  - {id: us-022, query: "best credit cards for travel", country: US, locale: en, category: commercial}
+  - {id: us-023, query: "dentist austin tx", country: US, locale: en, category: local}
+  - {id: us-025, query: "git rebase vs merge", country: US, locale: en, category: technical}
+  - {id: us-026, query: "abraham lincoln", country: US, locale: en, category: entity}
+  - {id: us-027, query: "electric bike under 1000", country: US, locale: en, category: commercial}
+  # --- United Kingdom (6) ---
+  - {id: gb-001, query: "cheap flights to barcelona", country: GB, locale: en, category: commercial}
+  - {id: gb-003, query: "how does a heat pump work", country: GB, locale: en, category: informational}
+  - {id: gb-004, query: "best broadband deals", country: GB, locale: en, category: commercial}
+  - {id: gb-008, query: "plumber near bristol", country: GB, locale: en, category: local}
+  - {id: gb-009, query: "cheap car insurance for young drivers", country: GB, locale: en, category: commercial}
+  - {id: gb-011, query: "what is council tax", country: GB, locale: en, category: question}
+  # --- Germany (5) ---
+  - {id: de-002, query: "bester laptop für studenten", country: DE, locale: de, category: commercial}
+  - {id: de-003, query: "günstige stromanbieter vergleich", country: DE, locale: de, category: commercial}
+  - {id: de-004, query: "wie funktioniert eine wärmepumpe", country: DE, locale: de, category: informational}
+  - {id: de-005, query: "zahnarzt münchen", country: DE, locale: de, category: local}
+  - {id: de-006, query: "beste kreditkarte ohne jahresgebühr", country: DE, locale: de, category: commercial}
+  # --- France (4) ---
+  - {id: fr-001, query: "meilleure assurance habitation", country: FR, locale: fr, category: commercial}
+  - {id: fr-002, query: "recette pâte à crêpes", country: FR, locale: fr, category: informational}
+  - {id: fr-003, query: "comparateur assurance auto", country: FR, locale: fr, category: commercial}
+  - {id: fr-008, query: "qu'est-ce que la tva", country: FR, locale: fr, category: question}
+  # --- Brazil (3) ---
+  - {id: br-001, query: "melhor celular custo benefício", country: BR, locale: pt, category: commercial}
+  - {id: br-004, query: "melhor cartão de crédito sem anuidade", country: BR, locale: pt, category: commercial}
+  - {id: br-006, query: "como declarar imposto de renda", country: BR, locale: pt, category: informational}
+  # --- Japan (3) ---
+  - {id: jp-002, query: "格安sim 比較", country: JP, locale: ja, category: commercial}
+  - {id: jp-005, query: "クレジットカード おすすめ", country: JP, locale: ja, category: commercial}
+  - {id: jp-006, query: "富士山", country: JP, locale: ja, category: entity}
+  # --- India (3) ---
+  - {id: in-001, query: "best mutual funds for sip", country: IN, locale: en, category: commercial}
+  - {id: in-004, query: "restaurants in bangalore", country: IN, locale: en, category: local}
+  - {id: in-005, query: "health insurance plans comparison", country: IN, locale: en, category: commercial}
+  # --- Spain (2) ---
+  - {id: es-001, query: "comparador de hipotecas", country: ES, locale: es, category: commercial}
+  - {id: es-004, query: "restaurantes madrid centro", country: ES, locale: es, category: local}

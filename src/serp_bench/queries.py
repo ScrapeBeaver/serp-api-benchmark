@@ -68,19 +68,33 @@ def _rng(*parts: object) -> random.Random:
 
 
 class _PassSequence:
-    """A pool's endless sequence of queries: pass after pass over the whole list, each pass
-    in its own shuffled order. Position p is query `p mod n` of pass `p div n`."""
+    """A pool's endless sequence of queries: pass after pass over the whole list.
+    Position p is query `p mod n` of pass `p div n`.
 
-    def __init__(self, queries: list[Query], seed_parts: tuple[object, ...]) -> None:
-        self._queries = queries
+    The list is cut once into day blocks of `per_day` queries, in an order shuffled for
+    the pool. A query keeps its block on every pass, so when `per_day` divides the list it
+    is sent exactly every `n / per_day` days: a per-query history needs that regularity.
+    Inside its block the order is shuffled anew on every pass, so a query does not stay in
+    the same run of its day.
+    """
+
+    def __init__(self, queries: list[Query], per_day: int, seed_parts: tuple[object, ...]) -> None:
+        base = list(queries)
+        _rng("blocks", *seed_parts).shuffle(base)
+        size = max(1, min(per_day, len(base)))
+        self._blocks = [base[start : start + size] for start in range(0, len(base), size)]
+        self._length = len(base)
         self._seed_parts = seed_parts
         self._passes: dict[int, list[Query]] = {}
 
     def at(self, position: int) -> Query:
-        number, within = divmod(position, len(self._queries))
+        number, within = divmod(position, self._length)
         if number not in self._passes:
-            ordered = list(self._queries)
-            _rng("pass", number, *self._seed_parts).shuffle(ordered)
+            ordered: list[Query] = []
+            for index, block in enumerate(self._blocks):
+                block = list(block)
+                _rng("pass", number, index, *self._seed_parts).shuffle(block)
+                ordered += block
             self._passes[number] = ordered
         return self._passes[number][within]
 
@@ -146,14 +160,14 @@ def plan(
 ) -> list[Task]:
     """The ordered tasks for one run of one day.
 
-    Each pool walks its query list in passes. A pass is the whole list in an order shuffled
-    for that pass; the next pass starts only when the previous one is finished. A day takes
-    the next `per_day` queries of that endless sequence, and a run takes its consecutive
-    share of the day's. So every query is sent equally often, whatever the sizes:
+    Each pool walks its query list in passes; the next pass starts only when the previous
+    one is finished. A day takes the next `per_day` queries of that endless sequence, and a
+    run takes its consecutive share of the day's. So every query is sent equally often,
+    whatever the sizes:
 
     * `per_day` equal to the list: each query once a day, in a run that changes daily;
-    * `per_day` half the list: each query exactly every second day, never skipped for
-      longer, which is what a per-query history needs;
+    * `per_day` a quarter of the list: each query exactly every fourth day, never skipped
+      for longer, which is what a per-query history needs;
     * `per_day` larger than the list: several passes a day.
 
     The run's tasks from all pools are then interleaved in an order shuffled for that run.
@@ -177,7 +191,7 @@ def plan(
         source = config.source_of(name)
         if source not in cache:
             cache[source] = load_query_set(root / source)
-        sequence = _PassSequence(cache[source], (name, version, seed))
+        sequence = _PassSequence(cache[source], pool.per_day, (name, version, seed))
         day_start = (day.toordinal() - _EPOCH) * pool.per_day
         stamp = f"{day:%Y%m%d}-r{run_index}"
         for position in range(offset, offset + count):

@@ -108,6 +108,11 @@ recomputed by anyone.
   the whole page as lost. It is now the share of result links that are resolved. The
   share of whole pages is still computed (`resolved_pages` in the summary) and still
   decides which pages go on to step 3.
+- **2026-11-15. A core list and a wide list that rotates.** Until now one list of eighty
+  searches was sent in full every day. Forty of them are now the core, sent every day;
+  the other forty and 120 new ones are the wide list, a quarter of which is sent each
+  day. The daily volume is the same, 96 a day per provider. Figures before and after are
+  over different searches: the core is the part that is comparable throughout.
 - **2026-11-15. AI Overview is recorded.** Records written before this release have no
   `ai_overview` field, so the figure starts with the first run after it.
 - **2026-11-15. The 95th and 99th percentiles are shown from 50 answers** (they needed
@@ -291,12 +296,16 @@ schedule:
 
 pools:
   core:
-    source: queries/smoke.yaml
-    per_day: 80           # spread evenly over the pool's runs
+    source: queries/core.yaml
+    per_day: 40           # the whole list every day, spread evenly over the pool's runs
     runs: all             # or run indexes, e.g. [0, 2]
     device: desktop
     page: 1
     headline: true        # counts towards the main table
+  wide:
+    source: queries/wide.yaml
+    per_day: 40           # a quarter of the list a day: every search every four days
+    headline: true
   page2:
     from: core            # the same queries as `core`
     per_day: 16
@@ -314,19 +323,40 @@ day, in which runs, with which device and results page. Only pools marked `headl
 the main figures; the others are reported separately. `serp-bench plan` prints what the
 file adds up to per run and per day.
 
-A pool walks its query list in passes: the whole list in a shuffled order, then again in
-a new order. A day takes the next `per_day` queries of that sequence. So every query is
-sent equally often and none is skipped: once a day when `per_day` equals the size of the
-list, exactly every second day when it is half the list, at a time of day that changes
-from pass to pass. A longer list with the same `per_day` measures more different queries
-for the same number of requests.
+A pool walks its query list in passes, and a day takes the next `per_day` queries of that
+sequence. The list is cut once into day blocks, in an order shuffled for the pool, and a
+query keeps its block: so every query is sent equally often and none is skipped, once a
+day when `per_day` equals the size of the list, exactly every fourth day when it is a
+quarter of the list. Inside its day the order is shuffled anew on every pass, so a query
+does not stay at the same time of day. A longer list with the same `per_day` measures
+more different queries for the same number of requests.
+
+All of it follows from the date and from this file: `serp-bench plan --date D --run N`
+prints what any run of any day sends, before or after the fact.
 
 Changing this file changes what the numbers mean. Every record therefore carries a hash of
 the effective configuration (this file plus the contents of the query files), and a report
 warns when it is asked to combine two configurations.
 
-The queries in `queries/smoke.yaml` are a small starter set for exercising the pipeline.
-They are not the benchmark's query set.
+### The searches
+
+Two lists, both in `queries/`:
+
+- **`core.yaml`: forty searches, every one of them every day.** The same searches every
+  day are what makes one day comparable with the next, and they give step 3 its history.
+- **`wide.yaml`: 160 searches, forty a day**, so every one comes back exactly every four
+  days. It keeps the figures from being about forty searches only. Four days is the
+  longest gap at which step 3 still has a history for a search: it needs a search on
+  three earlier days within fourteen.
+
+About half of the 200 are commercial (loans, insurance, software, shopping), because that
+is where poisoning concentrates; the rest are questions, local searches, people and
+places, how-to and technical searches, in eight countries and six languages.
+
+Both lists are public, and which searches go on which day follows from the date. That is
+what lets anyone recompute a run, and it also means a provider that wanted to treat
+exactly these searches differently could. A wide list that rotates makes that a lot of
+work instead of a little; it does not make it impossible, and nothing here claims so.
 
 ## Providers
 

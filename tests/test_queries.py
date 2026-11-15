@@ -64,7 +64,7 @@ def test_a_run_has_each_pools_share(config):
     }
     assert Counter(t.pool for t in tasks) == expected
     assert len({t.task_id for t in tasks}) == len(tasks)
-    assert all(t.headline == (t.pool == "core") for t in tasks)
+    assert all(t.headline == (t.pool != "page2") for t in tasks)
     assert {t.page for t in tasks if t.pool == "page2"} == {2}
     # Mobile searches are not measured: no pool of the shipped configuration asks for them.
     assert {t.device for t in tasks} == {Device.desktop}
@@ -73,7 +73,7 @@ def test_a_run_has_each_pools_share(config):
 def test_a_pool_can_ask_for_mobile_searches(tmp_path):
     """The planner still knows how: a provider's capability is checked in conformance."""
     pools = {
-        "core": {"source": "queries/smoke.yaml", "per_day": 8},
+        "core": {"source": "queries/core.yaml", "per_day": 8},
         "phone": {"from": "core", "per_day": 4, "device": "mobile"},
     }
     tasks = plan(custom(tmp_path, pools), tmp_path, DAY, 0)
@@ -98,22 +98,65 @@ def test_the_plan_changes_with_the_day_the_run_and_the_seed(config):
 
 
 def test_each_query_once_a_day_when_per_day_equals_the_set(tmp_path):
-    queries = load_query_set(ROOT / "queries" / "smoke.yaml")
-    config = custom(tmp_path, {"core": {"source": "queries/smoke.yaml", "per_day": len(queries)}})
+    queries = load_query_set(ROOT / "queries" / "core.yaml")
+    config = custom(tmp_path, {"core": {"source": "queries/core.yaml", "per_day": len(queries)}})
     day = [t.query_id for run in range(4) for t in plan(config, tmp_path, DAY, run)]
     assert sorted(day) == sorted(q.id for q in queries)
 
 
 def test_a_query_moves_between_runs_from_day_to_day(tmp_path):
-    queries = load_query_set(ROOT / "queries" / "smoke.yaml")
-    config = custom(tmp_path, {"core": {"source": "queries/smoke.yaml", "per_day": len(queries)}})
+    queries = load_query_set(ROOT / "queries" / "core.yaml")
+    config = custom(tmp_path, {"core": {"source": "queries/core.yaml", "per_day": len(queries)}})
     seen = set()
     for offset in range(10):
         for run in range(4):
             tasks = plan(config, tmp_path, DAY + dt.timedelta(days=offset), run)
-            if "us-001" in {t.query_id for t in tasks}:
+            if queries[0].id in {t.query_id for t in tasks}:
                 seen.add(run)
     assert len(seen) > 1
+
+
+def test_a_rotating_list_brings_every_query_back_after_exactly_one_cycle(tmp_path):
+    """Twenty queries, five a day: each one every fourth day, never sooner and never later.
+    A per-query history depends on that; a list reshuffled whole on every pass would bring
+    a query back after one day or after seven."""
+    config = custom(tmp_path, {"wide": {"source": "queries/twenty.yaml", "per_day": 5}})
+    sent: dict[str, list[int]] = {}
+    slots: dict[str, set[int]] = {}
+    for offset in range(24):
+        for run in range(4):
+            for task in plan(config, tmp_path, DAY + dt.timedelta(days=offset), run):
+                sent.setdefault(task.query_id, []).append(offset)
+                slots.setdefault(task.query_id, set()).add(run)
+    assert len(sent) == 20
+    gaps = {days[i + 1] - days[i] for days in sent.values() for i in range(len(days) - 1)}
+    assert gaps == {4}
+    # Its day of the cycle is fixed; its run within that day is not.
+    assert any(len(runs) > 1 for runs in slots.values())
+
+
+def test_the_shipped_lists_are_a_core_sent_daily_and_a_wide_list_that_rotates(config):
+    """What the methodology says about the searches, checked against the files."""
+    core = load_query_set(ROOT / config.source_of("core"))
+    wide = load_query_set(ROOT / config.source_of("wide"))
+    assert len(core) == config.pools["core"].per_day  # every core search every day
+    cycle, rest = divmod(len(wide), config.pools["wide"].per_day)
+    assert rest == 0 and cycle == 4  # every wide search every four days, exactly
+    both = [*core, *wide]
+    assert len({q.id for q in both}) == len(both)
+    assert len({(q.query.casefold(), q.country) for q in both}) == len(both)  # no search twice
+    commercial = sum(1 for q in both if q.category == "commercial")
+    assert commercial * 2 >= len(both)  # "about half are commercial" is at least half
+
+    day = [t for run in range(config.schedule.runs_per_day) for t in plan(config, ROOT, DAY, run)]
+    assert {t.query_id for t in day if t.pool == "core"} == {q.id for q in core}
+    tomorrow = [
+        t
+        for run in range(config.schedule.runs_per_day)
+        for t in plan(config, ROOT, DAY + dt.timedelta(days=1), run)
+    ]
+    today_wide = {t.query_id for t in day if t.pool == "wide"}
+    assert not today_wide & {t.query_id for t in tomorrow if t.pool == "wide"}
 
 
 def test_a_small_set_cycles(tmp_path):
@@ -126,7 +169,7 @@ def test_a_pool_only_takes_part_in_its_runs(tmp_path):
     config = custom(
         tmp_path,
         {
-            "core": {"source": "queries/smoke.yaml", "per_day": 8},
+            "core": {"source": "queries/core.yaml", "per_day": 8},
             "nightly": {"from": "core", "per_day": 5, "runs": [0], "page": 2},
         },
     )
@@ -244,7 +287,7 @@ def test_half_the_list_a_day_means_each_query_exactly_every_second_day(tmp_path)
 
 
 def test_a_day_never_repeats_a_query_while_the_list_is_larger_than_the_day(tmp_path):
-    config = custom(tmp_path, {"core": {"source": "queries/smoke.yaml", "per_day": 10}})
+    config = custom(tmp_path, {"core": {"source": "queries/core.yaml", "per_day": 10}})
     for offset in range(6):
         ids = day_ids(config, tmp_path, dt.date(2026, 3, 1) + dt.timedelta(days=offset))
         assert len(ids) == 10

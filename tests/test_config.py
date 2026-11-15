@@ -34,9 +34,11 @@ def error(tmp_path, data: dict) -> str:
 
 def test_the_shipped_configuration_loads():
     config = load_config(ROOT / "bench.yaml")
-    assert set(config.pools) == {"core", "page2"}
-    assert config.pools["core"].headline and not config.pools["page2"].headline
-    assert config.source_of("page2") == "queries/smoke.yaml"
+    assert set(config.pools) == {"core", "wide", "page2"}
+    assert config.pools["core"].headline and config.pools["wide"].headline
+    assert not config.pools["page2"].headline
+    assert config.source_of("page2") == "queries/core.yaml"
+    assert config.source_of("wide") == "queries/wide.yaml"
     assert config.pool_runs("core") == list(range(config.schedule.runs_per_day))  # every run
 
 
@@ -83,7 +85,7 @@ def test_runs_per_day_must_divide_the_day(tmp_path):
 
 def test_a_pool_needs_exactly_one_origin(tmp_path):
     data = base()
-    data["pools"]["mobile"]["source"] = "queries/smoke.yaml"
+    data["pools"]["mobile"]["source"] = "queries/core.yaml"
     assert "exactly one of `source` or `from`" in error(tmp_path, data)
 
 
@@ -142,6 +144,6 @@ def test_config_hash_follows_the_configuration_and_the_queries(tmp_path):
     changed = config_hash(load_config(write(tmp_path, data)), tmp_path)
     assert changed != first
 
-    queries = tmp_path / "queries" / "smoke.yaml"
+    queries = tmp_path / "queries" / "core.yaml"
     queries.write_text(queries.read_text(encoding="utf-8") + "\n# edited\n", encoding="utf-8")
     assert config_hash(load_config(write(tmp_path, data)), tmp_path) != changed
