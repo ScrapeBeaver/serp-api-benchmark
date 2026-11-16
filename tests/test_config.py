@@ -74,6 +74,22 @@ def test_the_run_due_in_an_hour():
     assert schedule.run_due_in_hour(dt.datetime(2026, 11, 12, 7, 0, tzinfo=dt.UTC)) is None
 
 
+def test_a_run_is_owed_for_the_gap_between_runs_less_an_hour():
+    """Long enough to outlast the hours in which GitHub starts nothing, and over before
+    the following run falls due."""
+
+    def hours(runs: int) -> float:
+        return Schedule(runs_per_day=runs).grace / dt.timedelta(hours=1)
+
+    assert hours(4) == 5
+    assert hours(8) == 2
+    assert hours(12) == 1  # half the gap, where an hour less would leave nothing
+    assert hours(24) == 0.5
+    for runs in (1, 2, 3, 4, 6, 8, 12, 24):
+        schedule = Schedule(runs_per_day=runs)
+        assert dt.timedelta(0) < schedule.grace < dt.timedelta(hours=schedule.step_hours)
+
+
 def test_runs_per_day_must_divide_the_day(tmp_path):
     data = base()
     data["schedule"]["runs_per_day"] = 5

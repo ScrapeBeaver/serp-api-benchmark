@@ -76,11 +76,16 @@ class Schedule(_Strict):
 
     @property
     def grace(self) -> dt.timedelta:
-        """How long after its due time a run is still done by the schedule: half the gap
-        between two runs. A job that starts late, or a failed one tried again an hour
-        later, still does its run; a run is never done so late that it sits next to the
-        following one."""
-        return dt.timedelta(hours=self.step_hours) / 2
+        """How long after its due time a run is still done by the schedule: the gap between
+        two runs less an hour, and never less than half the gap. Five hours at four runs
+        a day.
+
+        A scheduled job on GitHub does not only start late, some of the hourly starts never
+        happen: on 2026-11-16 there were six in twelve hours, with 3 h 24 min between two
+        of them. A run is owed for long enough to outlast such a silence, and stops being
+        owed an hour before the following run falls due, so the two never overlap."""
+        gap = dt.timedelta(hours=self.step_hours)
+        return max(gap - dt.timedelta(hours=1), gap / 2)
 
 
 class Pool(_Strict):

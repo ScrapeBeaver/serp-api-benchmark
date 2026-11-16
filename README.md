@@ -260,10 +260,11 @@ minutes. `--interval SECONDS` changes that for a single run.
 
 `--run next` does the first of today's runs that is not stored yet, so a run started by
 hand needs no index. `--run auto` (the default) is what the schedule asks for: the run that
-fell due recently and is not stored yet, or nothing. "Recently" is half the gap between two
-runs, three hours at four runs a day: a scheduled job on GitHub starts tens of minutes late,
-often in the next clock hour, and its run must not be lost for that. `--allow-draft` is needed
-while a provider's status is `draft`.
+fell due recently and is not stored yet, or nothing. "Recently" is the gap between two runs
+less an hour, five hours at four runs a day: a scheduled job on GitHub starts tens of minutes
+late, often in the next clock hour, and some of the hourly starts never happen at all (more
+than three hours passed between two of them on 2026-11-16). A run must not be lost for that.
+`--allow-draft` is needed while a provider's status is `draft`.
 
 ### Commands
 

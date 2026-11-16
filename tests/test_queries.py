@@ -232,7 +232,9 @@ def test_the_schedule_does_a_run_however_late_the_job_starts(config, tmp_path):
     assert next_hour.hour != due.hour and late_run(config, next_hour, tmp_path) == (DAY, 1)
     # A job that failed is tried again by the next hourly start, as long as the run is owed.
     assert late_run(config, due + schedule.grace, tmp_path) == (DAY, 1)
-    # Later than that the run is let go: it must not land next to the following one.
+    # GitHub also drops hourly starts: more than three hours can pass between two of them.
+    assert late_run(config, due + dt.timedelta(hours=3, minutes=30), tmp_path) == (DAY, 1)
+    # Later than that the run is let go: it must not land on the following one.
     assert late_run(config, due + schedule.grace + dt.timedelta(minutes=1), tmp_path) is None
     assert schedule.grace < dt.timedelta(hours=schedule.step_hours)
     # Once it is stored it is not owed any more, however early in its window.

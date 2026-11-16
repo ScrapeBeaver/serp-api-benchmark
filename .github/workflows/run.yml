@@ -7,8 +7,10 @@ name: Benchmark run
 # On a schedule it wakes up every hour; `serp-bench run --run auto` then does the run that
 # fell due recently and is not stored yet (the hours move from day to day, see
 # bench.yaml), and does nothing otherwise. GitHub starts a scheduled job tens of minutes
-# late, often in the next clock hour, so the run is found by what is owed, not by the hour. Started by hand, it does the next of today's runs that is
-# not stored yet, so nobody has to know which ones were done. A run is never done twice.
+# late, often in the next clock hour, and some hourly starts never happen, so the run is
+# found by what is owed, not by the hour. Started by hand, it does the next of today's
+# runs that is not stored yet, so nobody has to know which ones were done. A run is never
+# done twice.
 #
 # A schedule fires only from the default branch.
 
