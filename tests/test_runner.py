@@ -254,17 +254,19 @@ def odd_page(marker: str = "odd"):
     return handler
 
 
-def three(specs, handler):
-    """Providers a and b answer alike; c answers through `handler`."""
+def four(specs, handler):
+    """Providers a, b and d answer alike, which makes them a group; c answers through
+    `handler`."""
     return [
         FakeProvider(fake_config(specs, "a")),
         FakeProvider(fake_config(specs, "b")),
         FakeProvider(fake_config(specs, "c"), handler),
+        FakeProvider(fake_config(specs, "d")),
     ]
 
 
 def test_no_control_repeats_unless_asked_for(tmp_path, specs):
-    records = run(tmp_path, three(specs, odd_page()), make_tasks(3))
+    records = run(tmp_path, four(specs, odd_page()), make_tasks(3))
     assert not any(r.control for r in records)
 
 
@@ -279,13 +281,13 @@ def test_a_page_that_matches_nobody_is_asked_for_once_more(tmp_path, specs):
             return odd_page()(request)
         return httpx.Response(200, json=echo_body(request))
 
-    records = run(tmp_path, three(specs, once_odd), make_tasks(3), max_control_repeats=5)
+    records = run(tmp_path, four(specs, once_odd), make_tasks(3), max_control_repeats=5)
     controls = [r for r in records if r.control]
     assert [(r.provider, r.task_id, r.outcome) for r in controls] == [("c", "t-002", "delivered")]
     # It is sent after the last measured request, and is not one of them.
     assert records.index(controls[0]) == len(records) - 1
     assert controls[0].scheduled_at is None and not controls[0].counts
-    assert len([r for r in records if r.counts]) == 9
+    assert len([r for r in records if r.counts]) == 12
     assert calls.count("t-002") == 2 and calls[-1] == "t-002"
 
     verdict = judge(records)[("test-run", "t-002", "c")]
@@ -294,17 +296,18 @@ def test_a_page_that_matches_nobody_is_asked_for_once_more(tmp_path, specs):
         "a": 3,
         "b": 3,
         "c": 3,
+        "d": 3,
     }
 
 
 def test_control_repeats_are_capped_and_stay_inside_the_run_limit(tmp_path, specs):
-    capped = run(tmp_path, three(specs, odd_page()), make_tasks(4), max_control_repeats=2)
+    capped = run(tmp_path, four(specs, odd_page()), make_tasks(4), max_control_repeats=2)
     assert [r.task_id for r in capped if r.control] == ["t-001", "t-002"]
 
     # A run limit of 5 requests: the warm-up and four tasks leave no room for a repeat.
     full = run(
         tmp_path,
-        three(specs, odd_page()),
+        four(specs, odd_page()),
         make_tasks(4),
         max_control_repeats=2,
         max_requests_per_provider=5,
@@ -313,5 +316,5 @@ def test_control_repeats_are_capped_and_stay_inside_the_run_limit(tmp_path, spec
 
 
 def test_second_pages_are_not_repeated(tmp_path, specs):
-    records = run(tmp_path, three(specs, odd_page()), make_tasks(2, page=2), max_control_repeats=5)
+    records = run(tmp_path, four(specs, odd_page()), make_tasks(2, page=2), max_control_repeats=5)
     assert not any(r.control for r in records)

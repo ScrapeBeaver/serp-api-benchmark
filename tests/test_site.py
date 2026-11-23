@@ -12,6 +12,7 @@ from serp_bench import cli
 from serp_bench.models import OUTCOME_DELIVERED, OUTCOME_VOID
 from serp_bench.site import HEAD_MARK, PAGES, SUMMARY_MARK, build_site, render
 from serp_bench.summary import (
+    DAILY_SHARES,
     HISTORY_DAYS,
     NOT_MEASURED_YET,
     WINDOWS,
@@ -30,10 +31,15 @@ TEMPLATE = ROOT / "site" / "template.html"
 
 @pytest.fixture(scope="module")
 def records(tmp_path_factory):
-    """A run of the offline mock: deliveries and failures, with no network."""
+    """A run of the offline mock: deliveries and failures, with no network.
+
+    Of a fixed day, and slowly enough for every task to be sent. Which searches the mock
+    fails follows from the tasks, and the tasks from the date: on the day's own date the
+    run of 2026-11-23 happened to have no failure left among the tasks that were sent, and
+    a test that needs one failed."""
     out = tmp_path_factory.mktemp("run")
-    args = ["run", *CONFIG, "--providers", "mock", "--run", "0", "--limit", "40"]
-    assert cli.main([*args, "--interval", "0.01", "--out", str(out)]) == 0
+    args = ["run", *CONFIG, "--providers", "mock", "--date", f"{NOW:%Y-%m-%d}", "--run", "0"]
+    assert cli.main([*args, "--limit", "40", "--interval", "0.05", "--out", str(out)]) == 0
     return load_records(out / "raw")
 
 
@@ -109,8 +115,23 @@ def test_the_summary_has_every_window_and_a_day_by_day_history(summary):
     assert set(provider["windows"]) == {str(n) for n in WINDOWS}
     assert all(len(series) == HISTORY_DAYS for series in provider["daily"].values())
     assert provider["daily"]["success"][-1] == provider["windows"]["1"]["success"][0]
+    # Each day's share comes with its 95% interval, the same one the one-day window has.
+    assert set(provider["daily_range"]) == set(DAILY_SHARES)
+    assert all(len(series) == HISTORY_DAYS for series in provider["daily_range"].values())
+    assert provider["daily_range"]["success"][-1] == provider["windows"]["1"]["success"][1:3]
+    low, high = provider["daily_range"]["success"][-1]
+    assert low <= provider["daily"]["success"][-1] <= high
+    for key in DAILY_SHARES:  # a day without a figure has no interval either
+        points, intervals = provider["daily"][key], provider["daily_range"][key]
+        assert [v is None for v in points] == [v is None for v in intervals]
     outcomes = provider["outcomes"]
     assert outcomes["resolved"] + outcomes["unresolved"] + outcomes["failed"] == outcomes["tasks"]
+    # Every window says what its failed requests ended in, and they add up to its failures.
+    for window in provider["windows"].values():
+        failed = window["tasks"] - (window["success"][3] if window["success"] else 0)
+        assert sum(window["failures"].values()) == failed
+        assert "delivered" not in window["failures"] and "void" not in window["failures"]
+    assert provider["windows"]["30"]["failures"] == outcomes["failed_by_class"]
     step3 = outcomes["clean"] + outcomes["poisoned"] + outcomes["unjudged"]
     assert step3 == outcomes["resolved"]
     assert "mock" in summary["pricing"]["providers"]

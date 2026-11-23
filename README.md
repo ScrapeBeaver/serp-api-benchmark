@@ -118,6 +118,37 @@ recomputed by anyone.
 - **2026-11-15. The 95th and 99th percentiles are shown from 50 answers** (they needed
   100 and 500). They appear sooner and are rougher at first: at 50 answers the 95th
   percentile rests on the three slowest ones.
+- **2026-11-23. Step 3: a short page gets no verdict, and the agreeing group needs three
+  providers.** Two rules of the poisoned-results check changed, and every verdict since
+  the first run was computed again from the same records.
+  *Short pages.* Two pages agree when they share half of the sites of the shorter one. On
+  a page with five sites that is three, and real pages of a weather or a loan search share
+  two of five often enough to be called poisoned by chance: 69 of the 234 pages called
+  poisoned so far had fewer than seven sites. A page with fewer than seven sites now gets
+  no verdict in either direction. Leaving out only the short poisoned pages would have
+  lowered the figure of whoever returns short pages, so the short clean ones are left out
+  with them.
+  *Three providers.* The group taken for the real page was the largest set of agreeing
+  pages from at least two providers. Two providers that share a quirk agree with each
+  other as well, so it now takes three. 24 of 680 searches had a group of two.
+  What it did to the figure over the 34 runs up to 2026-11-22 (poisoned pages out of the
+  fully resolved pages that got a verdict; providers without enough resolved links have no
+  figure before or after):
+
+  | Provider | Before | After |
+  |---|---|---|
+  | ScrapeBeaver | 0.8% (5 of 639) | 0.2% (1 of 531) |
+  | Oxylabs | 0.4% (2 of 532) | 0.2% (1 of 438) |
+  | ScrapingBee | 1.0% (6 of 607) | 0.9% (5 of 549) |
+  | Serper | 1.5% (10 of 658) | 1.2% (7 of 605) |
+  | Decodo | 2.8% (2 of 71) | 2.9% (2 of 68) |
+  | SerpApi | 56.3% (67 of 119) | 53.1% (52 of 98) |
+  | Scrape.do | 80.6% (129 of 160) | 79.5% (93 of 117) |
+
+  The price is fewer verdicts: between a tenth and a third of a provider's fully resolved
+  pages are now unjudged, most of them for being short. ScrapeBeaver, which runs this
+  benchmark, gains the most in relative terms from the first rule; the table is here so
+  that the change can be weighed.
 
 ## How each number is computed
 
@@ -177,13 +208,14 @@ domains) of their first ten resolved results; order and exact addresses are not 
 | Signal | Rule |
 |---|---|
 | A. The query's usual sites | Sites on at least 60% of the reference pages of the last 14 days. A page with 60% of them passes, 40-59% is doubtful, less fails. Reference pages are those of the agreeing group of their own run. Says nothing until a query has 5 reference pages from 3 different days. |
-| B. Agreement at the same minute | Two pages agree when at least half of the sites of the shorter one are on the other. The agreeing group is the largest set of pages, from at least two providers, that all agree with each other; it is not a majority vote. A page that agrees with no page of the group fails; one that agrees with some is doubtful. |
+| B. Agreement at the same minute | Two pages agree when at least half of the sites of the shorter one are on the other. The agreeing group is the largest set of pages, from at least three providers, that all agree with each other; it is not a majority vote. A page that agrees with no page of the group fails; one that agrees with some is doubtful. |
 | C. The control repeat | A first page outside the group is asked for once more from the same provider after the run. It tells a one-off from a persistent difference and never changes the verdict. |
 
 A page is `clean` when it passes A or is in the group of B, `poisoned` when it fails every
 signal that is available, and `unjudged` otherwise. A page that fails A but is in the
 group is clean: everyone moved at once, so Google changed. Unjudged pages are reported and
-never counted as clean. The share on the results page follows the funnel: poisoned pages
+never counted as clean. A page with fewer than seven sites is compared like any other but
+gets no verdict, clean or poisoned: it is too short to judge. The share on the results page follows the funnel: poisoned pages
 out of the pages that passed step 2 and got a verdict either way.
 
 ```bash

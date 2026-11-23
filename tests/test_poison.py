@@ -103,7 +103,7 @@ def verdict_of(records: list[Record], provider: str, run: str = "run-1", task: s
     return judge(records)[(run, task, provider)]
 
 
-def history(days: int = 4, providers: tuple[str, ...] = ("a", "b")) -> list[Record]:
+def history(days: int = 4, providers: tuple[str, ...] = ("a", "b", "c")) -> list[Record]:
     """Earlier runs of the same query, one a day, in which `providers` returned the real page."""
     records = []
     for back in range(1, days + 1):
@@ -151,40 +151,75 @@ def test_two_pages_agree_when_half_of_the_smaller_one_is_shared():
 
 
 def test_the_group_is_not_a_majority_vote():
-    """Two agree, three return three different pages: the two are the real ones."""
+    """Three agree, four return four different pages: the three are the real ones."""
     pages = {
         "a": frozenset(REAL),
         "b": frozenset(REAL),
-        "c": frozenset(fake("c")),
+        "c": frozenset(REAL),
         "d": frozenset(fake("d")),
         "e": frozenset(fake("e")),
+        "f": frozenset(fake("f")),
+        "g": frozenset(fake("g")),
     }
-    assert clean_group(pages) == {"a", "b"}
+    assert clean_group(pages) == {"a", "b", "c"}
+
+
+def test_two_pages_that_agree_are_not_a_group():
+    """Two providers that share a quirk agree with each other as well, so it takes three."""
+    assert clean_group({"a": frozenset(REAL), "b": frozenset(REAL)}) == frozenset()
+    with_a_third = {"a": frozenset(REAL), "b": frozenset(REAL), "c": frozenset(REAL)}
+    assert clean_group(with_a_third) == {"a", "b", "c"}
+
+
+def test_two_pages_with_the_same_quirk_are_not_taken_for_the_real_one():
+    """Two return the same other page and one the real page: a group of two would be the
+    wrong pair, and nothing here says which page is real."""
+    pages = {
+        "a": frozenset(REAL),
+        "b": frozenset(fake("quirk")),
+        "c": frozenset(fake("quirk")),
+    }
+    assert clean_group(pages) == frozenset()
 
 
 def test_no_group_when_nobody_agrees_or_two_groups_are_equal():
-    assert clean_group({"a": frozenset(fake("a")), "b": frozenset(fake("b"))}) == frozenset()
+    assert clean_group({p: frozenset(fake(p)) for p in ("a", "b", "c")}) == frozenset()
     assert clean_group({"a": frozenset(REAL)}) == frozenset()
-    two_pairs = {
+    two_triples = {
         "a": frozenset(REAL),
         "b": frozenset(REAL),
-        "c": frozenset(fake("x")),
+        "c": frozenset(REAL),
         "d": frozenset(fake("x")),
+        "e": frozenset(fake("x")),
+        "f": frozenset(fake("x")),
     }
-    assert clean_group(two_pairs) == frozenset()
+    assert clean_group(two_triples) == frozenset()
 
 
 def test_a_page_half_way_between_does_not_break_the_group():
-    """a, b and c agree; d agrees with a and b but not with c. Both {a,b,c} and {a,b,d}
-    are groups of three, so only a and b are certain."""
+    """a, b, c and e agree; d agrees with a, b and e but not with c. Both {a,b,c,e} and
+    {a,b,d,e} are groups of four, so only a, b and e are certain."""
     half = [*REAL[:5], *fake("d")[:5]]
     pages = {
         "a": frozenset(REAL),
         "b": frozenset(REAL),
         "c": frozenset([*REAL[5:], *fake("c")[:5]]),
         "d": frozenset(half),
+        "e": frozenset(REAL),
     }
-    assert clean_group(pages) == {"a", "b"}
+    assert clean_group(pages) == {"a", "b", "e"}
+
+
+def test_no_group_when_fewer_than_three_pages_are_certain():
+    """Both {a,b,c} and {a,b,d} are groups of three; only a and b are in both, and two
+    pages are not a group."""
+    pages = {
+        "a": frozenset(REAL),
+        "b": frozenset(REAL),
+        "c": frozenset([*REAL[5:], *fake("c")[:5]]),
+        "d": frozenset([*REAL[:5], *fake("d")[:5]]),
+    }
+    assert clean_group(pages) == frozenset()
 
 
 def test_usual_sites_are_those_on_most_reference_pages():
@@ -225,14 +260,17 @@ def test_the_page_that_matches_nobody_is_the_poisoned_one():
         page("a", REAL),
         page("b", [*REAL[:8], "new1.com", "new2.com"]),
         page("c", fake("c")),
+        page("d", REAL),
     ]
     assert verdict_of(records, "a").verdict == CLEAN
     assert verdict_of(records, "b").verdict == CLEAN
+    assert verdict_of(records, "d").verdict == CLEAN
     odd = verdict_of(records, "c")
     assert odd.verdict == POISONED and odd.agreement == OUTSIDE_GROUP
-    assert odd.group == ("a", "b") and odd.shared_with == {"a": (0, 10), "b": (0, 10)}
+    assert odd.group == ("a", "b", "d")
+    assert odd.shared_with == {"a": (0, 10), "b": (0, 10), "d": (0, 10)}
     assert odd.history is None and odd.signals == ("agreement",)
-    assert tally(judge(records).values()) == {CLEAN: 2, POISONED: 1, UNJUDGED: 0}
+    assert tally(judge(records).values()) == {CLEAN: 3, POISONED: 1, UNJUDGED: 0}
 
 
 def test_without_history_and_without_a_group_nothing_is_judged():
@@ -242,13 +280,35 @@ def test_without_history_and_without_a_group_nothing_is_judged():
         assert verdict.verdict == UNJUDGED and verdict.signals == ()
 
 
+def test_two_providers_that_agree_do_not_make_each_other_clean():
+    """Two agreeing pages are not a group, so without a history neither gets a verdict."""
+    records = [page("a", REAL), page("b", REAL)]
+    for provider in ("a", "b"):
+        verdict = verdict_of(records, provider)
+        assert verdict.verdict == UNJUDGED and verdict.signals == ()
+        assert verdict.agreement is None and verdict.group == ()
+    assert tally(judge(records).values()) == {CLEAN: 0, POISONED: 0, UNJUDGED: 2}
+
+
+def test_two_providers_with_the_same_quirk_do_not_poison_the_real_page():
+    """b and c return the same other page, a alone the real one: with a group of two, b and
+    c would be clean and a poisoned. No group forms and nobody is judged."""
+    records = [page("a", REAL), page("b", fake("quirk")), page("c", fake("quirk"))]
+    for provider in ("a", "b", "c"):
+        verdict = verdict_of(records, provider)
+        assert verdict.verdict == UNJUDGED and verdict.signals == ()
+        assert verdict.agreement is None and verdict.group == ()
+    assert verdict_of(records, "b").shared_with == {"a": (0, 10), "c": (10, 10)}
+
+
 def test_a_page_near_the_group_is_left_unjudged():
-    near = [*REAL[:5], *fake("d")[:5]]  # agrees with a and b, not with c
+    near = [*REAL[:5], *fake("d")[:5]]  # agrees with a, b and e, not with c
     records = [
         page("a", REAL),
         page("b", REAL),
         page("c", [*REAL[5:], *fake("c")[:5]]),
         page("d", near),
+        page("e", REAL),
     ]
     assert verdict_of(records, "d").agreement == NEAR_GROUP
     assert verdict_of(records, "d").verdict == UNJUDGED
@@ -277,15 +337,63 @@ def test_each_moment_is_judged_on_its_own():
     records = [
         page("a", REAL, run="run-1"),
         page("b", REAL, run="run-1"),
+        page("c", REAL, run="run-1"),
         page("a", fake("x"), run="run-2"),
         page("b", fake("x"), run="run-2"),
+        page("c", fake("x"), run="run-2"),
         page("a", fake("y"), task="task-2"),
         page("b", fake("z"), task="task-2"),
+        page("c", fake("w"), task="task-2"),
     ]
     verdicts = judge(records)
     assert verdicts[("run-1", "task-1", "a")].verdict == CLEAN
     assert verdicts[("run-2", "task-1", "a")].verdict == CLEAN
     assert verdicts[("run-1", "task-2", "a")].verdict == UNJUDGED
+
+
+# --- short pages -----------------------------------------------------------------------------
+
+GROUP = [page("a", REAL), page("b", REAL), page("c", REAL)]
+
+
+def test_a_short_page_that_matches_nobody_is_not_called_poisoned():
+    """Half of six sites is three: real pages miss that by chance often enough. Seven sites
+    is where a verdict starts."""
+    six = verdict_of([*GROUP, page("d", fake("d")[:6])], "d")
+    assert six.verdict == UNJUDGED and six.agreement == OUTSIDE_GROUP
+    assert six.reason.startswith("fewer than 7 sites on the page")
+    assert len(six.sites) == 6 and six.shared_with["a"] == (0, 6)
+
+    seven = verdict_of([*GROUP, page("d", fake("d")[:7])], "d")
+    assert seven.verdict == POISONED and seven.agreement == OUTSIDE_GROUP
+    assert len(seven.sites) == 7
+
+
+def test_a_short_page_in_the_group_is_not_called_clean_either():
+    """The rule is the same in both directions: dropping only the short poisoned pages would
+    flatter whoever returns short pages."""
+    records = [*GROUP, page("d", REAL[:6])]
+    short = verdict_of(records, "d")
+    assert short.verdict == UNJUDGED and short.agreement == IN_GROUP
+    assert short.reason.startswith("fewer than 7 sites on the page")
+    assert short.group == ("a", "b", "c", "d")
+    for provider in ("a", "b", "c"):
+        assert verdict_of(records, provider).verdict == CLEAN
+    assert tally(judge(records).values()) == {CLEAN: 3, POISONED: 0, UNJUDGED: 1}
+
+
+def test_a_short_page_still_counts_towards_the_group():
+    """a, b and the six-site page of c are a group of exactly three: without c there would
+    be none, a and b would not be clean and d would not be poisoned."""
+    records = [page("a", REAL), page("b", REAL), page("c", REAL[:6]), page("d", fake("d"))]
+    assert verdict_of(records, "c").verdict == UNJUDGED
+    for provider in ("a", "b"):
+        verdict = verdict_of(records, provider)
+        assert verdict.verdict == CLEAN and verdict.group == ("a", "b", "c")
+    assert verdict_of(records, "d").verdict == POISONED
+    without = [record for record in records if record.provider != "c"]
+    assert verdict_of(without, "a").verdict == UNJUDGED
+    assert verdict_of(without, "d").verdict == UNJUDGED
 
 
 # --- history ---------------------------------------------------------------------------------
@@ -296,7 +404,7 @@ def test_history_judges_a_page_when_no_provider_agrees_with_it():
     good = [*history(), page("a", [*REAL[:7], *fake("n")[:3]])]
     verdict = verdict_of(good, "a")
     assert (verdict.verdict, verdict.history, verdict.agreement) == (CLEAN, PASS, None)
-    assert verdict.usual_share == 0.7 and verdict.reference_pages == 8
+    assert verdict.usual_share == 0.7 and verdict.reference_pages == 12
 
     bad = [*history(), page("a", [*REAL[:3], *fake("n")[:7]])]
     verdict = verdict_of(bad, "a")
@@ -311,7 +419,7 @@ def test_one_day_of_pages_is_not_a_history():
     same_day = [
         page(p, REAL, run=f"old-{hour}", when=DAY - dt.timedelta(hours=hour))
         for hour in (1, 2, 3)
-        for p in ("a", "b")
+        for p in ("a", "b", "c")
     ]
     verdict = verdict_of([*same_day, page("a", fake("n"))], "a")
     assert verdict.history is None and verdict.verdict == UNJUDGED
@@ -321,13 +429,13 @@ def test_history_older_than_two_weeks_and_later_runs_are_not_used():
     old = [
         page(p, REAL, run=f"old-{back}", when=DAY - dt.timedelta(days=back))
         for back in (15, 16, 17, 18)
-        for p in ("a", "b")
+        for p in ("a", "b", "c")
     ]
     assert verdict_of([*old, page("a", fake("n"))], "a").history is None
     later = [
         page(p, REAL, run=f"new-{ahead}", when=DAY + dt.timedelta(days=ahead))
         for ahead in (1, 2, 3, 4)
-        for p in ("a", "b")
+        for p in ("a", "b", "c")
     ]
     assert verdict_of([*later, page("a", fake("n"))], "a").history is None
 
@@ -340,6 +448,17 @@ def test_only_pages_of_an_agreeing_group_become_history():
         for back in (1, 2, 3, 4)
     ]
     assert verdict_of([*alone, page("a", fake("p"))], "a").history is None
+
+
+def test_a_short_page_of_the_group_is_a_reference_page():
+    """Too short for a verdict of its own, it is still a page of an agreeing group."""
+    earlier = [
+        page(p, sites, run=f"old-{back}", when=DAY - dt.timedelta(days=back))
+        for back in (1, 2, 3, 4)
+        for p, sites in (("a", REAL), ("b", REAL), ("c", REAL[:6]))
+    ]
+    verdict = verdict_of([*earlier, page("a", REAL)], "a")
+    assert (verdict.verdict, verdict.history, verdict.reference_pages) == (CLEAN, PASS, 12)
 
 
 def test_history_is_kept_per_query_and_results_page():
@@ -362,19 +481,28 @@ def test_when_everyone_moves_at_once_google_changed():
 
 
 def moment_with_control(control_page: Record) -> list[Record]:
-    return [page("a", REAL), page("b", REAL), page("c", fake("c")), control_page]
+    return [page("a", REAL), page("b", REAL), page("d", REAL), page("c", fake("c")), control_page]
 
 
 def test_candidates_for_a_control_are_first_pages_outside_the_group():
     records = [
         page("a", REAL),
         page("b", REAL),
+        page("d", REAL),
         page("c", fake("c")),
         page("a", REAL, task="task-2", number=2),
         page("b", REAL, task="task-2", number=2),
+        page("d", REAL, task="task-2", number=2),
         page("c", fake("d"), task="task-2", number=2),
     ]
     assert [(r.provider, r.task_id) for r in control_candidates(records)] == [("c", "task-1")]
+
+
+def test_a_short_page_outside_the_group_is_not_a_candidate_for_a_control():
+    """It gets no verdict, so a repeat would be a request spent on nothing."""
+    assert control_candidates([*GROUP, page("d", fake("d")[:6])]) == []
+    seven = control_candidates([*GROUP, page("d", fake("d")[:7])])
+    assert [(r.provider, r.task_id) for r in seven] == [("d", "task-1")]
 
 
 def test_a_control_that_matches_the_group_means_a_one_off():
@@ -409,9 +537,11 @@ def test_the_poisoned_share_is_counted_on_resolved_pages_that_got_a_verdict():
     records = [
         page("a", REAL),
         page("b", REAL),
+        page("d", REAL),
         page("c", fake("c")),
         page("a", REAL, task="task-2"),
-        page("b", REAL, task="task-2", wrappers=1),
+        page("b", REAL, task="task-2", wrappers=1),  # the third of the group all the same
+        page("d", REAL, task="task-2"),
         page("c", fake("d"), task="task-2", wrappers=1),
         page("c", fake("e"), task="task-3"),  # alone: nothing to compare with
     ]
@@ -433,13 +563,13 @@ def test_the_poisoned_share_is_counted_on_resolved_pages_that_got_a_verdict():
 
 
 def test_the_page_says_agreement_until_the_pages_have_a_history():
-    today = [page("a", REAL), page("b", REAL), page("c", fake("c"))]
+    today = [page("a", REAL), page("b", REAL), page("d", REAL), page("c", fake("c"))]
     stage = poison_stage(today, judge(today), DAY.date())
-    assert (stage["stage"], stage["judged"], stage["judged_with_history"]) == ("agreement", 3, 0)
+    assert (stage["stage"], stage["judged"], stage["judged_with_history"]) == ("agreement", 4, 0)
 
     with_history = [*history(providers=("a", "b", "c")), *today]
     stage = poison_stage(today, judge(with_history), DAY.date())
-    assert (stage["stage"], stage["judged_with_history"]) == ("history", 3)
+    assert (stage["stage"], stage["judged_with_history"]) == ("history", 4)
 
 
 def test_the_poison_command_lists_the_pages_that_did_not_match(tmp_path, capsys):
@@ -449,6 +579,7 @@ def test_the_poison_command_lists_the_pages_that_did_not_match(tmp_path, capsys)
         for record in [
             page("a", REAL),
             page("b", REAL),
+            page("d", REAL),
             page("c", fake("c")),
             page("c", REAL, control=True),
         ]:
@@ -456,14 +587,16 @@ def test_the_poison_command_lists_the_pages_that_did_not_match(tmp_path, capsys)
     assert cli.main(["poison", "--records", str(tmp_path / "raw"), "--sites"]) == 0
     out = capsys.readouterr().out
     assert out.count("POISONED  c  'personal loans online' US desktop p1") == 1
-    # Three pages were measured; the control repeat is not a fourth.
-    counted = [line.split() for line in out.splitlines() if line.startswith(("a ", "b ", "c "))]
+    # Four pages were measured; the control repeat is not a fifth.
+    rows = ("a ", "b ", "c ", "d ")
+    counted = [line.split() for line in out.splitlines() if line.startswith(rows)]
     assert counted == [
         ["a", "1", "1", "0", "0", "0.0%"],
         ["b", "1", "1", "0", "0", "0.0%"],
         ["c", "1", "0", "1", "0", "100.0%"],
+        ["d", "1", "1", "0", "0", "0.0%"],
     ]
-    assert "shared with: a* 0/10, b* 0/10" in out
+    assert "shared with: a* 0/10, b* 0/10, d* 0/10" in out
     assert "repeat matched the others: a one-off" in out and "c0.net" in out
     assert cli.main(["poison", "--records", str(tmp_path / "raw"), "--provider", "a"]) == 0
     assert "POISONED" not in capsys.readouterr().out

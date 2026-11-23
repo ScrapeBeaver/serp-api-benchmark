@@ -22,10 +22,12 @@ query has reference pages from several days.
 
 Signal B, agreement at the same minute. Every provider gets the same query at the same
 moment. Two pages agree when at least half of the sites of the smaller one are on the
-other. The agreeing group is the largest set of pages, from at least two providers, that
-all agree with each other. This is not a majority vote: when two of five providers agree
-and the other three return three different pages, the two are the real ones, because
-random pages do not coincide and real ones do.
+other. The agreeing group is the largest set of pages, from at least three providers,
+that all agree with each other. This is not a majority vote: when three of seven
+providers agree and the other four return four different pages, the three are the real
+ones, because random pages do not coincide and real ones do. Three and not two: two
+providers that share a quirk (the same other country, the same stale copy) agree with
+each other as well, and with the honest pages missing they would be taken for the group.
 
 Signal C, the control repeat. A page outside the group is asked for once more from the
 same provider after the run. It does not change the verdict; it tells a one-off from a
@@ -35,6 +37,12 @@ The verdict: `clean` when the page passes A or is in the group of B; `poisoned` 
 fails every signal that is available, and at least one is; `unjudged` otherwise. A page
 that fails A but is in the group is clean: when every provider moved at once, Google
 changed, not the provider. Unjudged pages are reported and never counted as clean.
+
+A page with fewer than seven sites gets no verdict at all, clean or poisoned. Half of the
+sites of a five-site page is three, and real pages of a weather or a loan search share two
+of five often enough to be called poisoned by chance. The rule is the same in both
+directions on purpose: dropping only the short poisoned pages would lower the poisoned
+share of whoever returns short pages.
 
 Nothing here knows a provider by name, and everything is recomputed from the records.
 """
@@ -51,6 +59,8 @@ from serp_bench.models import OUTCOME_DELIVERED, Record
 
 TOP_RESULTS = 10  # results of a page that are compared
 MIN_RESOLVED_LINKS = 5  # fewer resolved links than this: the page cannot be compared
+MIN_SITES_TO_JUDGE = 7  # fewer sites than this: compared, but too short for a verdict
+MIN_GROUP = 3  # providers whose pages all agree before they are taken for the real page
 AGREE_SHARE = 0.5  # two pages agree when they share this part of the smaller one's sites
 HISTORY_DAYS = 14  # how far back reference pages are taken from
 MIN_REFERENCE_PAGES = 5  # history says nothing with fewer reference pages than this,
@@ -116,11 +126,11 @@ def clean_group(pages: Mapping[str, frozenset[str]]) -> frozenset[str]:
 
     The group is the largest set of pages that all agree with each other. When several
     sets are equally large, only the pages that are in every one of them are certain, and
-    they are the group if at least two remain. Two equally large groups with nothing in
-    common give no group at all: nothing says which of them is the real page.
+    they are the group if at least `MIN_GROUP` remain. Two equally large groups with
+    nothing in common give no group at all: nothing says which of them is the real page.
     """
     ids = sorted(pages)
-    for size in range(len(ids), 1, -1):
+    for size in range(len(ids), MIN_GROUP - 1, -1):
         largest = [
             set(members)
             for members in combinations(ids, size)
@@ -128,7 +138,7 @@ def clean_group(pages: Mapping[str, frozenset[str]]) -> frozenset[str]:
         ]
         if largest:
             certain = set.intersection(*largest)
-            return frozenset(certain) if len(certain) >= 2 else frozenset()
+            return frozenset(certain) if len(certain) >= MIN_GROUP else frozenset()
     return frozenset()
 
 
@@ -283,6 +293,11 @@ def judge(records: Iterable[Record]) -> dict[Key, Verdict]:
                 history = _history_signal(share)
 
             verdict, reason = decide(history, agreement)
+            if len(page) < MIN_SITES_TO_JUDGE:
+                # Compared like any other page, and it can be in the group, but it is given
+                # no verdict of its own in either direction.
+                verdict = UNJUDGED
+                reason = f"fewer than {MIN_SITES_TO_JUDGE} sites on the page: too short to judge"
             verdicts[key] = Verdict(
                 verdict,
                 reason,
@@ -343,7 +358,8 @@ def _control(
 
 def control_candidates(records: Iterable[Record]) -> list[Record]:
     """The measured first pages worth a control repeat: those the agreement signal puts
-    outside the group of their moment. In the order they were sent."""
+    outside the group of their moment, short pages left out (they get no verdict). In the
+    order they were sent."""
     records = list(records)
     verdicts = judge(records)
     return [
@@ -353,6 +369,7 @@ def control_candidates(records: Iterable[Record]) -> list[Record]:
         and record.page == 1
         and (verdict := verdicts.get((record.run_id, record.task_id, record.provider)))
         and verdict.agreement == OUTSIDE_GROUP
+        and len(verdict.sites) >= MIN_SITES_TO_JUDGE
     ]
 
 

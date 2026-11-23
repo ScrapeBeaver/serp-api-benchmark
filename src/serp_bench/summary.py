@@ -62,6 +62,9 @@ RUN_FIGURES: tuple[str, ...] = (
     "p95",
 )
 
+# The day-by-day figures that are shares, and so have a 95% interval to draw around them.
+DAILY_SHARES: tuple[str, ...] = ("success", "resolved", "resolved_pages", "poisoned", "ai_overview")
+
 # The request shapes whose cost is shown next to a plain desktop search.
 COMPARED_SHAPES: dict[str, dict[str, object]] = {
     "mobile": {"device": "mobile"},
@@ -156,6 +159,9 @@ def measure(
     delivered answers to those searches that carried the overview's text, in the same
     request and with no option asked for. `ai_overview_chars` is the median length of
     that text and how many texts it is the median of.
+
+    `failures` says what the requests that were not delivered ended in, by failure class:
+    a timeout, an HTTP 5xx, an empty page are different troubles behind one success rate.
     """
     records = list(records)
     counted = [r for r in records if r.outcome != OUTCOME_VOID]
@@ -171,6 +177,9 @@ def measure(
         "tasks": len(counted),
         "void": len(records) - len(counted),
         "success": _share(len(delivered), len(counted)),
+        "failures": dict(
+            sorted(Counter(r.outcome for r in counted if r.outcome != OUTCOME_DELIVERED).items())
+        ),
         "resolved": _share(*link_counts(delivered)),
         "resolved_pages": _share(len(good), len(delivered)),
         "poisoned": _share(step3[POISONED], step3[CLEAN] + step3[POISONED]),
@@ -316,11 +325,17 @@ def _provider(
             *NOT_MEASURED_YET,
         )
     }
+    # The interval of each day's share, [low, high], for the page to draw around the point:
+    # two poisoned pages out of forty is 5%, and anywhere from 1.4% to 16.5%.
+    daily_range: dict[str, list[list[float] | None]] = {key: [] for key in DAILY_SHARES}
     for day in days:
         figures = measure(by_day.get(day, []), verdicts, overviews)
         for key, series in daily.items():
             value = figures[key]
             series.append(None if value is None else value[0])
+        for key, intervals in daily_range.items():
+            value = figures[key]
+            intervals.append(None if value is None else [value[1], value[2]])
 
     by_run: dict[str, list[Record]] = {}
     for record in records:
@@ -347,6 +362,7 @@ def _provider(
         "ai_overview_more": config.capabilities.ai_overview_more,
         "windows": {str(n): measure(within(n), verdicts, overviews) for n in WINDOWS},
         "daily": daily,
+        "daily_range": daily_range,
         "outcomes": _outcomes(within(30), verdicts),
         "runs": [of_run(run["id"]) for run in runs],
         "latency": {str(n): latency(within(n)) for n in WINDOWS},
