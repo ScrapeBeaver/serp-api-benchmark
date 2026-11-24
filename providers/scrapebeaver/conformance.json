@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "provider": "scrapebeaver",
-  "provider_status": "draft",
+  "provider_status": "conformance",
   "adapter_version": "1",
-  "date": "2026-11-12T18:19:45Z",
+  "date": "2026-11-24T13:33:46Z",
   "overall": "UNKNOWN",
   "probes": [
     {
@@ -15,9 +15,9 @@
       "outcome": "delivered",
       "void_reason": null,
       "http_status": 200,
-      "ttfb_ms": 3190.8,
-      "total_ms": 3192.6,
-      "organic_count": 9,
+      "ttfb_ms": 4152.7,
+      "total_ms": 4154.2,
+      "organic_count": 7,
       "checks": [
         {
           "check": "dispatched",
@@ -27,7 +27,7 @@
         {
           "check": "response_received",
           "passed": true,
-          "detail": "complete response in 3.19 s"
+          "detail": "complete response in 4.15 s"
         },
         {
           "check": "account_ok",
@@ -42,7 +42,7 @@
         {
           "check": "json_body",
           "passed": true,
-          "detail": "valid JSON, 7732 bytes"
+          "detail": "valid JSON, 7270 bytes"
         },
         {
           "check": "no_provider_error",
@@ -57,17 +57,17 @@
         {
           "check": "has_results",
           "passed": true,
-          "detail": "9 organic results"
+          "detail": "7 organic results"
         },
         {
           "check": "min_organic",
           "passed": true,
-          "detail": "9 organic results, at least 3 needed"
+          "detail": "7 organic results, at least 3 needed"
         },
         {
           "check": "well_formed_results",
           "passed": true,
-          "detail": "9 of 9 results have a title and an absolute http(s) URL"
+          "detail": "7 of 7 results have a title and an absolute http(s) URL"
         },
         {
           "check": "params_echo",
@@ -77,7 +77,7 @@
       ],
       "response": {
         "verdict": "PASS",
-        "detail": "delivered, 9 results"
+        "detail": "delivered, 7 results"
       },
       "billing": {
         "verdict": "PASS",
@@ -95,9 +95,9 @@
       "outcome": "delivered",
       "void_reason": null,
       "http_status": 200,
-      "ttfb_ms": 3286.5,
-      "total_ms": 3287.7,
-      "organic_count": 8,
+      "ttfb_ms": 7392.9,
+      "total_ms": 7393.7,
+      "organic_count": 7,
       "checks": [
         {
           "check": "dispatched",
@@ -107,7 +107,7 @@
         {
           "check": "response_received",
           "passed": true,
-          "detail": "complete response in 3.29 s"
+          "detail": "complete response in 7.39 s"
         },
         {
           "check": "account_ok",
@@ -122,7 +122,7 @@
         {
           "check": "json_body",
           "passed": true,
-          "detail": "valid JSON, 9761 bytes"
+          "detail": "valid JSON, 12117 bytes"
         },
         {
           "check": "no_provider_error",
@@ -137,17 +137,17 @@
         {
           "check": "has_results",
           "passed": true,
-          "detail": "8 organic results"
+          "detail": "7 organic results"
         },
         {
           "check": "min_organic",
           "passed": true,
-          "detail": "8 organic results, at least 3 needed"
+          "detail": "7 organic results, at least 3 needed"
         },
         {
           "check": "well_formed_results",
           "passed": true,
-          "detail": "8 of 8 results have a title and an absolute http(s) URL"
+          "detail": "7 of 7 results have a title and an absolute http(s) URL"
         },
         {
           "check": "params_echo",
@@ -157,7 +157,7 @@
       ],
       "response": {
         "verdict": "PASS",
-        "detail": "delivered, 8 results"
+        "detail": "delivered, 7 results"
       },
       "billing": {
         "verdict": "PASS",
@@ -175,9 +175,9 @@
       "outcome": "delivered",
       "void_reason": null,
       "http_status": 200,
-      "ttfb_ms": 5294.1,
-      "total_ms": 5295.9,
-      "organic_count": 11,
+      "ttfb_ms": 988.0,
+      "total_ms": 989.7,
+      "organic_count": 10,
       "checks": [
         {
           "check": "dispatched",
@@ -187,7 +187,7 @@
         {
           "check": "response_received",
           "passed": true,
-          "detail": "complete response in 5.30 s"
+          "detail": "complete response in 0.99 s"
         },
         {
           "check": "account_ok",
@@ -202,7 +202,7 @@
         {
           "check": "json_body",
           "passed": true,
-          "detail": "valid JSON, 8728 bytes"
+          "detail": "valid JSON, 5199 bytes"
         },
         {
           "check": "no_provider_error",
@@ -217,17 +217,17 @@
         {
           "check": "has_results",
           "passed": true,
-          "detail": "11 organic results"
+          "detail": "10 organic results"
         },
         {
           "check": "min_organic",
           "passed": true,
-          "detail": "11 organic results, at least 3 needed"
+          "detail": "10 organic results, at least 3 needed"
         },
         {
           "check": "well_formed_results",
           "passed": true,
-          "detail": "11 of 11 results have a title and an absolute http(s) URL"
+          "detail": "10 of 10 results have a title and an absolute http(s) URL"
         },
         {
           "check": "params_echo",
@@ -237,7 +237,7 @@
       ],
       "response": {
         "verdict": "PASS",
-        "detail": "delivered, 11 results"
+        "detail": "delivered, 10 results"
       },
       "billing": {
         "verdict": "PASS",
@@ -255,8 +255,8 @@
       "outcome": "delivered",
       "void_reason": null,
       "http_status": 200,
-      "ttfb_ms": 3198.2,
-      "total_ms": 3199.1,
+      "ttfb_ms": 2855.5,
+      "total_ms": 2857.6,
       "organic_count": 9,
       "checks": [
         {
@@ -267,7 +267,7 @@
         {
           "check": "response_received",
           "passed": true,
-          "detail": "complete response in 3.20 s"
+          "detail": "complete response in 2.86 s"
         },
         {
           "check": "account_ok",
@@ -282,7 +282,7 @@
         {
           "check": "json_body",
           "passed": true,
-          "detail": "valid JSON, 7844 bytes"
+          "detail": "valid JSON, 5080 bytes"
         },
         {
           "check": "no_provider_error",
@@ -335,8 +335,8 @@
       "outcome": "delivered",
       "void_reason": null,
       "http_status": 200,
-      "ttfb_ms": 4737.6,
-      "total_ms": 4739.0,
+      "ttfb_ms": 2090.6,
+      "total_ms": 2092.4,
       "organic_count": 8,
       "checks": [
         {
@@ -347,7 +347,7 @@
         {
           "check": "response_received",
           "passed": true,
-          "detail": "complete response in 4.74 s"
+          "detail": "complete response in 2.09 s"
         },
         {
           "check": "account_ok",
@@ -362,7 +362,7 @@
         {
           "check": "json_body",
           "passed": true,
-          "detail": "valid JSON, 6056 bytes"
+          "detail": "valid JSON, 3877 bytes"
         },
         {
           "check": "no_provider_error",
@@ -415,8 +415,8 @@
       "outcome": "delivered",
       "void_reason": null,
       "http_status": 200,
-      "ttfb_ms": 2421.7,
-      "total_ms": 2422.6,
+      "ttfb_ms": 1043.0,
+      "total_ms": 1044.3,
       "organic_count": 9,
       "checks": [
         {
@@ -427,7 +427,7 @@
         {
           "check": "response_received",
           "passed": true,
-          "detail": "complete response in 2.42 s"
+          "detail": "complete response in 1.04 s"
         },
         {
           "check": "account_ok",
@@ -442,7 +442,7 @@
         {
           "check": "json_body",
           "passed": true,
-          "detail": "valid JSON, 7305 bytes"
+          "detail": "valid JSON, 4599 bytes"
         },
         {
           "check": "no_provider_error",
@@ -477,7 +477,7 @@
       ],
       "response": {
         "verdict": "UNKNOWN",
-        "detail": "returned 9 results for a phrase with no matches: these are Google's substitutes for the words without quotes; a finding, check whether the response marks them as such"
+        "detail": "returned 9 results for a phrase with no matches: these are Google's substitutes for the words without quotes, and the response does not say so; a finding"
       },
       "billing": {
         "verdict": "PASS",

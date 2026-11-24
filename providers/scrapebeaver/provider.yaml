@@ -3,19 +3,19 @@
 schema_version: 1
 id: scrapebeaver
 name: ScrapeBeaver
-status: conformance   # called with a live key on 2026-11-12: see conformance.json
+status: conformance   # called with a live key on 2026-11-24, at the production address: see conformance.json
 homepage: https://scrapebeaver.com
 docs_url: https://scrapebeaver.com/docs
 
 product:
   name: Google Search (light)
-  endpoint: "POST https://dev.scrapebeaver.com/v1/search/light"
+  endpoint: "POST https://api.scrapebeaver.com/v1/search/light"
   mode: light
   settings: {}          # defaults; the AI Overview that loads after the page is not requested.
                         # `request_id` is never sent, so no stored answer can be replayed.
   alternatives:
     - name: Google Search Advanced
-      endpoint: "POST https://dev.scrapebeaver.com/v1/search"
+      endpoint: "POST https://api.scrapebeaver.com/v1/search"
       why_not: "Announced, not released. It adds ads, shopping and further blocks to the same results."
       source: https://scrapebeaver.com/docs/google-search
   notes: >
@@ -98,7 +98,7 @@ billing:
 
     usage_reporting:
       response_field: organic_success       # true: one search charged; false: nothing
-      account_endpoint: "GET https://dev.scrapebeaver.com/v1/usage"
+      account_endpoint: "GET https://api.scrapebeaver.com/v1/usage"
       notes: "GET /v1/usage/export lists every search; GET /v1/limits gives the limits and what is in use. None of them is a search."
 
     purchase:
@@ -153,5 +153,7 @@ billing:
 
 adapter:
   version: "1"
-  base_url: https://dev.scrapebeaver.com
+  # The production address since 2026-11-24. Until then the same service, with the same
+  # account, was called at https://dev.scrapebeaver.com.
+  base_url: https://api.scrapebeaver.com
   base_url_env: SCRAPEBEAVER_BASE_URL
