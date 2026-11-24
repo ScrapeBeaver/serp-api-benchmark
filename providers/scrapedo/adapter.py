@@ -52,6 +52,8 @@ class ScrapeDo(Provider):
             params["start"] = str((task.page - 1) * 10)  # an offset in steps of 10
         if task.location:
             params["location"] = task.location  # the canonical name; encoded on their side
+        if task.time_range == "week":
+            params["time_period"] = "last_week"
         return HttpRequest(method="GET", url=f"{self.base_url}/plugin/google/search", params=params)
 
     def parse(self, raw: RawResponse) -> Serp:

@@ -17,6 +17,7 @@ from serp_bench.models import (
     VOID_AUTH_OR_CREDITS,
     CheckResult,
     FailureClass,
+    OrganicResult,
     RawResponse,
     ResultRef,
     Serp,
@@ -112,6 +113,35 @@ def url_hash(url: str) -> str:
     return hashlib.sha256(normalise_url(url).encode("utf-8")).hexdigest()[:16]
 
 
+def title_hash(title: str) -> str | None:
+    """A short hash of a result's title, lower case with spaces collapsed; None for an empty
+    title. Two results with the same hash are taken to be the same result when their links
+    cannot say so (a wrapper carries the destination in a form nobody can read)."""
+    text = " ".join(title.casefold().split())
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:12] if text else None
+
+
+PLACE_TOP_RESULTS = 10  # results of a page that are looked at for the name of the place
+
+
+def place_named(serp: Serp, location: str) -> int:
+    """How many of the first ten organic results name the place a search was placed in: the
+    first part of its canonical name ("Austin" of "Austin,Texas,United States"), in the
+    result's address, title or snippet. A page Google made for a place names it in most of
+    its results; a page made for nowhere in particular names it in none."""
+    name = " ".join(location.split(",")[0].casefold().split())
+    if not name:
+        return 0
+    needles = {name, name.replace(" ", "-"), name.replace(" ", "")}
+    top = sorted(serp.organic, key=lambda result: result.position)[:PLACE_TOP_RESULTS]
+
+    def text(result: OrganicResult) -> str:
+        words = f"{result.url} {result.title} {result.snippet or ''}".casefold().split()
+        return " ".join(words)
+
+    return sum(1 for result in top if any(needle in text(result) for needle in needles))
+
+
 def result_refs(serp: Serp) -> list[ResultRef]:
     """Every organic result, in order. A result whose link is not an absolute URL is kept
     too, marked, so later steps can count it; dropping it here would hide exactly the
@@ -128,6 +158,7 @@ def result_refs(serp: Serp) -> list[ResultRef]:
                 on_google=absolute and is_google_host(host),
                 wrapper=is_google_wrapper(result.url),
                 well_formed=absolute and bool(result.title.strip()),
+                title_hash=title_hash(result.title),
             )
         )
     return refs
@@ -144,6 +175,7 @@ class Step1:
     serp: Serp | None = None
     organic_count: int | None = None
     results: list[ResultRef] = field(default_factory=list)
+    place_named: int | None = None  # with a place asked for: results of the first ten naming it
 
 
 def void_reason(provider: Provider, raw: RawResponse) -> str | None:
@@ -265,6 +297,8 @@ def judge(
     count = len(serp.organic)
     refs = result_refs(serp)
     seen = {"serp": serp, "organic_count": count, "results": refs}
+    if task.location:
+        seen["place_named"] = place_named(serp, task.location)
     passed("parsed", "the body has the documented shape")
 
     if count == 0:

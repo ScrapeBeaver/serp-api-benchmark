@@ -183,6 +183,7 @@ def test_records_keep_where_results_point_and_not_what_they_say(tmp_path, specs)
         "on_google",
         "wrapper",
         "well_formed",
+        "title_hash",
     }
     text = record.model_dump_json()
     assert "Result 1" not in text, "no titles in a record"
@@ -318,3 +319,73 @@ def test_control_repeats_are_capped_and_stay_inside_the_run_limit(tmp_path, spec
 def test_second_pages_are_not_repeated(tmp_path, specs):
     records = run(tmp_path, four(specs, odd_page()), make_tasks(2, page=2), max_control_repeats=5)
     assert not any(r.control for r in records)
+
+
+# --- one provider after another, ticks, repeats ------------------------------------------------
+
+
+def _stamp(record: Record) -> float:
+    import datetime as dt
+
+    return dt.datetime.fromisoformat(record.scheduled_at.replace("Z", "+00:00")).timestamp()
+
+
+def test_staggered_providers_get_a_task_one_interval_apart_in_the_order_given(tmp_path, specs):
+    providers = [FakeProvider(fake_config(specs, name)) for name in ("c", "a", "b")]
+    records = real(run(tmp_path, providers, make_tasks(4), stagger=True, interval=0.05))
+    assert {r.provider: r.position for r in records} == {"c": 0, "a": 1, "b": 2}
+    start = min(_stamp(r) for r in records)
+    for record in records:
+        tick = int(record.task_id[-3:]) - 1
+        expected = (tick + record.position) * 0.05
+        assert _stamp(record) - start == pytest.approx(expected, abs=0.002)
+    # each provider still gets one task per interval
+    for provider in "abc":
+        times = sorted(_stamp(r) for r in records if r.provider == provider)
+        gaps = [later - earlier for earlier, later in zip(times, times[1:], strict=False)]
+        assert gaps == pytest.approx([0.05] * 3, abs=0.002)
+
+
+def test_without_stagger_no_position_is_recorded(tmp_path, specs):
+    providers = [FakeProvider(fake_config(specs, "a")), FakeProvider(fake_config(specs, "b"))]
+    records = real(run(tmp_path, providers, make_tasks(3)))
+    assert {r.position for r in records} == {None}
+
+
+def test_a_task_is_sent_at_its_tick_not_at_its_place_in_the_list(tmp_path, specs):
+    tasks = make_tasks(3)
+    tasks = [t.model_copy(update={"tick": tick}) for t, tick in zip(tasks, (0, 4, 5), strict=True)]
+    records = real(run(tmp_path, [FakeProvider(fake_config(specs))], tasks, interval=0.05))
+    start = min(_stamp(r) for r in records)
+    offsets = {r.task_id: _stamp(r) - start for r in records}
+    assert offsets["t-002"] == pytest.approx(0.20, abs=0.002)  # four ticks, with idle ones before
+    assert offsets["t-003"] == pytest.approx(0.25, abs=0.002)
+
+
+def test_a_repeat_and_a_feature_search_are_recorded_as_what_they_are(tmp_path, specs):
+    first = make_tasks(1)[0]
+    again = first.model_copy(
+        update={"task_id": "t-001-again", "pool": "repeat", "headline": False,
+                "repeat_of": "t-001", "tick": 3}
+    )  # fmt: skip
+    week = first.model_copy(
+        update={"task_id": "w-001", "pool": "week", "headline": False, "feature": "week",
+                "time_range": "week", "tick": 1}
+    )  # fmt: skip
+    records = {r.task_id: r for r in real(run(tmp_path, [FakeProvider(fake_config(specs))],
+                                              [first, week, again]))}  # fmt: skip
+    assert records["t-001-again"].repeat_of == "t-001" and not records["t-001-again"].headline
+    assert (records["w-001"].feature, records["w-001"].time_range) == ("week", "week")
+    assert records["t-001"].repeat_of is None and records["t-001"].feature is None
+    assert all(r.counts for r in records.values())  # measured requests, in their own pools
+
+
+def test_a_time_filter_the_provider_does_not_offer_is_void_not_failed(tmp_path, specs):
+    yes = FakeProvider(fake_config(specs, "yes"))
+    no = FakeProvider(fake_config(specs, "no", time_filter=False))
+    week = make_tasks(1, time_range="week", feature="week", headline=False)
+    records = real(run(tmp_path, [yes, no], week))
+    by = {r.provider: r for r in records}
+    assert by["yes"].outcome == "delivered"
+    assert (by["no"].outcome, by["no"].void_reason) == ("void", "not_supported")
+    assert "past week" in by["no"].checks[0].detail and by["no"].started_at is None

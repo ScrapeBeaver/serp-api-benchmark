@@ -51,6 +51,8 @@ auth:
 capabilities:
   mobile: true                    # `device: mobile`
   city_location: false            # `location` is a two-letter country code on this endpoint
+  time_filter: true               # `tbs`, forwarded verbatim
+  web_tab: true                   # `udm`, forwarded verbatim
   pagination: true                # `start_page`; "each page is a separate fetch and charge"
   raw_html: true                  # `output: ["html"]`, the default
   ai_overview: true               # returned inside the page; `expand_aio` expands it

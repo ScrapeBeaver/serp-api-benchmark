@@ -158,8 +158,8 @@ def _when(record: Record) -> dt.datetime | None:
 
 
 def _query_key(record: Record) -> tuple[object, ...]:
-    """What makes two pages "the same query": history is kept per query, place, device
-    and results page."""
+    """What makes two pages "the same query": history is kept per query, place, device,
+    results page and time filter."""
     return (
         " ".join(record.query.casefold().split()),
         record.country,
@@ -167,6 +167,7 @@ def _query_key(record: Record) -> tuple[object, ...]:
         record.location,
         str(record.device),
         record.page,
+        record.time_range,
     )
 
 
@@ -357,15 +358,16 @@ def _control(
 
 
 def control_candidates(records: Iterable[Record]) -> list[Record]:
-    """The measured first pages worth a control repeat: those the agreement signal puts
-    outside the group of their moment, short pages left out (they get no verdict). In the
-    order they were sent."""
+    """The measured first pages worth a control repeat: those of the main table that the
+    agreement signal puts outside the group of their moment, short pages left out (they
+    get no verdict). In the order they were sent."""
     records = list(records)
     verdicts = judge(records)
     return [
         record
         for record in records
         if record.counts
+        and record.headline
         and record.page == 1
         and (verdict := verdicts.get((record.run_id, record.task_id, record.provider)))
         and verdict.agreement == OUTSIDE_GROUP

@@ -44,6 +44,8 @@ auth:
 capabilities:
   mobile: true                      # `device`
   city_location: true               # `location` at city level, or `uule`
+  time_filter: true               # `tbs=qdr:w`
+  web_tab: true                   # `udm=14`
   pagination: true                  # each further page is a separate search
   raw_html: true                    # `output=html`
   ai_overview: true                 # in the response, or behind a `page_token` that lives one minute

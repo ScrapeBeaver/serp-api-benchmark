@@ -26,17 +26,16 @@ _HOSTS = [
 
 class Mock(Provider):
     def build_request(self, task: Task) -> HttpRequest:
-        return HttpRequest(
-            method="POST",
-            url=f"{self.base_url}/search",
-            json_body={
-                "q": task.query,
-                "country": task.country,
-                "locale": task.locale,
-                "device": task.device.value,
-                "page": task.page,
-            },
-        )
+        body: dict[str, object] = {
+            "q": task.query,
+            "country": task.country,
+            "locale": task.locale,
+            "device": task.device.value,
+            "page": task.page,
+        }
+        if task.time_range:
+            body["time_range"] = task.time_range
+        return HttpRequest(method="POST", url=f"{self.base_url}/search", json_body=body)
 
     def transport(self) -> httpx.AsyncBaseTransport:
         return httpx.MockTransport(self._answer)
@@ -66,17 +65,22 @@ class Mock(Provider):
         if outcome == "invalid_json":
             return httpx.Response(200, text="<html><body>Bad gateway</body></html>")
 
-        # A query that is one quoted phrase has no results here, as a nonsense phrase has
-        # none on a real search engine. This is what the conformance probe expects.
-        phrase = asked["q"].startswith('"') and asked["q"].endswith('"')
+        # A query that is one quoted phrase of made-up words (not a vowel in it) has no
+        # results here, as a nonsense phrase has none on a real search engine. This is what
+        # the conformance probe expects. A phrase of real words is a search like any other.
+        text = asked["q"]
+        phrase = text.startswith('"') and text.endswith('"') and not set(text) & set("aeiou")
         count = 0 if outcome == "empty_results" or phrase else rng.randint(8, 10)
         hosts = rng.sample(_HOSTS, count)
         offset = (asked["page"] - 1) * 10
+        # A search for the past week is answered with other pages than the same search for
+        # any time: the request differs, so the draw does.
+        when = " this week" if asked.get("time_range") else ""
         results = [
             {
                 "rank": offset + index + 1,
                 "link": f"https://www.{host}.example/{asked['q'].replace(' ', '-')[:40]}",
-                "title": f"{host.title()}: {asked['q']}",
+                "title": f"{host.title()}: {asked['q']}{when}",
                 "text": f"A synthetic result about {asked['q']}.",
                 "shown": f"{host}.example",
             }

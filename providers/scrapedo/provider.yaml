@@ -50,6 +50,8 @@ auth:
 capabilities:
   mobile: true                    # `device=mobile`
   city_location: true             # `location`, a Google canonical name, or `uule`
+  time_filter: true               # `time_period=last_week`
+  web_tab: unknown                # not documented
   pagination: true                # `start`, in steps of 10, up to 100
   raw_html: true                  # `include_html=true`
   ai_overview: true               # in the answer when Google renders it; otherwise a second, charged call

@@ -399,7 +399,7 @@ footer { padding: 24px 0 36px; font-size: 13px; color: var(--faint); }
           </ul>
           <p>So every answer goes through three checks, in order. Only an answer that passes all three is a <b>usable answer</b>, and that is the main number on this page.</p>
           <ol class="steps">
-            <li><b>Same search, same second</b>From a published list, to every provider at once, four times a day. One attempt, no retries.</li>
+            <li><b>Same search, same minutes</b>From a published list, to one provider after another, 15 seconds apart, three times a day. One attempt, no retries.</li>
             <li><b>Did it succeed?</b>A valid response within 60 seconds with at least three results.</li>
             <li><b>Are the URLs resolved?</b>Result links must point at websites, not back at google.com. We count the share of links that do.</li>
             <li><b>Is it poisoned?</b>The sites must be the ones this search usually returns, or the ones another provider got in the same minute.</li>
@@ -417,15 +417,15 @@ footer { padding: 24px 0 36px; font-size: 13px; color: var(--faint); }
         <section id="m-sent">
           <h2>What we send</h2>
           <p><b>The searches.</b> Two lists of searches, each search with a country and a language, both published in the repository. A core of forty is sent every day: the same searches every day are what makes one day comparable with the next, and what gives the third check its history. A wider list of 160 rotates: forty of them go out each day, so every one of them comes back exactly every four days. About half of all the searches are commercial (loans, insurance, software, shopping), because that is where poisoning concentrates. The rest are questions, local searches, people and places, how-to and technical searches, in six languages, Japanese among them. Which searches go on which day, and in what order, follows from the date alone, so anyone can recompute what was sent. Both lists are public, so a provider that wanted to treat exactly these 200 searches differently could; what a wide rotating list does is make that a lot of work instead of a little.</p>
-          <p><b>The timing.</b> Four runs a day, at hours that shift from day to day so that every hour gets its turn. Within a run a search is sent every 15 seconds on a fixed timetable, whether or not the previous one has come back. A slow provider cannot make us wait and so hide its slow answers.</p>
-          <p><b>Same second, same question.</b> Each search goes to every provider at the same moment, with the same words, country, language and device. Google's results change by the minute; sending at the same moment is what makes the answers comparable.</p>
+          <p><b>The timing.</b> Three runs a day, at hours that shift from day to day so that every hour gets its turn. Within a run a search is sent every 15 seconds on a fixed timetable, whether or not the previous one has come back. A slow provider cannot make us wait and so hide its slow answers.</p>
+          <p><b>Same question, one provider after another.</b> Each search goes to every provider with the same words, country, language and device, to one provider after another, 15 seconds apart, in an order drawn anew for every run. All of them have it within two and a half minutes, no two ask Google for it in the same second, and no provider is always first. Until 25 November 2026 every provider received a search at the same instant.</p>
           <p><b>One attempt.</b> We never retry. If a provider retries inside its own call, that time is part of its answer.</p>
           <p><b>The product.</b> Each provider's cheapest real-time Google search endpoint, with default settings and its cache switched off. The exact endpoint and every parameter we send are listed per provider in the repository.</p>
           <div class="ex">
             <div class="cap">Example · one search of a run</div>
             <div class="ln"><span>Search</span><code>best running shoes</code></div>
             <div class="ln"><span>Asked for</span><code>United States · English · desktop · page 1 · 10 results</code></div>
-            <div class="ln"><span>Sent</span><code>14:17:00 UTC, to every provider at once</code></div>
+            <div class="ln"><span>Sent</span><code>14:17:00 UTC to the first provider of the run, 14:19:30 to the eleventh</code></div>
             <div class="ln"><span>Recorded</span><code>status, time to the last byte, the site and position of every result</code></div>
           </div>
         </section>

@@ -47,8 +47,9 @@ auth:
 
 capabilities:
   mobile: true                    # `device=mobile`
-  city_location: false            # offered, but as `latitude`, `longitude` and `radius`: the benchmark names
-                                  # places, not coordinates, so tasks with a place are not sent here yet
+  city_location: true             # as `latitude`, `longitude` and `radius`: a point, not a name
+  time_filter: true               # `date_range=past_week`
+  web_tab: unknown                # `udm` is among the allowed extra_params; not tried
   pagination: true                # `page` for one page, `pages` for up to 10 aggregated in one response
   raw_html: true                  # `add_html=true`
   ai_overview: true               # `expand_aio=true`, best effort, with `search_type=classic` or `ads`
@@ -283,3 +284,5 @@ adapter:
   version: "1"
   base_url: https://app.scrapingbee.com
   base_url_env: SCRAPINGBEE_BASE_URL
+  options:
+    place_as: coordinates   # a place is a point and a radius; a task with only a name is not sent

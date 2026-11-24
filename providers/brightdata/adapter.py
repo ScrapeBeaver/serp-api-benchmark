@@ -50,6 +50,8 @@ class BrightData(Provider):
             search["start"] = str((task.page - 1) * 10)  # start=10 is page 2
         if task.location:
             search["uule"] = task.location  # the canonical name itself, not its encoded form
+        if task.time_range == "week":
+            search["tbs"] = "qdr:w"  # the address is Google's own: its past-week filter
         return HttpRequest(
             method="POST",
             url=f"{self.base_url}/request",

@@ -24,6 +24,8 @@ class Serper(Provider):
             body["page"] = task.page
         if task.location:
             body["location"] = task.location  # the place by name, as Google spells it
+        if task.time_range == "week":
+            body["tbs"] = "qdr:w"
         return HttpRequest(
             method="POST",
             url=f"{self.base_url}/search",

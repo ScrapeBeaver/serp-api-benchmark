@@ -1,8 +1,8 @@
 # serp-bench
 
 A reproducible comparison of Google SERP APIs: the same searches, sent to every provider
-at the same moment, timed the same way, with every request kept on record so that any
-number can be recomputed by anyone.
+within the same three minutes, timed the same way, with every request kept on record so
+that any number can be recomputed by anyone.
 
 **Who runs it.** This comparison is run by [ScrapeBeaver](https://scrapebeaver.com), which
 is one of the providers measured. It is a reproducible comparison, not an independent
@@ -47,22 +47,31 @@ Until those exist there are no results here, and nothing in this repository rank
    of tasks. It is deterministic: the same inputs give the same list on any machine.
 2. **A warm-up.** Each provider gets one request first, so that measured requests can
    reuse an open connection. It is recorded and never counted.
-3. **A fixed timetable.** Task *i* is sent at *t0 + i × interval*, to every provider at
-   the same instant, whether or not earlier answers have arrived. A slow provider does not
-   slow the timetable down, so its slow period is measured in full instead of being
-   quietly skipped. How late each request left compared with the timetable is recorded.
-   After the last task, a first page that matched no other provider's page is asked for
-   once more from the same provider (a control repeat, step 3). It is recorded and never
-   counted, and it cannot slow a measured request down because it is sent after them.
-4. **One attempt.** No retries, no redirects followed. What a single call returns is what
+3. **A fixed timetable, one provider after another.** Every task has its place in the
+   timetable, a tick, and ticks are 15 seconds apart. The providers stand in an order
+   drawn anew for every run, from the date and the run number alone. The task of tick *n*
+   is sent to the provider in place *k* at *t0 + (n + k) × interval*. So each provider
+   receives one task every 15 seconds, a task has reached all eleven within two and a half
+   minutes, no two providers ask Google for the same search in the same second, and over
+   the runs no provider is always first. Earlier answers are not waited for: a slow
+   provider does not slow the timetable down, so its slow period is measured in full
+   instead of being quietly skipped. How late each request left compared with the
+   timetable is recorded, and so is the provider's place in the order. (Until 2026-11-25
+   every provider received a task at the same instant.)
+4. **Pages in order, repeats on time.** One core search of the run is turned page by page:
+   pages 2 to 5 follow its first page in order, 75 seconds apart, so the next page is never
+   asked for while the one before may still be on its way. Five searches of the run are
+   asked again from the same provider exactly five minutes after the first time (see
+   [Repeatability](#repeatability)). After the last task, a first page of the main table
+   that matched no other provider's page is asked for once more from the same provider (a
+   control repeat, step 3). It is recorded and never counted, and it cannot slow a
+   measured request down because it is sent after them.
+5. **One attempt.** No retries, no redirects followed. What a single call returns is what
    is measured; a provider's own retries inside that call are part of its answer.
-5. **One clock.** The runner times every provider the same way: from sending the request
+6. **One clock.** The runner times every provider the same way: from sending the request
    to the response headers, and to the last byte of the body. The time limit is 60 seconds.
-6. **A record per request.** One line of JSON per (task, provider), written as the run
+7. **A record per request.** One line of JSON per (task, provider), written as the run
    goes. Everything reported is computed from those lines.
-
-Runs are spread over the day and the timetable moves one hour later each day, so every
-hour of the day is sampled within a few days rather than the same hours forever.
 
 ### Void: our problems are not a provider's failures
 
@@ -150,6 +159,39 @@ recomputed by anyone.
   benchmark, gains the most in relative terms from the first rule; the table is here so
   that the change can be weighed.
 
+- **2026-11-26. Methodology 0.2: three runs a day, one provider after another, repeats and
+  features.** The configuration of every day up to 2026-11-25 is kept as `bench-0.1.yaml`,
+  and `bench.yaml` names it as its `previous`, so those days can still be planned and
+  recomputed as they were. From 00:00 UTC of 2026-11-26:
+
+  - **Three runs a day instead of four**, eight hours apart. The hours still move by one
+    each day, so every hour of the day is sampled within eight days. The main table rests
+    on the same 80 searches a day per provider as before.
+  - **A task goes to one provider after another**, 15 seconds apart, in an order drawn for
+    the run, instead of to all of them at the same instant. The pages that step 3
+    compares are now fetched within two and a half minutes of each other, not in the same
+    second. A provider's place in the order is in the record (`position`).
+  - **Later pages are asked for like a person turns them.** The `page2` pool (the second
+    page of sixteen core searches a day) is replaced by pages 2 to 5 of one core search
+    per run, in order.
+  - **Repeats.** Five searches of every run are asked again five minutes later; the page
+    shows [Repeatability](#repeatability) from them. Records keep a hash of each result's
+    title (`title_hash`) so that two pages can be compared where the links are wrappers.
+  - **The lists.** Nine of the forty core searches and thirty-seven of the 160 wide ones
+    were replaced, so that the lists have what real use has: searches inside one site
+    (`site:`), exact phrases in quotes, and more searches of six words and longer (a fifth
+    of the list, an eighth before). A `site:` search has one site, so by the rule of
+    2026-11-23 it gets no step-3 verdict. The lists before are still in `queries/core.yaml`
+    and `queries/wide.yaml`.
+  - **Features.** A search placed in a city and a search for the past week are sent, one
+    each per run, to the providers that offer them, and shown apart (see
+    [Features](#features-that-not-every-provider-offers)).
+  - **Control repeats** are at most three a run (ten before) and only for searches of the
+    main table.
+
+  Figures before and after this day are over different lists and a different timetable.
+  The summary and the page do not separate them: the windows of the first days hold both.
+
 ## How each number is computed
 
 This section is generated from the registry in `src/serp_bench/metrics.py`, which is the
@@ -228,6 +270,61 @@ Rule A is the one two rank trackers publish
 [Nozzle](https://nozzle.io/research/poisoned-google-serps/)). The check uses no provider's
 own detection, the operator's included.
 
+### Repeatability
+
+Ask for the same search twice, and a provider that fetches the page from Google both times
+returns nearly the same page. One that answers from unlike sources, or whose answers are
+sometimes substituted, does not. Each run asks five searches again from the same provider,
+exactly five minutes after the first time: three first pages of the main table, and two of
+the pages of the run's paged search (pages 2 and 4 in one run, 3 and 5 in the next).
+
+Two pages are compared by their first ten results. A result of one page is on the other
+when the address is the same or, where an address is Google's wrapper and says nothing,
+the title is: records keep a hash of the title, never the title. The score of a pair is
+the results of each page that are also on the other, out of the results of both. Order is
+not compared. A pair counts when both requests were delivered; a request that failed is
+the success rate's business.
+
+Repeatability is the mean of two halves, the pairs of first pages and the pairs of later
+pages, so that later pages weigh as much as first pages although fewer of them are asked
+again. It is shown once each half rests on 20 pairs, with both halves and their pair
+counts next to it (`repeatability` in the summary, `summary.repeatability` in the code).
+
+What it does not say: Google itself sometimes changes a page within five minutes, for
+everyone, so 100% is not the expected value, and a few points between two providers are
+not a difference. A search about today's news changes honestly. Read it next to the other
+figures, not instead of them.
+
+### Features that not every provider offers
+
+Some things a search API can do are not offered by every provider. They cannot be in the
+main table: the providers would not be compared on the same searches. Two of them are
+measured on searches of their own, sent only to the providers that declare the feature
+(`capabilities` in `provider.yaml`). A provider that does not offer a feature is not sent
+its searches and has no figure for it, which is not a failure.
+
+| Feature | The search | The feature is at work when |
+|---|---|---|
+| Search in a city | One search of `queries/city.yaml` per run: an everyday search that names no place, placed in a city | At least half of the first ten results name the city, in the address, the title or the snippet |
+| Past week only | One core search of the run, with the past-week filter on | At most half of its first ten results are also on the same provider's page of the same search without the filter, in the same run |
+
+`Applied` is the share of the delivered answers that show the feature at work, out of
+those where it can be told (`summary.feature_figures`). A provider that takes the
+parameter and ignores it delivers every answer and applies none. The other figures of a
+feature, success rate, resolved URLs and response time, are the main table's, computed on
+these searches. Step 3 is not applied to them: providers that ignore a place all return
+the same placeless page, agree with each other, and would be taken for the real one.
+
+The rule for a city was tried on 2026-11-23 before it was adopted: 520 searches, ten
+providers, five cities. Pages came out one of two ways, six or more of the first ten
+results naming the city or none or one, and the same searches with no place asked named a
+city in no result at all.
+
+Google's Web tab (`udm=14`) is declared, not measured: the page says who offers it.
+
+A feature gets one search per run, about ninety per provider in a month, so its figures
+are rough for weeks and are shown with their intervals.
+
 ### See it for one request
 
 Every record carries the trail of checks that decided its outcome, in words:
@@ -293,7 +390,7 @@ minutes. `--interval SECONDS` changes that for a single run.
 `--run next` does the first of today's runs that is not stored yet, so a run started by
 hand needs no index. `--run auto` (the default) is what the schedule asks for: the run that
 fell due recently and is not stored yet, or nothing. "Recently" is the gap between two runs
-less an hour, five hours at four runs a day: a scheduled job on GitHub starts tens of minutes
+less an hour, seven hours at three runs a day: a scheduled job on GitHub starts tens of minutes
 late, often in the next clock hour, and some of the hourly starts never happen at all (more
 than three hours passed between two of them on 2026-11-16). A run must not be lost for that.
 `--allow-draft` is needed while a provider's status is `draft`.
@@ -321,42 +418,65 @@ ever logged.
 ## Configuring what is sent: `bench.yaml`
 
 ```yaml
-methodology_version: "0.1"
+methodology_version: "0.2"
+starts: 2026-11-26        # in force from 00:00 UTC of this day
+previous: bench-0.1.yaml  # the configuration of the days before it
 providers: [scrapebeaver]
 
 schedule:
-  runs_per_day: 4         # evenly spaced; must divide 24
+  runs_per_day: 3         # evenly spaced; must divide 24
   minute: 17              # past the hour
   rotate_hours: true      # the timetable moves one hour later each day
 
 pools:
   core:
-    source: queries/core.yaml
+    source: queries/core-0.2.yaml
     per_day: 40           # the whole list every day, spread evenly over the pool's runs
     runs: all             # or run indexes, e.g. [0, 2]
     device: desktop
     page: 1
     headline: true        # counts towards the main table
   wide:
-    source: queries/wide.yaml
+    source: queries/wide-0.2.yaml
     per_day: 40           # a quarter of the list a day: every search every four days
     headline: true
-  page2:
-    from: core            # the same queries as `core`
-    per_day: 16
-    page: 2
+  deep:
+    follows: core         # a search the core pool sends in the same run
+    per_run: 1
+    pages: [2, 3, 4, 5]   # asked in order, never two at a time
+  week:
+    follows: core
+    per_run: 1
+    time_range: week      # only results of the past week
+    feature: week
+  city:
+    source: queries/city.yaml
+    per_day: 3
+    feature: city
+
+repeats:
+  after_seconds: 300      # the same search again, from the same provider
+  first_pages: 3          # of the run's main-table searches
+  later_pages: 2          # of the pages of its paged search
 
 limits:
   timeout_seconds: 60
   dispatch_interval_seconds: 15
+  stagger_providers: true # one provider after another, in an order drawn for the run
   max_in_flight_per_provider: 5
-  max_tasks_per_provider_per_run: 130
+  max_tasks_per_provider_per_run: 60
 ```
 
 A **pool** is a named stream of tasks: where its queries come from, how many are sent per
 day, in which runs, with which device and results page. Only pools marked `headline` feed
-the main figures; the others are reported separately. `serp-bench plan` prints what the
-file adds up to per run and per day.
+the main figures; the others are reported separately. A pool that `follows` another takes
+its searches from what that pool sends in the very same run: the later pages of a search
+need its first page, and a filtered search is read against the same search without the
+filter. `serp-bench plan` prints what the file adds up to per run and per day.
+
+`starts` and `previous` are how the file changes: a new file takes over at midnight UTC of
+a stated day, and the one before it stays in the repository, so what a day's runs were
+never changes in the middle of the day and an old day can still be planned.
 
 A pool walks its query list in passes, and a day takes the next `per_day` queries of that
 sequence. The list is cut once into day blocks, in an order shuffled for the pool, and a
@@ -375,15 +495,22 @@ warns when it is asked to combine two configurations.
 
 ### The searches
 
-Two lists, both in `queries/`:
+Three lists, all in `queries/`:
 
-- **`core.yaml`: forty searches, every one of them every day.** The same searches every
-  day are what makes one day comparable with the next, and they give step 3 its history.
-- **`wide.yaml`: 160 searches, forty a day**, so every one comes back exactly every four
-  days. It keeps the figures from being about forty searches only. Four days is the
+- **`core-0.2.yaml`: forty searches, every one of them every day.** The same searches
+  every day are what makes one day comparable with the next, and they give step 3 its
+  history.
+- **`wide-0.2.yaml`: 160 searches, forty a day**, so every one comes back exactly every
+  four days. It keeps the figures from being about forty searches only. Four days is the
   longest gap at which step 3 still has a history for a search: it needs a search on
   three earlier days within fourteen.
+- **`city.yaml`: fifty searches placed in a city, three a day**, for the providers that
+  offer a place below country level. Not in the main table.
 
+`core.yaml` and `wide.yaml` are the lists of the days up to 2026-11-25.
+
+In the 200 searches of the first two lists, fifteen are inside one site (`site:`),
+fifteen ask for an exact phrase in quotes, and a fifth are six words or longer.
 About half of the 200 are commercial (loans, insurance, software, shopping), because that
 is where poisoning concentrates; the rest are questions, local searches, people and
 places, how-to and technical searches, in eight countries and six languages.
@@ -430,7 +557,10 @@ One JSON object per line, gzip-compressed, `schema_version: 1`.
 | `config_hash`, `methodology_version` | The configuration and methodology the run used |
 | `pool`, `headline` | The pool the task came from, and whether it feeds the main figures |
 | `task_id`, `query_id`, `query` | The task and the query |
-| `country`, `locale`, `device`, `page`, `location` | What was asked for |
+| `country`, `locale`, `device`, `page`, `location`, `time_range` | What was asked for; `time_range` is `week` for a search of the past week only |
+| `feature` | The feature a task of a feature pool measures (`city`, `week`) |
+| `repeat_of` | For a repeat: the task id of the search it asks for again |
+| `position` | The provider's place in the run's order: a task reaches it this many intervals after the first provider. Null before 2026-11-26 |
 | `provider`, `provider_status`, `adapter_version` | Who answered, its status at the time, and the adapter that read the answer |
 | `scheduled_at`, `started_at` | When the timetable said to send it, and when it was sent (UTC) |
 | `dispatch_lag_ms`, `client_lag` | How late it left, and whether that exceeds 250 ms |
@@ -440,15 +570,16 @@ One JSON object per line, gzip-compressed, `schema_version: 1`.
 | `void_reason` | Why a void request is void |
 | `checks` | The ordered checks that led to the outcome, each with what it saw |
 | `organic_count` | How many organic results the answer had |
-| `results` | For each result: `pos`, `host`, `url_hash`, `on_google`, `wrapper`, `well_formed` |
+| `results` | For each result: `pos`, `host`, `url_hash`, `on_google`, `wrapper`, `well_formed`, `title_hash` |
+| `place_named` | With a place asked for: how many of the first ten results name it |
 | `provider_request_id` | The provider's own id for the request, when it gives one |
 | `billed_units` | The units the response itself says were charged, when it says |
 | `ai_overview` | The AI Overview block of the answer: `chars`, the characters of its own text, and `deferred`, true when it had no text but a token for a second request. Null when the answer had no such block, and in records written before 2026-11-15 |
 | `warmup` | True for the warm-up request, which is never counted |
 | `control` | True for a control repeat (step 3), which is never counted |
 
-A record keeps where results point, not what they say: the host and a hash of the
-normalised URL, never titles, snippets or bodies. That is enough to recompute every
+A record keeps where results point, not what they say: the host, a hash of the
+normalised URL and a hash of the title, never titles, snippets or bodies. That is enough to recompute every
 figure, and it does not republish a provider's output. Every result is kept, including
 one whose link is not a usable address. `wrapper` is true when the link is Google's own
 redirect or results page (`google.com/goto?url=...`, a relative `/url?q=...`) instead of

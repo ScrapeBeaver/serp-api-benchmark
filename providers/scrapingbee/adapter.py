@@ -14,6 +14,7 @@ from serp_bench.provider import Provider
 API_KEY = "SCRAPINGBEE_API_KEY"
 COST_HEADER = "spb-cost"  # the credits this request cost, as the general API documents it
 REQUEST_ID_HEADER = "spb-request-id"
+PLACE_RADIUS_METRES = "20000"  # around the point a search is placed at: a city, not a street
 
 
 def _header(raw: RawResponse, wanted: str) -> str | None:
@@ -33,6 +34,14 @@ class ScrapingBee(Provider):
         }
         if task.page > 1:
             params["page"] = str(task.page)
+        if task.coordinates:
+            # A place is taken as a point and a radius in metres, not as a name.
+            latitude, longitude = task.coordinates
+            params["latitude"] = f"{latitude:g}"
+            params["longitude"] = f"{longitude:g}"
+            params["radius"] = PLACE_RADIUS_METRES
+        if task.time_range == "week":
+            params["date_range"] = "past_week"
         # `light_request` is left at its default, true: the cheap mode is the one measured.
         return HttpRequest(
             method="GET",

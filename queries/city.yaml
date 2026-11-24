@@ -1,0 +1,68 @@
+# Searches placed in a city: the "search in a city" feature.
+#
+# Ten everyday searches that name no place, each placed in five cities: the same words give
+# another page in Austin than in Seattle, and the page says which city it was made for.
+# Three of the fifty go out each day, one per run, to the providers that offer a place
+# below country level. `location` is Google's canonical name of the place; `coordinates`
+# are the same place as latitude and longitude, for a provider that takes it that way.
+#
+# These are not in the main table: not every provider offers the feature. See "Features"
+# in the README.
+version: 1
+description: Searches placed in a city. Three a day, one per run.
+queries:
+  # --- Austin ---
+  - {id: city-austin-city-hall, query: "city hall", country: US, locale: en, category: local, location: "Austin,Texas,United States", coordinates: [30.2672, -97.7431]}
+  - {id: city-austin-dentist, query: "dentist", country: US, locale: en, category: local, location: "Austin,Texas,United States", coordinates: [30.2672, -97.7431]}
+  - {id: city-austin-library, query: "public library", country: US, locale: en, category: local, location: "Austin,Texas,United States", coordinates: [30.2672, -97.7431]}
+  - {id: city-austin-pizza, query: "pizza delivery", country: US, locale: en, category: local, location: "Austin,Texas,United States", coordinates: [30.2672, -97.7431]}
+  - {id: city-austin-used-cars, query: "used cars", country: US, locale: en, category: local, location: "Austin,Texas,United States", coordinates: [30.2672, -97.7431]}
+  - {id: city-austin-farmers-market, query: "farmers market", country: US, locale: en, category: local, location: "Austin,Texas,United States", coordinates: [30.2672, -97.7431]}
+  - {id: city-austin-vet, query: "emergency vet", country: US, locale: en, category: local, location: "Austin,Texas,United States", coordinates: [30.2672, -97.7431]}
+  - {id: city-austin-apartments, query: "apartments for rent", country: US, locale: en, category: local, location: "Austin,Texas,United States", coordinates: [30.2672, -97.7431]}
+  - {id: city-austin-weekend, query: "things to do this weekend", country: US, locale: en, category: local, location: "Austin,Texas,United States", coordinates: [30.2672, -97.7431]}
+  - {id: city-austin-electrician, query: "electrician", country: US, locale: en, category: local, location: "Austin,Texas,United States", coordinates: [30.2672, -97.7431]}
+  # --- Seattle ---
+  - {id: city-seattle-city-hall, query: "city hall", country: US, locale: en, category: local, location: "Seattle,Washington,United States", coordinates: [47.6062, -122.3321]}
+  - {id: city-seattle-dentist, query: "dentist", country: US, locale: en, category: local, location: "Seattle,Washington,United States", coordinates: [47.6062, -122.3321]}
+  - {id: city-seattle-library, query: "public library", country: US, locale: en, category: local, location: "Seattle,Washington,United States", coordinates: [47.6062, -122.3321]}
+  - {id: city-seattle-pizza, query: "pizza delivery", country: US, locale: en, category: local, location: "Seattle,Washington,United States", coordinates: [47.6062, -122.3321]}
+  - {id: city-seattle-used-cars, query: "used cars", country: US, locale: en, category: local, location: "Seattle,Washington,United States", coordinates: [47.6062, -122.3321]}
+  - {id: city-seattle-farmers-market, query: "farmers market", country: US, locale: en, category: local, location: "Seattle,Washington,United States", coordinates: [47.6062, -122.3321]}
+  - {id: city-seattle-vet, query: "emergency vet", country: US, locale: en, category: local, location: "Seattle,Washington,United States", coordinates: [47.6062, -122.3321]}
+  - {id: city-seattle-apartments, query: "apartments for rent", country: US, locale: en, category: local, location: "Seattle,Washington,United States", coordinates: [47.6062, -122.3321]}
+  - {id: city-seattle-weekend, query: "things to do this weekend", country: US, locale: en, category: local, location: "Seattle,Washington,United States", coordinates: [47.6062, -122.3321]}
+  - {id: city-seattle-electrician, query: "electrician", country: US, locale: en, category: local, location: "Seattle,Washington,United States", coordinates: [47.6062, -122.3321]}
+  # --- Denver ---
+  - {id: city-denver-city-hall, query: "city hall", country: US, locale: en, category: local, location: "Denver,Colorado,United States", coordinates: [39.7392, -104.9903]}
+  - {id: city-denver-dentist, query: "dentist", country: US, locale: en, category: local, location: "Denver,Colorado,United States", coordinates: [39.7392, -104.9903]}
+  - {id: city-denver-library, query: "public library", country: US, locale: en, category: local, location: "Denver,Colorado,United States", coordinates: [39.7392, -104.9903]}
+  - {id: city-denver-pizza, query: "pizza delivery", country: US, locale: en, category: local, location: "Denver,Colorado,United States", coordinates: [39.7392, -104.9903]}
+  - {id: city-denver-used-cars, query: "used cars", country: US, locale: en, category: local, location: "Denver,Colorado,United States", coordinates: [39.7392, -104.9903]}
+  - {id: city-denver-farmers-market, query: "farmers market", country: US, locale: en, category: local, location: "Denver,Colorado,United States", coordinates: [39.7392, -104.9903]}
+  - {id: city-denver-vet, query: "emergency vet", country: US, locale: en, category: local, location: "Denver,Colorado,United States", coordinates: [39.7392, -104.9903]}
+  - {id: city-denver-apartments, query: "apartments for rent", country: US, locale: en, category: local, location: "Denver,Colorado,United States", coordinates: [39.7392, -104.9903]}
+  - {id: city-denver-weekend, query: "things to do this weekend", country: US, locale: en, category: local, location: "Denver,Colorado,United States", coordinates: [39.7392, -104.9903]}
+  - {id: city-denver-electrician, query: "electrician", country: US, locale: en, category: local, location: "Denver,Colorado,United States", coordinates: [39.7392, -104.9903]}
+  # --- Boston ---
+  - {id: city-boston-city-hall, query: "city hall", country: US, locale: en, category: local, location: "Boston,Massachusetts,United States", coordinates: [42.3601, -71.0589]}
+  - {id: city-boston-dentist, query: "dentist", country: US, locale: en, category: local, location: "Boston,Massachusetts,United States", coordinates: [42.3601, -71.0589]}
+  - {id: city-boston-library, query: "public library", country: US, locale: en, category: local, location: "Boston,Massachusetts,United States", coordinates: [42.3601, -71.0589]}
+  - {id: city-boston-pizza, query: "pizza delivery", country: US, locale: en, category: local, location: "Boston,Massachusetts,United States", coordinates: [42.3601, -71.0589]}
+  - {id: city-boston-used-cars, query: "used cars", country: US, locale: en, category: local, location: "Boston,Massachusetts,United States", coordinates: [42.3601, -71.0589]}
+  - {id: city-boston-farmers-market, query: "farmers market", country: US, locale: en, category: local, location: "Boston,Massachusetts,United States", coordinates: [42.3601, -71.0589]}
+  - {id: city-boston-vet, query: "emergency vet", country: US, locale: en, category: local, location: "Boston,Massachusetts,United States", coordinates: [42.3601, -71.0589]}
+  - {id: city-boston-apartments, query: "apartments for rent", country: US, locale: en, category: local, location: "Boston,Massachusetts,United States", coordinates: [42.3601, -71.0589]}
+  - {id: city-boston-weekend, query: "things to do this weekend", country: US, locale: en, category: local, location: "Boston,Massachusetts,United States", coordinates: [42.3601, -71.0589]}
+  - {id: city-boston-electrician, query: "electrician", country: US, locale: en, category: local, location: "Boston,Massachusetts,United States", coordinates: [42.3601, -71.0589]}
+  # --- Manchester ---
+  - {id: city-manchester-city-hall, query: "city hall", country: GB, locale: en, category: local, location: "Manchester,England,United Kingdom", coordinates: [53.4808, -2.2426]}
+  - {id: city-manchester-dentist, query: "dentist", country: GB, locale: en, category: local, location: "Manchester,England,United Kingdom", coordinates: [53.4808, -2.2426]}
+  - {id: city-manchester-library, query: "public library", country: GB, locale: en, category: local, location: "Manchester,England,United Kingdom", coordinates: [53.4808, -2.2426]}
+  - {id: city-manchester-pizza, query: "pizza delivery", country: GB, locale: en, category: local, location: "Manchester,England,United Kingdom", coordinates: [53.4808, -2.2426]}
+  - {id: city-manchester-used-cars, query: "used cars", country: GB, locale: en, category: local, location: "Manchester,England,United Kingdom", coordinates: [53.4808, -2.2426]}
+  - {id: city-manchester-farmers-market, query: "farmers market", country: GB, locale: en, category: local, location: "Manchester,England,United Kingdom", coordinates: [53.4808, -2.2426]}
+  - {id: city-manchester-vet, query: "emergency vet", country: GB, locale: en, category: local, location: "Manchester,England,United Kingdom", coordinates: [53.4808, -2.2426]}
+  - {id: city-manchester-apartments, query: "apartments for rent", country: GB, locale: en, category: local, location: "Manchester,England,United Kingdom", coordinates: [53.4808, -2.2426]}
+  - {id: city-manchester-weekend, query: "things to do this weekend", country: GB, locale: en, category: local, location: "Manchester,England,United Kingdom", coordinates: [53.4808, -2.2426]}
+  - {id: city-manchester-electrician, query: "electrician", country: GB, locale: en, category: local, location: "Manchester,England,United Kingdom", coordinates: [53.4808, -2.2426]}

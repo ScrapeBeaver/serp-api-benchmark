@@ -48,6 +48,8 @@ auth:
 capabilities:
   mobile: true                    # `mob_search=true`
   city_location: true             # `location` (city level), `uule`
+  time_filter: true               # `tbs`; the values are Google's (`qdr:w`), the page does not list them
+  web_tab: unknown                # not documented
   pagination: true                # `page`, one page per request
   raw_html: true                  # `html=true`
   ai_overview: true               # inline when Google renders it inline, otherwise through a second call

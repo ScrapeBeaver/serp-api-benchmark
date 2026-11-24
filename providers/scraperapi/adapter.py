@@ -42,6 +42,8 @@ class ScraperApi(Provider):
             params["start"] = str((task.page - 1) * 10)  # an offset
         if task.location:
             params["uule"] = uule(task.location)
+        if task.time_range == "week":
+            params["tbs"] = "w"  # their own values: h, d, w, m, y
         return HttpRequest(
             method="GET", url=f"{self.base_url}/structured/google/search", params=params
         )

@@ -53,6 +53,8 @@ auth:
 capabilities:
   mobile: true                    # desktop and mobile user agents are included in the price
   city_location: true             # city / ZIP geotargeting is included in the price
+  time_filter: true               # the address is Google's own, so `tbs=qdr:w` goes in it as it is
+  web_tab: true                   # `udm` goes in the address
   pagination: true                # `start=`, one page per request
   raw_html: true                  # raw HTML is one of the output formats, at the same price
   ai_overview: true               # `brd_ai_overview=2`

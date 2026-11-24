@@ -20,6 +20,8 @@ auth:
 capabilities:
   mobile: true
   city_location: false
+  time_filter: true
+  web_tab: false
   pagination: true
   raw_html: false
   ai_overview: false

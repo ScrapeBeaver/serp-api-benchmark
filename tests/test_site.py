@@ -279,7 +279,7 @@ def test_the_site_command_builds_pages_even_before_any_results(tmp_path, capsys)
         "What we send",
         "The searches.",
         "The timing.",
-        "Same second, same question.",
+        "Same question, one provider after another.",
         "One attempt.",
         "The product.",
         "Step 1 · Did it succeed?",

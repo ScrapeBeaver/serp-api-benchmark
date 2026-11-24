@@ -35,6 +35,8 @@ class Scrapingdog(Provider):
             params["mob_search"] = "true"  # documented at 10 credits
         if task.location:
             params["uule"] = uule(task.location)
+        if task.time_range == "week":
+            params["tbs"] = "qdr:w"
         return HttpRequest(method="GET", url=f"{self.base_url}/google", params=params)
 
     def parse(self, raw: RawResponse) -> Serp:

@@ -44,6 +44,8 @@ auth:
 capabilities:                     # true | false | unknown
   mobile: true                    # a phone results page can be requested
   city_location: unknown          # a place below country level can be requested
+  time_filter: unknown            # results of the past week only can be requested
+  web_tab: unknown                # Google's Web tab (udm=14) can be requested; declared, not measured
   pagination: true                # page 2 and later can be requested
   raw_html: false                 # the page itself can be returned next to the JSON
   ai_overview: false              # the AI Overview is returned

@@ -54,7 +54,7 @@ from serp_bench.provider import (
     load_spec,
     parse_config,
 )
-from serp_bench.queries import late_run, per_run_counts, plan, resolve_run
+from serp_bench.queries import late_run, per_run_counts, plan, provider_order, resolve_run
 from serp_bench.records import RecordError, RecordWriter, read_records
 from serp_bench.report import render, report_data
 from serp_bench.runner import RunContext, run_tasks
@@ -179,6 +179,7 @@ def cmd_providers(args: argparse.Namespace) -> int:
 def cmd_plan(args: argparse.Namespace) -> int:
     config, root, _ = _setup(args)
     day = _day(args.date)
+    config = config.on(day)
     schedule = config.schedule
     now = dt.datetime.now(dt.UTC)
     times = [schedule.due_time(day, k) for k in range(schedule.runs_per_day)]
@@ -196,16 +197,20 @@ def cmd_plan(args: argparse.Namespace) -> int:
     rows = []
     for name, pool in config.pools.items():
         runs = config.pool_runs(name)
-        counts = per_run_counts(pool.per_day, len(runs))
+        if pool.per_run is not None:
+            counts = [pool.per_run * pool.tasks_per_search] * len(runs)
+        else:
+            counts = per_run_counts(config.tasks_per_day(name), len(runs))
         here = counts[runs.index(run_index)] if run_index in runs else 0
+        origin = f"{pool.follows}, same run" if pool.follows else config.source_of(name)
         rows.append(
             [
                 name,
-                config.source_of(name),
+                origin,
                 pool.device.value,
-                str(pool.page),
+                ", ".join(map(str, pool.pages)) if pool.pages else str(pool.page),
                 "yes" if pool.headline else "no",
-                str(pool.per_day),
+                str(config.tasks_per_day(name)),
                 ", ".join(f"run {r}: {c}" for r, c in zip(runs, counts, strict=True)),
                 str(here),
             ]
@@ -216,14 +221,27 @@ def cmd_plan(args: argparse.Namespace) -> int:
     print()
     print(_table(headers, rows))
     limits = config.limits
-    per_day = sum(pool.per_day for pool in config.pools.values())
-    minutes = len(tasks) * limits.dispatch_interval_seconds / 60
+    per_day = sum(config.tasks_per_day(name) for name in config.pools) + config.repeats_per_day
+    ticks = 1 + max((task.tick if task.tick is not None else n) for n, task in enumerate(tasks))
+    order = provider_order(config, day, run_index, config.providers, seed=args.seed)
+    if limits.stagger_providers:
+        ticks += len(order) - 1
+    minutes = ticks * limits.dispatch_interval_seconds / 60
+    repeats = sum(1 for task in tasks if task.repeat_of)
     print()
     print(
-        f"{len(tasks)} tasks in this run, {per_day} per day per provider, plus one warm-up "
-        f"request per run. One task every {limits.dispatch_interval_seconds:g} s: about "
-        f"{minutes:.0f} min."
+        f"{len(tasks)} tasks in this run"
+        + (f", {repeats} of them repeats" if repeats else "")
+        + f"; {per_day} per day per provider, plus one warm-up request per run. One task "
+        f"every {limits.dispatch_interval_seconds:g} s: about {minutes:.0f} min."
     )
+    if limits.stagger_providers:
+        print(
+            "A task reaches the providers one after another, "
+            f"{limits.dispatch_interval_seconds:g} s apart, in this run's order: "
+            + ", ".join(order)
+            + "."
+        )
     if len(tasks) + 1 > limits.max_tasks_per_provider_per_run:
         print(
             f"NOTE: the run limit is {limits.max_tasks_per_provider_per_run} requests per "
@@ -348,9 +366,11 @@ def cmd_run(args: argparse.Namespace) -> int:
             )
             return 0
         day, run_index = owed
+        config = config.on(day)
         late = (now - config.schedule.due_at(day, run_index)).total_seconds() / 60
         log.info("schedule", f"run {run_index} of {day}, due {late:.0f} min ago")
     else:
+        config = config.on(day)  # a day's runs are those of the configuration of that day
         run_index = resolve_run(config, args.run, now, day=day, stored=stored)
     if run_index is None:
         times = ", ".join(
@@ -369,6 +389,9 @@ def cmd_run(args: argparse.Namespace) -> int:
     if not providers:
         print("error: no provider can run (see the messages above)", file=sys.stderr)
         return 2
+    # The order in which each task reaches the providers, drawn for this run.
+    order = provider_order(config, day, run_index, [p.id for p in providers], seed=args.seed)
+    providers = sorted(providers, key=lambda provider: order.index(provider.id))
 
     limits = config.limits
     interval = limits.dispatch_interval_seconds if args.interval is None else args.interval
@@ -424,10 +447,17 @@ def cmd_run(args: argparse.Namespace) -> int:
             adapter_version=pc.adapter.version,
             product=pc.product.name,
         )
+    stagger = limits.stagger_providers
+    ticks = 1 + max((task.tick if task.tick is not None else n) for n, task in enumerate(tasks))
+    how = (
+        f"to one provider after another, {interval:g} s apart, in the order {', '.join(order)}"
+        if stagger
+        else "to all providers at once"
+    )
     log.info(
         "run_protocol",
-        f"{len(tasks)} tasks from pools {', '.join(pools)}; one task every {interval:g} s to all "
-        f"providers at once; time limit {limits.timeout_seconds:g} s; at most "
+        f"{len(tasks)} tasks from pools {', '.join(pools)}; one task every {interval:g} s {how}; "
+        f"time limit {limits.timeout_seconds:g} s; at most "
         f"{limits.max_in_flight_per_provider} of our requests in flight per provider; "
         "no retries",
         tasks=len(tasks),
@@ -435,7 +465,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         interval_seconds=interval,
         timeout_seconds=limits.timeout_seconds,
         max_in_flight=limits.max_in_flight_per_provider,
-        about_seconds=round(len(tasks) * interval),
+        provider_order=order if stagger else None,
+        about_seconds=round((ticks + (len(order) - 1 if stagger else 0)) * interval),
     )
 
     with RecordWriter(path) as writer:
@@ -453,6 +484,7 @@ def cmd_run(args: argparse.Namespace) -> int:
                     save_bodies=Path(args.save_bodies).resolve() if args.save_bodies else None,
                     on_record=_log_record,
                     max_control_repeats=controls,
+                    stagger=stagger,
                 )
             )
         except KeyboardInterrupt:
@@ -743,7 +775,7 @@ def cmd_site(args: argparse.Namespace) -> int:
         now=dt.datetime.now(dt.UTC),
         operator=config.site.operator,
         repository=config.site.repository,
-        methodology_version=config.methodology_version,
+        methodology_version=config.on(dt.datetime.now(dt.UTC).date()).methodology_version,
         preview=config.site.preview,
     )
     template = Path(args.template) if args.template else root / "site" / "template.html"
@@ -889,15 +921,38 @@ def _monthly_mix(config: BenchConfig, provider: ProviderConfig) -> tuple[list[Mi
         items.append(MixItem("control repeats (at most)", shape_for(provider), monthly))
     skipped = []
     capabilities = provider.capabilities
+    days = DAYS_IN_A_MONTH
     for name, pool in config.pools.items():
         mobile = pool.device.value == "mobile"
-        if (mobile and capabilities.mobile is False) or (
-            pool.page > 1 and capabilities.pagination is False
+        pages = pool.pages or [pool.page]
+        if (
+            (mobile and capabilities.mobile is False)
+            or (max(pages) > 1 and capabilities.pagination is False)
+            or (pool.time_range and capabilities.time_filter is False)
+            or (pool.feature == "city" and capabilities.city_location is False)
         ):
             skipped.append(name)
             continue
-        shape = shape_for(provider, device=pool.device.value, page=pool.page)
-        items.append(MixItem(f"pool {name}", shape, pool.per_day * DAYS_IN_A_MONTH))
+        volume = config.tasks_per_day(name) * days // len(pages)
+        for page in pages:
+            shape = shape_for(provider, device=pool.device.value, page=page)
+            label = f"pool {name}" + (f", page {page}" if pool.pages else "")
+            items.append(MixItem(label, shape, volume))
+    repeats = config.repeats
+    if repeats is not None:
+        runs = config.schedule.runs_per_day
+        if repeats.first_pages:
+            volume = repeats.first_pages * runs * days
+            items.append(MixItem("repeats of first pages", shape_for(provider), volume))
+        paged = [page for pool in config.pools.values() for page in pool.pages or []]
+        if repeats.later_pages and paged and capabilities.pagination is not False:
+            # Which page is asked again alternates, so over a month each page has its share;
+            # what does not divide evenly goes to the first pages, so that nothing is lost.
+            share, rest = divmod(repeats.later_pages * runs * days, len(paged))
+            for index, page in enumerate(paged):
+                shape = shape_for(provider, page=page)
+                volume = share + (1 if index < rest else 0)
+                items.append(MixItem(f"repeats of page {page}", shape, volume))
     return items, skipped
 
 
@@ -912,7 +967,7 @@ def cmd_budget(args: argparse.Namespace) -> int:
         raise ConfigError(f"unknown provider(s) {unknown}; available: {sorted(specs)}")
     day = _day(args.date)
     ceiling = config.budget.max_usd_per_provider_per_month
-    per_day = sum(pool.per_day for pool in config.pools.values())
+    per_day = sum(config.tasks_per_day(name) for name in config.pools) + config.repeats_per_day
     controls = config.limits.max_control_repeats_per_provider_per_run
     repeats = f" and up to {controls} control repeats a run" if controls else ""
     print(

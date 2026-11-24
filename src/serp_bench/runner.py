@@ -1,13 +1,22 @@
-"""A run: the same tasks sent to every provider at the same moment, on a fixed timetable.
+"""A run: the same tasks sent to every provider, on a fixed timetable.
 
 Protocol
 * One warm-up request per provider first, so measured requests can reuse an open
   connection. It is recorded with `warmup: true` and never counted.
-* Open-loop dispatch. Task i is sent at t0 + i x interval, whether or not earlier answers
-  have arrived, and every provider receives it at the same instant. A slow provider
+* Open-loop dispatch. A task has a place in the timetable, its tick, and is sent at
+  t0 + tick x interval whether or not earlier answers have arrived. A slow provider
   therefore does not slow the timetable down: if it stalls, it keeps receiving tasks at
   the same rate as everyone else, and its bad period is measured in full rather than
   quietly skipped (the "coordinated omission" trap of waiting for each answer).
+* One provider after another (`stagger`). The providers stand in an order drawn for the
+  run, and a task reaches each of them one interval after the one before: the provider in
+  place k is sent the task of tick n at t0 + (n + k) x interval. Every provider still
+  receives one task per interval, no two of them ask for the same search in the same
+  second, and over the runs none is always first. Without `stagger` every provider
+  receives a task at the same instant (how it was until 2026-11-25).
+* A repeat is a task like any other, placed in the timetable a fixed number of ticks
+  after the search it repeats, so each provider is asked again exactly that long after
+  it was asked the first time.
 * Requests to one provider may overlap up to a cap. A task that would exceed it is not
   sent to that provider and is recorded as void (`client_backpressure`): that is our
   stand's limit, shown in the report, not a failure of the provider.
@@ -125,6 +134,7 @@ def build_record(
     dispatch_lag_ms: float | None = None,
     warmup: bool = False,
     control: bool = False,
+    position: int | None = None,
 ) -> Record:
     billed = None
     if raw is not None and raw.error is None:
@@ -146,7 +156,12 @@ def build_record(
         device=task.device,
         page=task.page,
         location=task.location,
+        time_range=task.time_range,
+        feature=task.feature,
+        repeat_of=task.repeat_of,
+        place_named=step.place_named,
         run_index=ctx.run_index,
+        position=position,
         provider=provider.id,
         provider_status=provider.config.status,
         adapter_version=provider.config.adapter.version,
@@ -180,6 +195,8 @@ def _unsupported_detail(provider: Provider, task: Task) -> str:
         needs.append("results pages after the first")
     if task.location:
         needs.append("a place below country level")
+    if task.time_range:
+        needs.append("results of the past week only")
     return f"the provider does not offer {' or '.join(needs) or 'this kind of request'}"
 
 
@@ -196,9 +213,13 @@ async def run_tasks(
     save_bodies: Path | None = None,
     on_record: OnRecord | None = None,
     max_control_repeats: int = 0,
+    stagger: bool = False,
 ) -> list[Record]:
     """Run `tasks` against `providers`. Returns the records, which are also written as they
     are produced (in order of completion, not of dispatch).
+
+    With `stagger` the providers are asked one after another, an interval apart, in the
+    order they are given in; the caller draws that order for the run.
 
     The budget guard is here: a provider is never sent more than `max_requests_per_provider`
     requests in a run, the warm-up and the control repeats included. Tasks beyond that are
@@ -230,6 +251,7 @@ async def run_tasks(
         scheduled_at: str | None = None,
         warmup: bool = False,
         control: bool = False,
+        position: int | None = None,
     ) -> None:
         try:
             request = provider.build_request(task)
@@ -253,6 +275,7 @@ async def run_tasks(
                     dispatch_lag_ms=lag,
                     warmup=warmup,
                     control=control,
+                    position=position,
                 )
             )
         finally:
@@ -273,31 +296,56 @@ async def run_tasks(
         )
         await asyncio.gather(*(measure(p, warmup_task, warmup=True) for p in providers))
 
+        # Every (task, provider) pair has its moment: the task's tick, plus the provider's
+        # place in the order when the providers are asked one after another.
+        turn = {p.id: place for place, p in enumerate(providers)}
+        moments = sorted(
+            (
+                (
+                    (index if task.tick is None else task.tick)
+                    + (turn[provider.id] if stagger else 0),
+                    turn[provider.id],
+                    index,
+                ),
+                task,
+                provider,
+            )
+            for index, task in enumerate(tasks)
+            for provider in providers
+        )
         t0 = time.perf_counter()
         wall0 = dt.datetime.now(dt.UTC)
-        for index, task in enumerate(tasks):
-            due = t0 + index * interval
+        for (moment, place, _), task, provider in moments:
+            due = t0 + moment * interval
             delay = due - time.perf_counter()
             if delay > 0:
                 await asyncio.sleep(delay)
-            scheduled_at = _iso(wall0 + dt.timedelta(seconds=index * interval))
-            for provider in providers:
-                if not provider.supports(task):
-                    step = not_sent(VOID_NOT_SUPPORTED, _unsupported_detail(provider, task))
-                    keep(build_record(ctx, task, provider, step, scheduled_at=scheduled_at))
-                elif in_flight[provider.id] >= max_in_flight:
-                    detail = (
-                        f"{in_flight[provider.id]} of our requests to this provider were still "
-                        f"in flight (limit {max_in_flight}); not sent"
+            scheduled_at = _iso(wall0 + dt.timedelta(seconds=moment * interval))
+            position = place if stagger else None
+            if not provider.supports(task):
+                step = not_sent(VOID_NOT_SUPPORTED, _unsupported_detail(provider, task))
+                keep(
+                    build_record(
+                        ctx, task, provider, step, scheduled_at=scheduled_at, position=position
                     )
-                    step = not_sent(VOID_CLIENT_BACKPRESSURE, detail)
-                    keep(build_record(ctx, task, provider, step, scheduled_at=scheduled_at))
-                else:
-                    in_flight[provider.id] += 1
-                    job = asyncio.create_task(
-                        measure(provider, task, due=due, scheduled_at=scheduled_at)
+                )
+            elif in_flight[provider.id] >= max_in_flight:
+                detail = (
+                    f"{in_flight[provider.id]} of our requests to this provider were still "
+                    f"in flight (limit {max_in_flight}); not sent"
+                )
+                step = not_sent(VOID_CLIENT_BACKPRESSURE, detail)
+                keep(
+                    build_record(
+                        ctx, task, provider, step, scheduled_at=scheduled_at, position=position
                     )
-                    pending[job] = (provider, task, scheduled_at)
+                )
+            else:
+                in_flight[provider.id] += 1
+                job = asyncio.create_task(
+                    measure(provider, task, due=due, scheduled_at=scheduled_at, position=position)
+                )
+                pending[job] = (provider, task, scheduled_at)
             for job in [job for job in pending if job.done()]:
                 del pending[job]
                 job.result()  # an adapter bug stops the run instead of hiding

@@ -34,6 +34,8 @@ class ScrapeBeaver(Provider):
             body["start"] = (task.page - 1) * 10  # 0 is page 1, 10 is page 2
         if task.location:
             body["uule"] = uule(task.location)
+        if task.time_range == "week":
+            body["time_range"] = "week"
         return HttpRequest(
             method="POST",
             url=f"{self.base_url}/v1/search/light",

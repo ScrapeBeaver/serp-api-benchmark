@@ -70,6 +70,8 @@ class DataForSEO(Provider):
         if task.page > 1:
             # Later pages come in the same request: depth 20 is the first two pages.
             search["depth"] = task.page * 10
+        if task.time_range == "week":
+            search["search_param"] = "&tbs=qdr:w"  # "search results within a particular timeframe"
         token = base64.b64encode(f"{self.secret(LOGIN)}:{self.secret(PASSWORD)}".encode()).decode()
         return HttpRequest(
             method="POST",

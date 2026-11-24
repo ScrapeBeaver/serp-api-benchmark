@@ -90,6 +90,10 @@ class Auth(Strict):
 class Capabilities(Strict):
     mobile: Tri = "unknown"
     city_location: Tri = "unknown"
+    # Results of the past week only (Google's `tbs=qdr:w`), on the benchmarked endpoint.
+    time_filter: Tri = "unknown"
+    # Google's "Web" tab (`udm=14`), on the benchmarked endpoint. Declared, not measured.
+    web_tab: Tri = "unknown"
     pagination: Tri = "unknown"
     raw_html: Tri = "unknown"
     ai_overview: Tri = "unknown"

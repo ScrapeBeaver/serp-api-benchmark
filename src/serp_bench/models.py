@@ -67,6 +67,17 @@ class Task(BaseModel):
     page: int = 1  # 1-based results page
     # A place below country level, as Google's canonical name ("Austin,Texas,United States").
     location: str | None = None
+    # The same place as (latitude, longitude), for the providers that take a place that way.
+    coordinates: tuple[float, float] | None = None
+    # Only results of the past week ("week"). None: any time.
+    time_range: Literal["week"] | None = None
+    # The feature this task measures ("city", "week"), for a task of a feature pool.
+    feature: str | None = None
+    # A repeat: the task id of the search this one asks for again, some minutes later.
+    repeat_of: str | None = None
+    # Its place in the run's timetable, in dispatch intervals from the start. None: the
+    # place it has in the list.
+    tick: int | None = None
 
 
 class HttpRequest(BaseModel):
@@ -156,6 +167,10 @@ class ResultRef(BaseModel):
     wrapper: bool = False
     # The result has a non-empty title and an absolute http(s) URL.
     well_formed: bool = True
+    # First 12 hex of sha256 of the title, lower case with spaces collapsed. It says whether
+    # two pages carry the same result when the link is Google's wrapper and cannot say it.
+    # None in records written before 2026-11-25.
+    title_hash: str | None = None
 
 
 class Record(BaseModel):
@@ -175,7 +190,16 @@ class Record(BaseModel):
     device: Device
     page: int
     location: str | None = None
+    time_range: str | None = None  # "week": only results of the past week were asked for
+    feature: str | None = None  # the feature a task of a feature pool measures
+    repeat_of: str | None = None  # the task id of the search this request asks for again
+    # With a place asked for: how many of the first ten results name it. None: no place.
+    place_named: int | None = None
     run_index: int | None = None  # which of the day's runs; None outside a scheduled run
+    # The provider's turn in the run's order: a task reaches it this many dispatch
+    # intervals after the first provider. None in records written before 2026-11-25, when
+    # every provider received a task at the same instant.
+    position: int | None = None
     provider: str
     provider_status: str  # draft | conformance | shadow | published, at the time of the run
     adapter_version: str

@@ -187,12 +187,15 @@ def test_unknown_provider_and_bad_run_are_readable_errors(tmp_path, capsys):
     assert cli.main(["run", *CONFIG, "--providers", "nobody", "--run", "0"]) == 2
     assert "unknown provider(s) ['nobody']" in capsys.readouterr().err
     last = load_config(ROOT / "bench.yaml").schedule.runs_per_day - 1
-    assert cli.main(["run", *CONFIG, "--providers", "mock", "--run", str(last + 1)]) == 2
+    # The number of runs is that of the day's configuration, so the day is named: on a day
+    # before the file starts, the file before it is in force and has another number of runs.
+    day = ["--date", "2026-11-26"]
+    assert cli.main(["run", *CONFIG, *day, "--providers", "mock", "--run", str(last + 1)]) == 2
     assert f"must be `auto`, `next` or a run index from 0 to {last}" in capsys.readouterr().err
 
 
 def test_plan_prints_the_arithmetic(capsys):
-    assert cli.main(["plan", *CONFIG, "--date", "2026-11-12", "--run", "1", "--limit", "2"]) == 0
+    assert cli.main(["plan", *CONFIG, "--date", "2026-11-26", "--run", "1", "--limit", "2"]) == 0
     out = capsys.readouterr().out
     assert "run 0 at" in out and "moves one hour later each day" in out
     # the numbers come from bench.yaml, so the test follows it when the volume changes
@@ -200,10 +203,25 @@ def test_plan_prints_the_arithmetic(capsys):
     runs = config.schedule.runs_per_day
     core = per_run_counts(config.pools["core"].per_day, runs)
     assert ", ".join(f"run {i}: {n}" for i, n in enumerate(core)) in out
-    in_run = sum(per_run_counts(p.per_day, runs)[1] for p in config.pools.values())
-    per_day = sum(p.per_day for p in config.pools.values())
-    assert f"{in_run} tasks in this run, {per_day} per day per provider" in out
+    # a pool that follows another sends the same number in every run; the repeats come on top
+    in_run = sum(
+        p.per_run * p.tasks_per_search if p.per_run else per_run_counts(p.per_day, runs)[1]
+        for p in config.pools.values()
+    )
+    in_run += config.repeats.per_run
+    per_day = sum(config.tasks_per_day(name) for name in config.pools) + config.repeats_per_day
+    assert f"{in_run} tasks in this run, {config.repeats.per_run} of them repeats" in out
+    assert f"{per_day} per day per provider" in out
+    assert "one after another" in out and "in this run's order" in out
     assert f"... and {in_run - 2} more" in out
+
+
+def test_plan_of_a_day_before_the_file_starts_is_the_plan_of_the_file_before(capsys):
+    assert cli.main(["plan", *CONFIG, "--date", "2026-11-12", "--run", "1", "--limit", "2"]) == 0
+    out = capsys.readouterr().out
+    assert "run 3 at" in out and "methodology 0.1" in out
+    assert "24 tasks in this run; 96 per day per provider" in out
+    assert "one after another" not in out
 
 
 def test_providers_lists_status_and_key(capsys, monkeypatch):
@@ -345,18 +363,23 @@ def test_budget_prices_a_month_of_the_configuration(capsys):
     assert cli.main(["budget", *CONFIG, "--providers", "scrapebeaver,mock"]) == 0
     out = capsys.readouterr().out
     config = load_config(ROOT / "bench.yaml")
-    per_day = sum(pool.per_day for pool in config.pools.values())
+    per_day = sum(config.tasks_per_day(name) for name in config.pools) + config.repeats_per_day
     controls = config.limits.max_control_repeats_per_provider_per_run
     per_run_extra = 1 + controls  # the warm-up, and at most this many control repeats
     month = (per_day + config.schedule.runs_per_day * per_run_extra) * cli.DAYS_IN_A_MONTH
     assert f"{month:,}" in out and "Ceiling: $50.00" in out
     assert "pool core:" in out and "warm-ups:" in out and "control repeats (at most):" in out
+    # every kind of request is priced: the pages of the paged search, the features, the repeats
+    for line in ("pool deep, page 5:", "pool week:", "pool city:", "repeats of first pages:"):
+        assert line in out, line
+    assert "repeats of page 2:" in out
     assert "OVER BUDGET" not in out and "searches" in out
 
 
 def test_budget_fails_when_the_cheapest_covering_plan_is_above_the_ceiling(tmp_path, capsys):
     """Enough volume to outgrow ScrapeBeaver's $25 plan: the $80 one breaks a $50 ceiling."""
     shutil.copytree(ROOT / "queries", tmp_path / "queries")
+    shutil.copy(ROOT / "bench-0.1.yaml", tmp_path)  # the file bench.yaml names as its `previous`
     text = (ROOT / "bench.yaml").read_text(encoding="utf-8")
     text, changed = re.subn(r"(  core:\n(?:.*\n)*?    per_day: )\d+", r"\g<1>900", text, count=1)
     assert changed == 1 and "per_day: 900" in text
@@ -370,6 +393,7 @@ def test_budget_fails_when_the_cheapest_covering_plan_is_above_the_ceiling(tmp_p
 
 def test_the_budget_ceiling_does_not_change_the_configuration_hash(tmp_path):
     shutil.copytree(ROOT / "queries", tmp_path / "queries")
+    shutil.copy(ROOT / "bench-0.1.yaml", tmp_path)
     text = (ROOT / "bench.yaml").read_text(encoding="utf-8")
     (tmp_path / "bench.yaml").write_text(text, encoding="utf-8")
     before = config_hash(load_config(tmp_path / "bench.yaml"), tmp_path)

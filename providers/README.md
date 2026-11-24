@@ -99,7 +99,7 @@ for validation in CI. `_template/provider.yaml` shows every field with comments.
 | `product` | Exactly what is benchmarked: `name`, `endpoint`, `mode` (`light` or `full`), `settings` (every non-default parameter the adapter sends), `alternatives` (the provider's other Google endpoints and why they were not chosen), `notes` |
 | `terms` | What the terms of service say about benchmarking: `url`, `checked_at`, `benchmarking` (`allowed`, `not_mentioned`, `prohibited`, `unknown`), `quote`, `permission` |
 | `auth.env` | Names of the environment variables that hold the keys. Never a value |
-| `capabilities` | `mobile`, `city_location`, `pagination`, `raw_html`, `ai_overview`, `full_mode`: each `true`, `false` or `unknown` |
+| `capabilities` | `mobile`, `city_location`, `time_filter`, `web_tab`, `pagination`, `raw_html`, `ai_overview`, `full_mode`: each `true`, `false` or `unknown`. A task that needs a capability declared `false` is not sent to the provider |
 | `billing` | The price history (below) |
 | `adapter` | Technical settings of `adapter.py`: `version`, `base_url`, `base_url_env`, `options`. Not facts about the provider |
 

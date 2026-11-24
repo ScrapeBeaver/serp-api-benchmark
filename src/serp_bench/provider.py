@@ -106,6 +106,12 @@ class Provider(ABC):
             return False
         if task.location and caps.city_location is False:
             return False
+        # A provider that takes a place as a point (`adapter.options.place_as: coordinates`)
+        # cannot be asked for a place that is only named.
+        if task.location and self.options.get("place_as") == "coordinates" and not task.coordinates:
+            return False
+        if task.time_range and caps.time_filter is False:
+            return False
         return not (task.page > 1 and caps.pagination is False)
 
     def redact(self, text: str) -> str:

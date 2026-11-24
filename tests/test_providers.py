@@ -269,8 +269,6 @@ def test_scrapingbee_builds_the_documented_request(specs):
     }
     paged = provider.build_request(make_task(page=2, device=Device.mobile)).params
     assert (paged["page"], paged["device"]) == ("2", "mobile")
-    # A place is offered only as coordinates, so a task that names a place is not sent.
-    assert not provider.supports(make_task(location="Austin,Texas,United States"))
     assert "secret-value" not in str(provider.loggable(request))
 
 
@@ -524,3 +522,86 @@ def test_serpapi_builds_the_documented_request(specs):
     placed = provider.build_request(make_task(location="Austin,Texas,United States")).params
     assert placed["location"] == "Austin,Texas,United States"
     assert "secret-value" not in str(provider.loggable(request))
+
+
+# --- features: the past week, and a place ------------------------------------------------------
+
+AUSTIN = "Austin,Texas,United States"
+# Where each provider's own past-week parameter goes, and what it is, as its documentation
+# names it. Decodo documents none for the endpoint that is measured.
+PAST_WEEK = {
+    "brightdata": ("json_body", "url", "tbs=qdr%3Aw"),
+    "dataforseo": ("json_body", "search_param", "&tbs=qdr:w"),
+    "oxylabs": ("json_body", "tbs", "qdr:w"),
+    "scrapebeaver": ("json_body", "time_range", "week"),
+    "scrapedo": ("params", "time_period", "last_week"),
+    "scraperapi": ("params", "tbs", "w"),
+    "scrapingbee": ("params", "date_range", "past_week"),
+    "scrapingdog": ("params", "tbs", "qdr:w"),
+    "serpapi": ("params", "tbs", "qdr:w"),
+    "serper": ("json_body", "tbs", "qdr:w"),
+}
+
+
+def _keyed(spec):
+    return spec.create({name: f"secret-{name}" for name in spec.config.auth.env})
+
+
+@pytest.mark.parametrize("provider_id", sorted(PAST_WEEK))
+def test_a_search_for_the_past_week_carries_the_providers_own_parameter(specs, provider_id):
+    place, key, value = PAST_WEEK[provider_id]
+    provider = _keyed(specs[provider_id])
+    assert provider.config.capabilities.time_filter is True
+
+    def sent(task):
+        holder = getattr(provider.build_request(task), place)
+        holder = holder[0] if isinstance(holder, list) else holder
+        return holder.get(key)
+
+    filtered, plain = sent(make_task(time_range="week")), sent(make_task())
+    if provider_id == "brightdata":  # the parameter goes inside Google's own address
+        assert value in filtered and value not in plain
+    else:
+        assert filtered == value and plain is None
+
+
+def test_a_provider_that_offers_no_time_filter_is_not_asked_for_one(specs):
+    decodo = _keyed(specs["decodo"])
+    assert decodo.config.capabilities.time_filter is False
+    assert not decodo.supports(make_task(time_range="week"))
+    assert decodo.supports(make_task())
+    assert all(
+        _keyed(specs[provider_id]).supports(make_task(time_range="week"))
+        for provider_id in PAST_WEEK
+    )
+
+
+def test_scrapingbee_takes_a_place_as_a_point_and_a_radius(specs):
+    provider = _keyed(specs["scrapingbee"])
+    assert provider.config.capabilities.city_location is True
+    placed = make_task(location=AUSTIN, coordinates=(30.2672, -97.7431))
+    params = provider.build_request(placed).params
+    assert (params["latitude"], params["longitude"], params["radius"]) == (
+        "30.2672",
+        "-97.7431",
+        "20000",
+    )
+    assert provider.supports(placed)
+    # the name alone cannot be asked for here, so such a task is not sent
+    assert not provider.supports(make_task(location=AUSTIN))
+    assert "latitude" not in provider.build_request(make_task()).params
+
+
+def test_only_a_provider_that_takes_coordinates_needs_them(specs):
+    """The rule is in the shared code and switched on by the provider's configuration:
+    an adapter does not decide what it is sent."""
+    named_only = make_task(location=AUSTIN)
+    for provider_id in ("scrapebeaver", "serpapi", "serper", "brightdata"):
+        assert _keyed(specs[provider_id]).supports(named_only), provider_id
+    assert not _keyed(specs["oxylabs"]).supports(named_only)  # declares no city at all
+
+
+@pytest.mark.parametrize("provider_id", ["oxylabs", "scrapebeaver", "brightdata", "decodo"])
+def test_the_web_tab_is_declared_for_every_provider(specs, provider_id):
+    declared = {"oxylabs": True, "scrapebeaver": False, "brightdata": True, "decodo": "unknown"}
+    assert specs[provider_id].config.capabilities.web_tab == declared[provider_id]

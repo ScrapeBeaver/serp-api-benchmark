@@ -37,6 +37,8 @@ class Oxylabs(Provider):
             body["device"] = "mobile"
         if task.page > 1:
             body["start_page"] = task.page
+        if task.time_range == "week":
+            body["tbs"] = "qdr:w"  # "Time and quality filters ... Forwarded verbatim"
         return HttpRequest(
             method="POST",
             url=f"{self.base_url}/v1/scrape/google/search",

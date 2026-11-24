@@ -60,6 +60,8 @@ auth:
 capabilities:                     # of /v1/search, whose documented parameters are query, geo, uule, gl, locale, page
   mobile: false                   # no device parameter (the /scrape template has `device_type`)
   city_location: true             # `uule` is accepted (live call, 2026-11-12); how precisely it is honoured is not stated
+  time_filter: false              # `google_tbs` belongs to /scrape; /search documents no time filter
+  web_tab: unknown                # nothing about it for /search
   pagination: true                # `page`
   raw_html: false                 # no parameter for it; raw HTML comes from /scrape
   ai_overview: false              # "If you require detailed, rich data including AI overview Google Search target would suit your needs better"

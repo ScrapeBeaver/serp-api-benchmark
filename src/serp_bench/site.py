@@ -361,9 +361,9 @@ def llms_txt(summary: dict[str, Any], url: str) -> str:
         f"# {OPERATOR} SERP API Benchmark",
         "",
         "> An open, reproducible benchmark of Google search APIs. The same searches are sent "
-        "to every provider in the same second, four times a day; each answer is checked for "
-        "delivery, for resolved result URLs and for results that are not the ones Google "
-        "really serves (poisoned results). Run by "
+        "to every provider within the same three minutes, three times a day; each answer is "
+        "checked for delivery, for resolved result URLs and for results that are not the ones "
+        "Google really serves (poisoned results). Run by "
         f"{OPERATOR}, which is one of the providers measured. Code and records are public.",
         "",
         "## Pages",

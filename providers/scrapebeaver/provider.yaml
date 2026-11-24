@@ -32,6 +32,8 @@ auth:
 capabilities:
   mobile: true
   city_location: true   # `uule`
+  time_filter: true               # `time_range: week`
+  web_tab: false                  # the full results page only: there is no `udm` parameter
   pagination: true      # `start`, one page per call
   raw_html: true        # `format: html | both`
   ai_overview: true

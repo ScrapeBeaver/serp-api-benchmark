@@ -33,6 +33,8 @@ auth:
 capabilities:                       # none is stated on the public pages; from live calls, 2026-11-13
   mobile: false                     # the request has no device parameter
   city_location: true               # `location` is accepted; how precisely it is honoured was not measured
+  time_filter: true               # `tbs: qdr:w`
+  web_tab: unknown                # not documented
   pagination: true                  # `page`
   raw_html: unknown
   ai_overview: unknown

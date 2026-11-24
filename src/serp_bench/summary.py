@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 
 from serp_bench.ai_overview import has_text, searches_with_one
 from serp_bench.contract import BillingEntry, ProviderConfig
-from serp_bench.models import OUTCOME_DELIVERED, OUTCOME_VOID, Record
+from serp_bench.models import OUTCOME_DELIVERED, OUTCOME_VOID, Record, ResultRef
 from serp_bench.poison import CLEAN, POISONED, UNJUDGED, Key, Verdict, judge
 from serp_bench.poison import HISTORY_DAYS as POISON_HISTORY_DAYS
 from serp_bench.pricing import (
@@ -64,6 +64,20 @@ RUN_FIGURES: tuple[str, ...] = (
 
 # The day-by-day figures that are shares, and so have a 95% interval to draw around them.
 DAILY_SHARES: tuple[str, ...] = ("success", "resolved", "resolved_pages", "poisoned", "ai_overview")
+
+# Repeatability is shown once each of its two halves rests on this many pairs of pages.
+REPEATABILITY_MIN_PAIRS = 20
+SAME_RESULTS_TOP = 10  # results of a page that are compared with its repeat
+# A filtered page that shares more than this part of its results with the same search
+# without the filter was not filtered.
+FILTER_SAME_SHARE = 0.5
+# The features that not every provider offers: the capability that declares each, and
+# whether the benchmark measures it or only says who offers it.
+FEATURES: tuple[tuple[str, str, str, bool], ...] = (
+    ("city", "Search in a city", "city_location", True),
+    ("week", "Past week only", "time_filter", True),
+    ("web_tab", "Web tab", "web_tab", False),
+)
 
 # The request shapes whose cost is shown next to a plain desktop search.
 COMPARED_SHAPES: dict[str, dict[str, object]] = {
@@ -193,6 +207,128 @@ def measure(
     return figures
 
 
+# --- the same search twice -------------------------------------------------------------------
+
+
+def _top(record: Record) -> list[ResultRef]:
+    return sorted(record.results, key=lambda result: result.pos)[:SAME_RESULTS_TOP]
+
+
+def _found(result: ResultRef, page: list[ResultRef]) -> bool:
+    """Whether `page` carries this result: the same address or, when an address is Google's
+    wrapper and says nothing, the same title."""
+    return any(
+        (result.url_hash is not None and not result.wrapper and result.url_hash == other.url_hash)
+        or (result.title_hash is not None and result.title_hash == other.title_hash)
+        for other in page
+    )
+
+
+def same_results(a: Record, b: Record) -> float | None:
+    """How much two pages are the same page, from 0 to 1: the results of each that are also
+    on the other, out of the results of both. The order is not looked at. None when a page
+    has no results."""
+    top_a, top_b = _top(a), _top(b)
+    if not top_a or not top_b:
+        return None
+    shared = sum(_found(r, top_b) for r in top_a) + sum(_found(r, top_a) for r in top_b)
+    return shared / (len(top_a) + len(top_b))
+
+
+def repeatability(records: Iterable[Record]) -> dict[str, Any]:
+    """Repeatability of one provider over one set of requests: how much of a page comes back
+    when the same search is asked again five minutes later.
+
+    Every repeat is paired with the search it repeats, in the same run; a pair counts when
+    both were delivered. `first` is the mean over the pairs of first pages, `later` over
+    the pairs of pages 2 to 5, each as [percent, pairs]. `value` is the mean of the two,
+    so that later pages weigh as much as first pages although fewer of them are asked
+    again; it is None until each half has `REPEATABILITY_MIN_PAIRS` pairs.
+    """
+    records = list(records)
+    by_task = {(r.run_id, r.task_id): r for r in records}
+    scores: dict[str, list[float]] = {"first": [], "later": []}
+    for again in records:
+        if again.repeat_of is None or again.outcome != OUTCOME_DELIVERED:
+            continue
+        origin = by_task.get((again.run_id, again.repeat_of))
+        if origin is None or origin.outcome != OUTCOME_DELIVERED:
+            continue
+        score = same_results(origin, again)
+        if score is not None:
+            scores["first" if again.page == 1 else "later"].append(score)
+
+    def half(values: list[float]) -> list[float] | None:
+        return [round(100 * sum(values) / len(values), 1), len(values)] if values else None
+
+    first, later = half(scores["first"]), half(scores["later"])
+    ready = first and later and min(first[1], later[1]) >= REPEATABILITY_MIN_PAIRS
+    return {
+        "value": round((first[0] + later[0]) / 2, 1) if ready and first and later else None,
+        "first": first,
+        "later": later,
+        "min_pairs": REPEATABILITY_MIN_PAIRS,
+    }
+
+
+# --- features ----------------------------------------------------------------------------------
+
+
+def _applied(record: Record, plain: Mapping[tuple[str, str], Record]) -> bool | None:
+    """Whether a delivered answer to a feature search shows the feature at work. None when
+    it cannot be told.
+
+    * A search placed in a city: at least half of its first ten results name the city.
+    * A search for the past week: at most half of its first ten results are also on the
+      same provider's page of the same search, in the same run, without the filter. When
+      that page was not delivered there is nothing to read it against.
+    """
+    if record.feature == "city":
+        if record.place_named is None:
+            return None
+        return 2 * record.place_named >= min(SAME_RESULTS_TOP, len(record.results))
+    if record.feature == "week":
+        other = plain.get((record.run_id, record.query_id))
+        top = _top(record)
+        if other is None or other.outcome != OUTCOME_DELIVERED or not top:
+            return None
+        same = sum(_found(result, _top(other)) for result in top)
+        return same <= FILTER_SAME_SHARE * len(top)
+    return None
+
+
+def feature_figures(feature: str, records: Iterable[Record]) -> dict[str, Any]:
+    """One provider's figures on the searches of one feature. `records` are all its
+    requests of the window: the plain searches are what a filtered one is read against.
+
+    `applied` is the share of the delivered answers that show the feature at work, out of
+    those where it can be told. The other figures are the main table's, on these searches.
+    """
+    records = list(records)
+    plain = {
+        (r.run_id, r.query_id): r
+        for r in records
+        if r.headline and r.page == 1 and r.feature is None and r.repeat_of is None
+    }
+    rows = [r for r in records if r.feature == feature]
+    counted = [r for r in rows if r.outcome != OUTCOME_VOID]
+    delivered = [r for r in counted if r.outcome == OUTCOME_DELIVERED]
+    told = [flag for flag in (_applied(r, plain) for r in delivered) if flag is not None]
+    seconds = [r.total_ms / 1000 for r in delivered if r.total_ms is not None]
+    return {
+        "tasks": len(counted),
+        "void": len(rows) - len(counted),
+        "success": _share(len(delivered), len(counted)),
+        "failures": dict(
+            sorted(Counter(r.outcome for r in counted if r.outcome != OUTCOME_DELIVERED).items())
+        ),
+        "applied": _share(sum(told), len(told)),
+        "resolved": _share(*link_counts(delivered)),
+        "p50": _percentile(seconds, 50),
+        "p95": _percentile(seconds, 95),
+    }
+
+
 def moment_of(record: Record) -> dt.datetime | None:
     """When a request was due, or when it was sent, in UTC."""
     stamp = record.scheduled_at or record.started_at
@@ -298,9 +434,11 @@ def _provider(
     verdicts: Verdicts,
     runs: list[dict[str, str]],
     overviews: Overviews,
+    everything: list[Record] | None = None,
 ) -> dict[str, Any]:
     """One provider's entry: its figures for each window, day by day, run by run, and by
-    outcome."""
+    outcome. `records` are its requests of the main table; `everything` is every request
+    of it that counts, the repeats and the feature searches included."""
     by_day: dict[dt.date, list[Record]] = {}
     for record in records:
         day = day_of(record)
@@ -311,6 +449,20 @@ def _provider(
     def within(n: int) -> list[Record]:
         first = last - dt.timedelta(days=n - 1)
         return [r for day, rows in by_day.items() if first <= day <= last for r in rows]
+
+    def all_within(n: int) -> list[Record]:
+        first = last - dt.timedelta(days=n - 1)
+        return [
+            r for r in everything or [] if (day := day_of(r)) is not None and first <= day <= last
+        ]
+
+    capabilities = config.capabilities
+    features: dict[str, Any] = {}
+    for feature, _, capability, measured in FEATURES:
+        entry: dict[str, Any] = {"offered": getattr(capabilities, capability)}
+        if measured:
+            entry["windows"] = {str(n): feature_figures(feature, all_within(n)) for n in WINDOWS}
+        features[feature] = entry
 
     daily: dict[str, list[float | None]] = {
         key: []
@@ -361,6 +513,11 @@ def _provider(
         # How the overview is obtained when the answer does not carry it, as declared.
         "ai_overview_more": config.capabilities.ai_overview_more,
         "windows": {str(n): measure(within(n), verdicts, overviews) for n in WINDOWS},
+        # How much of a page comes back when the same search is asked again, per window.
+        "repeatability": {str(n): repeatability(all_within(n)) for n in WINDOWS},
+        # The features not every provider offers: whether this one does, as it declares,
+        # and its figures on the searches of each feature that is measured.
+        "features": features,
         "daily": daily,
         "daily_range": daily_range,
         "outcomes": _outcomes(within(30), verdicts),
@@ -484,6 +641,10 @@ def build_summary(
     by_provider: dict[str, list[Record]] = {}
     for record in counted:
         by_provider.setdefault(record.provider, []).append(record)
+    everything: dict[str, list[Record]] = {}
+    for record in records:
+        if record.counts:
+            everything.setdefault(record.provider, []).append(record)
 
     shown = [
         config
@@ -494,7 +655,16 @@ def build_summary(
     # headline tasks to the last.
     runs = run_list(counted)
     providers = [
-        _provider(config, by_provider[config.id], days, operator, verdicts, runs, overviews)
+        _provider(
+            config,
+            by_provider[config.id],
+            days,
+            operator,
+            verdicts,
+            runs,
+            overviews,
+            everything.get(config.id),
+        )
         for config in shown
     ]
     on_page = [record for config in shown for record in by_provider[config.id]]
@@ -510,6 +680,10 @@ def build_summary(
         "repository": repository,
         "preview": preview,
         "not_measured_yet": list(NOT_MEASURED_YET),
+        "features": [
+            {"id": feature, "name": name, "measured": measured}
+            for feature, name, _, measured in FEATURES
+        ],
         "poison": poison_stage(on_page, verdicts, last),
         "runs": runs,
         "coverage": {

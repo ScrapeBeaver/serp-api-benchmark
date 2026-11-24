@@ -53,6 +53,8 @@ class SerpApi(Provider):
             params["start"] = str((task.page - 1) * 10)  # an offset: 10 is the second page
         if task.location:
             params["location"] = task.location  # the canonical name, at city level
+        if task.time_range == "week":
+            params["tbs"] = "qdr:w"
         return HttpRequest(method="GET", url=f"{self.base_url}/search", params=params)
 
     def parse(self, raw: RawResponse) -> Serp:

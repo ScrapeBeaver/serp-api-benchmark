@@ -16,7 +16,11 @@ from serp_bench.provider import Provider, ProviderSpec, discover, parse_config
 ROOT = Path(__file__).resolve().parent.parent
 PROVIDERS_DIR = ROOT / "providers"
 CONTRACTS_DIR = Path(__file__).resolve().parent / "fixtures" / "contracts"
-DAY = dt.date(2026, 11, 12)
+BENCH = ROOT / "bench.yaml"
+# The shipped bench.yaml is in force from its `starts`. A day before that is planned from the
+# file it names as `previous`, so a test that means one of the two says which day it is.
+DAY = dt.date(2026, 11, 12)  # the configuration before: bench-0.1.yaml
+NEW_DAY = dt.date(2026, 11, 26)  # the first day of the shipped bench.yaml
 
 
 @pytest.fixture(autouse=True)

@@ -63,6 +63,8 @@ auth:
 capabilities:
   mobile: true                      # `device`, included in the base price
   city_location: true               # `location`; `location_coordinate` takes GPS coordinates
+  time_filter: true               # `search_param` with `&tbs=qdr:w`
+  web_tab: true                   # `search_param` with `&udm=14`
   pagination: true                  # `depth` above 10, or `max_crawl_pages`, in the same request
   raw_html: true                    # the HTML result type
   ai_overview: true                 # `load_async_ai_overview`

@@ -47,6 +47,8 @@ auth:
 capabilities:
   mobile: false                   # the endpoint page documents no device parameter
   city_location: true             # `uule`
+  time_filter: true               # `tbs=w`
+  web_tab: unknown                # not documented
   pagination: true                # `start`, an offset
   raw_html: unknown
   ai_overview: unknown
